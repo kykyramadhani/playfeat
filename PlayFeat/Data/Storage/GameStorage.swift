@@ -29,6 +29,18 @@ struct GameStorage {
         }
     }
 
+    static func bestStarsKey(forLevel levelID: String) -> String { "bestStars_\(levelID)" }
+
+    static func bestStars(forLevel levelID: String) -> Int {
+        UserDefaults.standard.integer(forKey: bestStarsKey(forLevel: levelID))
+    }
+
+    /// Keeps the higher of `stars` and the level's previous best.
+    static func recordStars(_ stars: Int, forLevel levelID: String) {
+        guard stars > bestStars(forLevel: levelID) else { return }
+        UserDefaults.standard.set(stars, forKey: bestStarsKey(forLevel: levelID))
+    }
+
     /// Banks a finished run: its coins, and its dish count if that beats the
     /// best so far.
     static func record(_ result: GameResult) {

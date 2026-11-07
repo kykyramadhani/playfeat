@@ -1,0 +1,27 @@
+{
+  "id": "1-4",
+  "planet": "kepler-186f",
+  "durationSec": 90,
+  "gravity": { "direction": "down", "multiplier": 0.6 },
+  "bubbleLifeSec": 4,
+  "bubbleEverySec": 2,
+  "usefulBubbleShare": 0.6,
+  "storageSlots": 2,
+  "maxWaiting": 3,
+  "starTargets": [50, 85, 105],
+  "orderPool": { "pepperFlatbread": 1, "mushroomFlatbread": 2, "sunsetSorbet": 2 },
+  "customers": [
+    { "arriveAt": 0,  "type": "regular", "order": "pepperFlatbread", "patienceSec": 35 },
+    { "arriveAt": 9,  "type": "regular", "order": "random",          "patienceSec": 35 },
+    { "arriveAt": 18, "type": "regular", "order": "random",          "patienceSec": 35 },
+    { "arriveAt": 27, "type": "angry",   "order": "sunsetSorbet",    "patienceSec": 25 },
+    { "arriveAt": 36, "type": "regular", "order": "random",          "patienceSec": 35 },
+    { "arriveAt": 45, "type": "regular", "order": "random",          "patienceSec": 35 },
+    { "arriveAt": 54, "type": "angry",   "order": "sunsetSorbet",    "patienceSec": 25 },
+    { "arriveAt": 63, "type": "regular", "order": "random",          "patienceSec": 35 }
+  ],
+  "bubbles": [
+    { "at": 0, "ingredient": "duskFlatbread", "lane": 2 },
+    { "at": 2, "ingredient": "emberPepper",   "lane": 3 }
+  ]
+}
