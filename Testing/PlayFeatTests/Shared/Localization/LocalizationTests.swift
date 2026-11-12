@@ -91,7 +91,7 @@ struct LocalizationTests {
         let keys: [String.LocalizationValue] = [
             // Settings sheet
             "Music", "Sound Effects", "Language", "One-hand Mode", "OFF", "ON",
-            "Left Hand", "Right Hand",
+            "Left Hand", "Right Hand", "Pickup Gesture", "Pinch", "F Pinch",
             // Seat check
             "Adjust your seat to fit in the frame",
             "Adjust your seat and raise your left hand",

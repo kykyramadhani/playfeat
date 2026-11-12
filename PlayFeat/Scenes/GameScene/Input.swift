@@ -66,7 +66,24 @@ extension GameScene {
         for hand in hands {
             let cursor = convertPoint(fromView: handInput.cursor(for: hand, in: viewSize))
             let state: HandState = hand.isClosedFist ? .fist : hand.isOpenHand ? .open : .unknown
+
+            #if DEBUG
+            print("Current Hand State: \(state)")
+            #endif
+
             var tracker = trackers[hand.id] ?? HandTracker()
+
+            // The grip can't be read this frame: neither grab nor let go.
+            // Whatever the hand holds stays put, and is only dropped if the
+            // grip stays unreadable past the held-hand grace period.
+            if state == .unknown {
+                tracker.openSince = nil
+                if plateHeldBy == hand.id { plateOpenSince = nil }
+                releaseLostGrip(for: hand.id, tracker: &tracker, now: now)
+                trackers[hand.id] = tracker
+                continue
+            }
+            
             tracker.lastSeen = now
 
             var handPoints = handInput.jointPoints(for: hand, in: viewSize)
@@ -92,9 +109,10 @@ extension GameScene {
                 continue
             }
 
-            // Grab when the hand closes into a fist (from any prior state).
+            // Pick up on the selected gesture's activation edge.
             if state == .fist, tracker.previousState != .fist, tracker.held == nil {
-                if let grabbed = grabCandidate(touchedBy: handPoints) {
+                let grabPoint = convertPoint(fromView: handInput.grabPoint(for: hand, in: viewSize))
+                if let grabbed = grabCandidate(touchedBy: handPoints, grabbingAt: grabPoint) {
                     grabbed.heldBy = hand.id
                     grabbed.zPosition = Self.heldZ
                     grabbed.removeAllActions()
@@ -132,9 +150,7 @@ extension GameScene {
                 }
             }
 
-            // Release only once the hand has *stayed* open. Every frame reads
-            // as either fist or open with nothing in between, so acting on the
-            // first open frame drops ingredients the player never let go of.
+            // Release once the selected gesture has stayed inactive.
             if let held = tracker.held {
                 if state == .open {
                     let openedAt = tracker.openSince ?? now
@@ -185,7 +201,7 @@ extension GameScene {
     ) {
         guard let plateNode else { return }
 
-        // Pick it up: a fist closing anywhere on the plate takes it.
+        // Pick it up when the selected gesture reaches the plate.
         if state == .fist, plateHeldBy == nil,
            handPoints.contains(where: {
                $0.distance(to: plateNode.position) <= plateRadius + grabSlack
@@ -344,23 +360,31 @@ extension GameScene {
 
     // MARK: - Grab candidate
 
-    /// Finds the nearest ingredient bubble that any joint of the
-    /// hand is touching. Ignores things already on the plate or
-    /// held by the other hand.
-    func grabCandidate(touchedBy handPoints: [CGPoint]) -> IngredientNode? {
-        guard !handPoints.isEmpty else { return nil }
+    /// The ingredient bubble a grab takes. Ignores things already on the plate
+    /// or held by the other hand.
+    func grabCandidate(touchedBy handPoints: [CGPoint], grabbingAt grabPoint: CGPoint) -> IngredientNode? {
+        let free = tableIngredients().filter { !$0.isOnPlate && $0.heldBy == nil }
+        let bubbles = free.map { (position: $0.position, reach: $0.radius + grabSlack) }
+        return Self.grabIndex(of: bubbles, touchedBy: handPoints + [grabPoint], grabPoint: grabPoint)
+            .map { free[$0] }
+    }
 
-        var best: (node: IngredientNode, distance: CGFloat)?
-        for node in tableIngredients()
-        where !node.isOnPlate && node.heldBy == nil {
-            let reach = node.radius + grabSlack
-            guard let nearest = handPoints.map({ $0.distance(to: node.position) }).min(),
-                  nearest <= reach else { continue }
-            if best == nil || nearest < best!.distance {
-                best = (node, nearest)
+    /// Of the bubbles any of the hand's points touch, the one nearest where it
+    /// grips.
+    ///
+    /// Touching stays generous: any joint will do. Choosing doesn't: reaching
+    /// up for a bubble puts the wrist and palm over the one below it, and
+    /// ranking by the nearest joint used to hand the grab to that lower bubble.
+    static func grabIndex(
+        of bubbles: [(position: CGPoint, reach: CGFloat)],
+        touchedBy handPoints: [CGPoint],
+        grabPoint: CGPoint
+    ) -> Int? {
+        bubbles.indices
+            .filter { index in
+                handPoints.contains { $0.distance(to: bubbles[index].position) <= bubbles[index].reach }
             }
-        }
-        return best?.node
+            .min { bubbles[$0].position.distance(to: grabPoint) < bubbles[$1].position.distance(to: grabPoint) }
     }
 
     // MARK: - Play area
@@ -494,23 +518,19 @@ extension GameScene {
     /// in mid-air forever. Hands holding an item get a 0.35s grace
     /// period so brief tracking dropouts don't release mid-drag.
     func retireVanishedHands(stillLive: Set<Int>, now: TimeInterval) {
-        for (id, tracker) in trackers where !stillLive.contains(id) {
-            if tracker.held != nil, now - tracker.lastSeen <= heldHandGrace {
-                continue
-            }
-            if let held = tracker.held { releaseOntoTable(held) }
-
-            // The plate needs the same treatment ingredients already got.
-            // Without this it stays owned by a hand that no longer exists:
-            // `carryPlate` only moves it for the owning id, and picking it up
-            // requires no owner at all, so nothing on screen can touch it
-            // again. Reaching for the HUD at the top of the screen pushes the
-            // hand out of the camera's view, which is exactly how players hit
-            // this.
-            if plateHeldBy == id { releasePlateHome() }
-
-            trackers[id] = nil
+        for (id, var tracker) in trackers where !stillLive.contains(id) {
+            releaseLostGrip(for: id, tracker: &tracker, now: now)
+            if tracker.held == nil, plateHeldBy != id { trackers[id] = nil }
         }
+    }
+
+    private func releaseLostGrip(for id: Int, tracker: inout HandTracker, now: TimeInterval) {
+        guard now - tracker.lastSeen >= heldHandGrace else { return }
+        if let held = tracker.held {
+            releaseOntoTable(held)
+            tracker.held = nil
+        }
+        if plateHeldBy == id { releasePlateHome() }
     }
 
     /// Drops everything held without committing — used when the game

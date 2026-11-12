@@ -19,12 +19,16 @@ final class ScriptedHandInput: HandInputSource {
     /// Only the cursor is used for touching; a scripted hand has no skeleton.
     func jointPoints(for hand: HandData, in size: CGSize) -> [CGPoint] { [] }
 
+    /// A scripted hand grips at its cursor.
+    func grabPoint(for hand: HandData, in size: CGSize) -> CGPoint { hand.grabPoint }
+
     /// Shows one hand at `point` (view space, origin top-left), closed into a
     /// fist to grab or open to let go.
     func placeHand(at point: CGPoint, closed: Bool) {
         hands = [HandData(
             id: 0,
             cursorPosition: point,
+            grabPoint: point,
             isOpenHand: !closed,
             isClosedFist: closed,
             skeleton: []

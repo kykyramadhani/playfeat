@@ -21,6 +21,10 @@ nonisolated extension CGPoint {
             y: y + (target.y - y) * fraction
         )
     }
+
+    func midpoint(with other: CGPoint) -> CGPoint {
+        eased(toward: other, by: 0.5)
+    }
 }
 
 nonisolated extension CGFloat {

@@ -28,6 +28,7 @@ struct SettingsView: View {
 
     @AppStorage(HandInputModeSetting.isOneHandKey) private var isOneHand = false
     @AppStorage(HandInputModeSetting.preferredHandKey) private var preferredHand: HandSide = .right
+    @AppStorage(GripGesture.storageKey) private var grip = GripGesture.defaultGesture
 
     var body: some View {
         ZStack {
@@ -47,12 +48,12 @@ struct SettingsView: View {
     // MARK: - Card
 
     private var card: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: 20) {
             Text("SETTINGS")
                 .font(.atkinson(size: 48, weight: .bold))
                 .foregroundStyle(.appTertiary)
-                .padding(.top, 60)
-                .padding(.bottom, 60)
+                .padding(.top, 44)
+                .padding(.bottom, 44)
 
             settingRow(title: "Music") {
                 VolumeSlider(value: $musicVolume, onChanged:  { newValue in
@@ -115,7 +116,20 @@ struct SettingsView: View {
                     )
                 }
             }
-            
+
+            Divider()
+
+            settingRow(title: "Pickup Gesture") {
+                SegmentedPill(
+                    leftTitle: "Pinch",
+                    rightTitle: "F Pinch",
+                    isRightSelected: Binding(
+                        get: { grip == .fPinch },
+                        set: { grip = $0 ? .fPinch : .pinch }
+                    )
+                )
+            }
+
             Divider()
                 .padding(.bottom, 32)
         }

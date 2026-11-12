@@ -84,6 +84,7 @@ final class CameraManager {
             mediaType: .video,
             position: position
         )
+        
         return discovery.devices.first
             ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position)
     }
@@ -115,11 +116,10 @@ final class CameraManager {
                     device.activeVideoMinFrameDuration = thirty
                 }
             }
-
-            let widestZoom = device.minAvailableVideoZoomFactor
+            
             device.videoZoomFactor = zoomFactor(
                 multiple: zoom,
-                widest: widestZoom,
+                widest: device.minAvailableVideoZoomFactor,
                 maximum: device.maxAvailableVideoZoomFactor
             )
 
@@ -129,7 +129,7 @@ final class CameraManager {
                 [CameraManager] \(device.localizedName): \
                 \(dimensions.width)×\(dimensions.height), \
                 \(Int(device.activeFormat.videoFieldOfView))° h-FOV, \
-                zoom \(device.videoZoomFactor) (floor \(widestZoom)), \
+                zoom \(device.videoZoomFactor) (floor \(device.minAvailableVideoZoomFactor)), \
                 Center Stage active: \(device.isCenterStageActive)
                 """)
             #endif

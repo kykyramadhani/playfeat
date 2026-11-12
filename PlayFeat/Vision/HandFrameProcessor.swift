@@ -132,6 +132,7 @@ nonisolated final class HandFrameProcessor: @unchecked Sendable {
             width: CVPixelBufferGetWidth(pixelBuffer),
             height: CVPixelBufferGetHeight(pixelBuffer)
         )
+        let grip = GripGesture.stored()
 
         // One handler for whatever runs this frame: the image is decoded once.
         let runsBodyPose = bodyPoseManager.shouldRunBodyPose(tracksSinglePlayer: tracksSinglePlayer)
@@ -141,7 +142,7 @@ nonisolated final class HandFrameProcessor: @unchecked Sendable {
             try handler.perform(runsBodyPose ? [handPoseRequest, bodyPoseManager.bodyPoseRequest]
                                              : [handPoseRequest])
         } catch {
-            return Output(bufferSize: bufferSize, playerBody: playerBody, hands: handsWhenNoneSeen())
+            return output(tracking: [], grip: grip, bufferSize: bufferSize)
         }
 
         // Everyone else in the room is ignored from here on. Resolved before
@@ -159,41 +160,91 @@ nonisolated final class HandFrameProcessor: @unchecked Sendable {
         playerBody = player.map { bodies[$0] }
 
         let observations = handPoseRequest.results ?? []
-        let classifications = observations.compactMap {
-            try? HandClassifier.classify($0, jointConfidenceThreshold: jointConfidenceThreshold)
+        let classifications = observations.compactMap { observation -> HandClassifier.Classification? in
+            do {
+                return try HandClassifier.classify(observation, jointConfidenceThreshold: jointConfidenceThreshold,
+                                                   bufferSize: bufferSize, grip: grip)
+            } catch {
+                #if DEBUG
+                print("[gesture] hand dropped: classify failed (\(error))")
+                #endif
+                return nil
+            }
         }
         guard !classifications.isEmpty else {
-            return Output(bufferSize: bufferSize, playerBody: playerBody, hands: handsWhenNoneSeen())
+            return output(tracking: [], grip: grip, bufferSize: bufferSize)
         }
-
-        let mode = HandInputModeSetting.stored()
 
         // No body, no hands. A hand is only the player's if it can be tied to
         // a visible shoulder, so a torso out of frame means nothing is tracked
         // — the same rule the seat check enforces before the game even starts.
-        let keep = player.map { player in
-            HumanBodyPoseManager.playerHandIndices(
-                handWrists: classifications.map(\.wrist),
-                bodies: bodies,
-                player: player,
-                wristTolerance: wristMatchTolerance,
-                limit: min(maximumHandCount, mode.handCount),
-                mode: mode
-            )
-        } ?? []
+        guard let player else {
+            #if DEBUG
+            print("[gesture] \(classifications.count) hand(s) dropped: no player body")
+            #endif
+            return output(tracking: [], grip: grip, bufferSize: bufferSize)
+        }
 
-        let hands = identityTracker.update(with: keep.map { classifications[$0] }, at: CACurrentMediaTime())
-        return Output(bufferSize: bufferSize, playerBody: playerBody, hands: hands)
+        let keep = playerHandIndices(of: classifications, bodies: bodies, player: player)
+
+        #if DEBUG
+        if keep.count < classifications.count {
+            print("[gesture] \(classifications.count - keep.count) hand(s) dropped by the body-wrist match"
+                  + " (body pose \(runsBodyPose ? "from this frame" : "from an earlier frame"))")
+        }
+        #endif
+
+        return output(tracking: keep.map { classifications[$0] }, grip: grip, bufferSize: bufferSize)
     }
 
-    /// Vision found nothing usable this frame.
+    /// Which of this frame's hands are the player's, up to the hand limit.
     ///
-    /// Runs the *same* coasting rule as a frame that did find hands: anything
-    /// still inside the grace period keeps being published at its last known
-    /// position, and only a hand that has been missing longer than that
-    /// actually goes away. Blanking the list outright is what used to make a
-    /// single dropped frame kill the aura.
-    private func handsWhenNoneSeen() -> [HandData] {
-        identityTracker.update(with: [], at: CACurrentMediaTime())
+    /// The body check picks a hand up; carrying on from a tracked hand keeps
+    /// it. The body's wrist can be a few frames stale, so on its own it keeps
+    /// rejecting a hand that is moving fast.
+    private func playerHandIndices(
+        of classifications: [HandClassifier.Classification],
+        bodies: [HumanBodyPoseManager.BodyCandidate],
+        player: Int
+    ) -> [Int] {
+        let mode = HandInputModeSetting.stored()
+        let limit = min(maximumHandCount, mode.handCount)
+
+        let bodyMatched = HumanBodyPoseManager.playerHandIndices(
+            handWrists: classifications.map(\.wrist),
+            bodies: bodies,
+            player: player,
+            wristTolerance: wristMatchTolerance,
+            limit: limit,
+            mode: mode
+        )
+        let continuing = identityTracker
+            .continuingIndices(of: classifications.map(\.location), at: CACurrentMediaTime())
+            .filter { !bodyMatched.contains($0) }
+        let keep = Array((bodyMatched + continuing).prefix(limit))
+
+        #if DEBUG
+        let rescued = keep.count - bodyMatched.count
+        if rescued > 0 { print("[gesture] \(rescued) hand(s) failed the body-wrist match, kept as continuing") }
+        #endif
+
+        return keep
+    }
+
+    /// The frame's output from the player's hands read in it: an empty list
+    /// when Vision found nothing usable.
+    ///
+    /// Empty frames go through the tracker too, so they run the same coasting
+    /// rule: anything still inside the grace period keeps being published at
+    /// its last known position, and only a hand missing longer than that goes
+    /// away. Blanking the list outright is what used to make a single dropped
+    /// frame kill the aura.
+    private func output(
+        tracking readings: [HandClassifier.Classification],
+        grip: GripGesture,
+        bufferSize: CGSize
+    ) -> Output {
+        let hands = identityTracker.update(with: readings, grip: grip, at: CACurrentMediaTime())
+        return Output(bufferSize: bufferSize, playerBody: playerBody, hands: hands)
     }
 }

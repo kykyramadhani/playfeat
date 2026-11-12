@@ -20,7 +20,6 @@ import AVFoundation
 import CoreGraphics
 
 final class CameraSession: NSObject {
-
     // MARK: - Configuration
     //
     // `var` on purpose: tuning knobs, read once when the session is set up.
@@ -31,16 +30,17 @@ final class CameraSession: NSObject {
     /// Digital zoom, as a multiple of the *widest* zoom the hardware supports.
     /// 1.0 would be "as wide as this camera goes".
     ///
-    /// Pinned to 2.0, which is the conventional **1×** selfie framing: a front
+    /// Pinned to 1.75. which is the conventional **1×** selfie framing: a front
     /// camera is a single ultra-wide sensor, and Apple's own Camera app gets
-    /// its 1× the same way, by cropping 2× into the sensor rather than
+    /// its 1× the same way, by cropping 1.75× into the sensor rather than
     /// switching lens. The full-wide view is deliberately not offered — it
     /// distorts faces at the edges and puts the player further away than the
     /// grab targets are tuned for.
     ///
     /// The crop costs resolution, which is why `selectWidestFormat` picks the
     /// largest format available rather than the cheapest.
-    var zoomFactor: CGFloat = 2.0
+    var zoomFactor: CGFloat = 1.75
+    var macZoomFactor: CGFloat = 1.0
 
     /// How the feed is fitted to the screen. The hand → screen mapping has to
     /// undo exactly this, so both read it from here.
@@ -52,9 +52,6 @@ final class CameraSession: NSObject {
     /// Bounds on the capture format picked in `selectWidestFormat`.
     var minimumCaptureWidth: Int32 = 640
     var maximumCaptureWidth: Int32 = 1920
-
-    /// Rotation used when running on a Mac.
-    var macCameraRotationAngle: CGFloat = 90
 
     // MARK: - Session
 
@@ -133,10 +130,10 @@ final class CameraSession: NSObject {
         // Read the tuning knobs here, on the main thread, so the session queue
         // never touches them concurrently with a caller changing them.
         let position = cameraPosition
-        let zoom = zoomFactor
         let widthRange = minimumCaptureWidth...maximumCaptureWidth
         let turnOffCenterStage = disablesCenterStage
-
+        let zoom = runsOnMac ? macZoomFactor : zoomFactor
+    
         sessionQueue.async { [weak self] in
             guard let self else { return }
 
@@ -169,6 +166,7 @@ final class CameraSession: NSObject {
                 self.captureSession.commitConfiguration()
                 return
             }
+            
             self.captureSession.addInput(input)
 
             // Widen the *capture* itself, before anything gets cropped for the
@@ -213,11 +211,6 @@ final class CameraSession: NSObject {
     }
 
     private func startTrackingRotation(for device: AVCaptureDevice) {
-        guard !runsOnMac else {
-            applyRotationAngle(macCameraRotationAngle)
-            return
-        }
-
         let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: previewLayer)
         rotationCoordinator = coordinator
         applyRotation(from: coordinator)
@@ -253,6 +246,7 @@ final class CameraSession: NSObject {
         let acceptedEverywhere = [previewConnection, outputConnection]
             .compactMap { $0 }
             .allSatisfy { $0.isVideoRotationAngleSupported(angle) }
+        
         guard acceptedEverywhere else {
             #if DEBUG
             print("[CameraSession] rotation \(angle)° rejected by the capture connection; feed left as-is.")

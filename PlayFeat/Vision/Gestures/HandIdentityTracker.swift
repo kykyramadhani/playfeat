@@ -4,7 +4,7 @@
 //
 //  Turns each frame's hand readings into hands with stable IDs. Vision
 //  reports hands in no particular order, so this matches every reading to the
-//  hand it most likely continues, smooths its cursor, keeps its pinch state,
+//  hand it most likely continues, smooths its cursor, keeps its grip state,
 //  and lets a hand coast through a few dropped frames instead of vanishing.
 //
 //  Pure — readings and a timestamp in, hands out — so the whole thing can be
@@ -37,11 +37,11 @@ nonisolated struct HandIdentityTracker {
     /// How long a hand's trajectory survives after Vision stops reporting it.
     var gracePeriod: TimeInterval = 0.35
 
-    /// Grabbing is a **pinch**: thumb tip and index-finger tip brought
-    /// together. Pinched below `pinchCloseRatio`, apart above `pinchOpenRatio`;
-    /// the gap between them stops the state flickering at the boundary.
-    var pinchCloseRatio: CGFloat = 0.3
-    var pinchOpenRatio: CGFloat = 0.5
+    /// How close (in normalized units) a reading must be to where a tracked
+    /// hand was last seen to count as that hand carrying on, which keeps it
+    /// even when the body check rejects it. Much tighter than `matchRadius`,
+    /// so a bystander's hand can't take over a track from across the frame.
+    var continuationRadius: CGFloat = 0.1
 
     // MARK: - State
 
@@ -49,8 +49,13 @@ nonisolated struct HandIdentityTracker {
     private struct TrackedHand {
         let id: Int
         var smoothed: CGPoint
-        /// Evidence-based pinch state — see `PinchDetector`.
-        var pinch: PinchDetector
+        /// Raw palm centre of the last reading. Continuation is judged from
+        /// here, not from `smoothed`, which trails a fast-moving hand.
+        var location: CGPoint
+        /// Raw grab point of the last reading (see `HandData.grabPoint`).
+        var grabPoint: CGPoint
+        /// Evidence-based grip state — see `GestureDetector`.
+        var gesture = GestureDetector()
         /// Last skeleton Vision gave for this hand. Kept so a hand that is
         /// coasting through a dropped frame can still be drawn where it was,
         /// rather than blinking out.
@@ -62,8 +67,9 @@ nonisolated struct HandIdentityTracker {
             HandData(
                 id: id,
                 cursorPosition: smoothed,
-                isOpenHand: !pinch.isPinching,
-                isClosedFist: pinch.isPinching,
+                grabPoint: grabPoint,
+                isOpenHand: gesture.state == .neutral,
+                isClosedFist: gesture.state == .active,
                 skeleton: skeleton
             )
         }
@@ -71,6 +77,9 @@ nonisolated struct HandIdentityTracker {
 
     private var tracked: [TrackedHand] = []
     private var nextHandID = 0
+    /// The grip the detectors were last fed. Switching grips starts every
+    /// hand's detector afresh, so evidence for one grip can't count for another.
+    private var currentGrip = GripGesture.defaultGesture
 
     // MARK: - Update
 
@@ -83,8 +92,11 @@ nonisolated struct HandIdentityTracker {
     /// whatever each was dragging.
     mutating func update(
         with readings: [HandClassifier.Classification],
+        grip: GripGesture = .defaultGesture,
         at now: TimeInterval
     ) -> [HandData] {
+        tracked.removeAll { now - $0.lastSeen > gracePeriod }
+        restartDetectorsIfGripChanged(to: grip)
 
         let assignments = Self.matchAssignments(
             newPositions: readings.map(\.location),
@@ -102,11 +114,17 @@ nonisolated struct HandIdentityTracker {
                 hand = tracked[previous]
             } else {
                 hand = TrackedHand(id: nextHandID, smoothed: reading.location,
-                                   pinch: PinchDetector(), skeleton: reading.skeleton,
-                                   lastSeen: now)
+                                   location: reading.location, grabPoint: reading.grabPoint,
+                                   skeleton: reading.skeleton, lastSeen: now)
+                #if DEBUG
+                print("[gesture] hand \(nextHandID) is new: no tracked hand within the match radius,"
+                      + " so its detector starts from scratch")
+                #endif
                 nextHandID += 1
             }
             hand.lastSeen = now
+            hand.location = reading.location
+            hand.grabPoint = reading.grabPoint
             hand.skeleton = reading.skeleton
 
             // Smooth the cursor: Vision's per-frame jitter is easily 20–30pt on
@@ -118,11 +136,7 @@ nonisolated struct HandIdentityTracker {
 
             // Evidence-based, and per hand, so neither one bad frame nor the
             // other hand can flip this one's state.
-            hand.pinch.record(
-                ratio: reading.pinchRatio,
-                closeRatio: pinchCloseRatio,
-                openRatio: pinchOpenRatio
-            )
+            hand.gesture.record(reading, grip: grip, at: now)
 
             stillTracked.append(hand)
         }
@@ -136,18 +150,51 @@ nonisolated struct HandIdentityTracker {
         // a frame to motion blur or a turned palm, and every one of those was
         // being handed downstream as "the hand is gone".
         let matched = Set(assignments.compactMap { $0 })
-        for (index, previous) in tracked.enumerated()
-        where !matched.contains(index) && now - previous.lastSeen <= gracePeriod {
+        for (index, previous) in tracked.enumerated() where !matched.contains(index) {
             var coasting = previous
-            // A frame with no reading is no evidence either way, so the
-            // half-built case for a state change is discarded rather than
-            // resumed against a newer, contradicting run of frames.
-            coasting.pinch.clearEvidence()
+            #if DEBUG
+            print("[gesture] hand \(previous.id) coasting: no reading this frame, keeping its grip state")
+            #endif
+            // A frame with no reading is no evidence either way: the grip
+            // holds, and only a half-built case for a change is discarded.
+            coasting.gesture.coast(at: now)
             stillTracked.append(coasting)
         }
 
         tracked = stillTracked
         return stillTracked.map(\.published)
+    }
+
+    private mutating func restartDetectorsIfGripChanged(to grip: GripGesture) {
+        guard grip != currentGrip else { return }
+        for index in tracked.indices { tracked[index].gesture = GestureDetector() }
+        currentGrip = grip
+    }
+
+    // MARK: - Continuation
+
+    /// Indices of the `locations` that carry on a hand already being tracked,
+    /// nearest first.
+    ///
+    /// The body check only gets a fresh body pose every few frames, so a
+    /// fast-moving hand regularly outruns the player's stored wrist and is
+    /// rejected, then coasts and freezes mid-gesture. Keeping any reading that
+    /// picks up right where a tracked hand left off means the body check is
+    /// only needed to pick a hand up, not to keep it.
+    func continuingIndices(of locations: [CGPoint], at now: TimeInterval) -> [Int] {
+        let current = tracked.filter { now - $0.lastSeen <= gracePeriod }
+        return Self.continuationIndices(of: locations, lastLocations: current.map(\.location),
+                                        radius: continuationRadius)
+    }
+
+    /// Pure core of `continuingIndices`, so it can be tested on its own.
+    static func continuationIndices(of locations: [CGPoint], lastLocations: [CGPoint], radius: CGFloat) -> [Int] {
+        let nearby: [(index: Int, distance: CGFloat)] = locations.indices.compactMap { index in
+            guard let nearest = lastLocations.map({ $0.distance(to: locations[index]) }).min(),
+                  nearest <= radius else { return nil }
+            return (index, nearest)
+        }
+        return nearby.sorted { $0.distance < $1.distance }.map(\.index)
     }
 
     // MARK: - Matching

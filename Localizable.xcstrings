@@ -115,6 +115,16 @@
         }
       }
     },
+    "F Pinch" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cubit F"
+          }
+        }
+      }
+    },
     "Get into position! Raise your hand and make sure it fit inside the frame." : {
       "localizations" : {
         "id" : {
@@ -357,6 +367,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dimiliki: %lld"
+          }
+        }
+      }
+    },
+    "Pickup Gesture" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestur Mengambil"
+          }
+        }
+      }
+    },
+    "Pinch" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cubit"
           }
         }
       }
