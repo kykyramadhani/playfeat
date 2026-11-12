@@ -20,6 +20,8 @@ struct ContentView: View {
     
     @State private var sceneManager = SceneManager()
     @State private var showSplashScreen = true
+    /// The loading/START title screen, shown once per launch after the splash.
+    @State private var showLaunchScreen = true
 
     /// False until the player has been through onboarding once. Backed by
     /// UserDefaults, so it survives launches but resets on a fresh install —
@@ -51,6 +53,17 @@ struct ContentView: View {
                 .zIndex(50)
             }
 
+            // Above onboarding, so START comes before the first-launch pages.
+            if showLaunchScreen {
+                LaunchView {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        showLaunchScreen = false
+                    }
+                }
+                .transition(.opacity)
+                .zIndex(75)
+            }
+
             if showSplashScreen {
                 SplashScreenView()
                     .transition(.opacity.combined(with: .scale(scale: 1.02)))
@@ -77,6 +90,7 @@ struct ContentView: View {
             DebugLaunch.applyLandscapeIfRequested()
             if DebugLaunch.skipToGameplay {
                 hasCompletedOnboarding = true
+                showLaunchScreen = false
                 sceneManager.finishTutorial()
                 sceneManager.play()
             }
@@ -103,6 +117,12 @@ struct ContentView: View {
         case .mainMenu:
             GameOpening(sceneManager: sceneManager)
                 .transition(.opacity)
+        case .planetSelect:
+            PlanetSelectView(sceneManager: sceneManager)
+                .transition(.opacity)
+        case .marathon:
+            MarathonView(sceneManager: sceneManager)
+                .transition(.opacity)
         case .shop:
             ShopView(sceneManager: sceneManager)
                 .transition(.opacity)
@@ -114,6 +134,9 @@ struct ContentView: View {
                 audio: audio
             )
             .transition(.opacity)
+        case .kitchen(let level):
+            KitchenView(sceneManager: sceneManager, level: level)
+                .transition(.opacity)
         case .postGame(let result):
             PostGameView(result: result, sceneManager: sceneManager)
                 .transition(.opacity)

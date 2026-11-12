@@ -22,6 +22,18 @@ final class SceneManager {
         isInTutorial = false
     }
 
+    func goToPlanetSelect() {
+        screen = .planetSelect
+    }
+
+    func goToMarathon() {
+        screen = .marathon
+    }
+
+    func goToKitchen(_ level: LevelData) {
+        screen = .kitchen(level)
+    }
+
     func play() {
         screen = .gameplay
     }

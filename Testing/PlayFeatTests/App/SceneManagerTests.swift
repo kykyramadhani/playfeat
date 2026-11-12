@@ -47,6 +47,39 @@ struct SceneManagerTests {
         #expect(manager.screen == .gameplay)
     }
 
+    /// Tap to Play opens the planet board first; a level there starts the run.
+    @Test func thePlanetBoardSitsBetweenTheMenuAndARun() {
+        let manager = SceneManager()
+
+        manager.goToPlanetSelect()
+        #expect(manager.screen == .planetSelect)
+
+        manager.play()
+        #expect(manager.screen == .gameplay)
+    }
+
+    /// The unlocked trophy opens the marathon; STORY MODE goes back to the board.
+    @Test func theMarathonOpensFromThePlanetBoardAndLeadsBackToIt() {
+        let manager = SceneManager()
+        manager.goToPlanetSelect()
+
+        manager.goToMarathon()
+        #expect(manager.screen == .marathon)
+
+        manager.goToPlanetSelect()
+        #expect(manager.screen == .planetSelect)
+    }
+
+    /// A planet level opens its kitchen, carrying the level it plays.
+    @Test func aLevelOpensItsKitchen() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+
+        manager.goToKitchen(level)
+
+        #expect(manager.screen == .kitchen(level))
+    }
+
     @Test func theShopIsReachableAndItsBackButtonReturnsToTheMenu() {
         let manager = SceneManager()
 

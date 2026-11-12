@@ -100,6 +100,14 @@ struct LocalizationTests {
             "Speed Bonus", "Dishes Served", "Play Again", "Shop", "Main Menu",
             // Main menu
             "Most Dishes Served",
+            // Launch screen and planet board
+            "Start", "Marathon Mode", "Energy", "Coins", "Fuel", "Settings", "Help",
+            "Recipe Book", "Galaxy Map",
+            // Level popup and marathon screen
+            "Play", "Close", "Story Mode", "Highest Score", "Leaderboard",
+            "It’s a little empty here...", "You",
+            // Planet kitchen
+            "Time Left", "Tips",
         ]
 
         defer { AppLocalization.apply(.english) }

@@ -50,6 +50,22 @@ struct ArtAssetTests {
         #expect(UIImage(named: "ServedDish") != nil)
     }
 
+    /// The planet kitchen draws every pantry ingredient and every dish a
+    /// level can order by name; a missing one is an empty bubble or sheet.
+    @Test func everyKitchenIngredientAndDishHasArt() {
+        for ingredient in Planet.kepler186f.pantry {
+            let name = KitchenArt.ingredientImage(ingredient)
+            #expect(UIImage(named: name) != nil, "missing kitchen art '\(name)'")
+        }
+        for dish in ["pepperFlatbread", "mushroomFlatbread", "sunsetSorbet"] {
+            let layers = KitchenArt.dishLayers(dish)
+            #expect(!layers.isEmpty, "no art listed for dish '\(dish)'")
+            for name in layers {
+                #expect(UIImage(named: name) != nil, "missing dish art '\(name)'")
+            }
+        }
+    }
+
     /// The source art sits on 1920×1080 canvases with the subject filling as
     /// little as 28% of the width. If trimming regresses, every bubble silently
     /// renders a fraction of its intended size.
