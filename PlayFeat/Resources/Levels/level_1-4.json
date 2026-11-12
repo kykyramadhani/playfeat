@@ -22,6 +22,10 @@
   ],
   "bubbles": [
     { "at": 0, "ingredient": "duskFlatbread", "lane": 2 },
-    { "at": 2, "ingredient": "emberPepper",   "lane": 3 }
+    { "at": 2, "ingredient": "emberPepper",   "lane": 3 },
+    { "at": 4, "ingredient": "slime",         "lane": 1 },
+    { "at": 6, "ingredient": "tentacle",      "lane": 4 },
+    { "at": 8, "ingredient": "slime",         "lane": 2 },
+    { "at": 10, "ingredient": "tentacle",     "lane": 3 }
   ]
 }

@@ -14,9 +14,14 @@ import Foundation
 
 nonisolated struct GestureDetector {
     enum State: Equatable {
-        /// The grip isn't being made.
+        /// The grip isn't being made. A hand that can't be read while it holds
+        /// nothing is neutral too: it can't grab, and for letting go there is
+        /// nothing to wait for.
         case neutral
-        /// This frame can't say either way (a fingertip or finger wasn't seen).
+        /// The hand was gripping, and this frame can't say whether it still
+        /// is (a fingertip or finger wasn't seen). Whatever it holds stays
+        /// held until the hand reads clearly again or `uncertainGripTimeout`
+        /// passes, after which the grip is let go and this turns `neutral`.
         case uncertain
         /// The grip is being made.
         case active
@@ -60,7 +65,7 @@ nonisolated struct GestureDetector {
 
     // MARK: - State
 
-    private(set) var state = State.uncertain
+    private(set) var state = State.neutral
     private var isActive = false
     private var lastFrame: TimeInterval?
     private var uncertainSince: TimeInterval?
@@ -110,6 +115,12 @@ nonisolated struct GestureDetector {
             return Vote(makesGrip: ratio <= pinchCloseRatio, releasesGrip: ratio >= pinchOpenRatio)
 
         case .fPinch:
+            // Fingertips this far apart have let go, whatever the other
+            // fingers are doing. A hand lowered or turned to drop something
+            // often can't have its finger shapes measured, and must still be
+            // able to let go.
+            if ratio >= fPinchOpenRatio { return Vote(makesGrip: false, releasesGrip: true) }
+
             guard let geometry = reading.geometry else { throw .fingerShapesNotMeasured }
             guard let index = geometry.index else { throw .indexFingerMissing }
             guard geometry.fingers.count == 4 else { throw .supportingFingerMissing }
@@ -117,7 +128,7 @@ nonisolated struct GestureDetector {
             let raised = geometry.supportingMostlyExtendedCount
             return Vote(
                 makesGrip: ratio <= fPinchCloseRatio && !index.isExtended && raised == 3,
-                releasesGrip: ratio >= fPinchOpenRatio || raised <= 1
+                releasesGrip: raised <= 1
             )
         }
     }
@@ -147,7 +158,7 @@ nonisolated struct GestureDetector {
     }
 
     private mutating func dropGripIfUncertainTooLong(at now: TimeInterval) {
-        guard let uncertainSince, now - uncertainSince >= Self.uncertainGripTimeout else { return }
+        guard isActive, let uncertainSince, now - uncertainSince >= Self.uncertainGripTimeout else { return }
         #if DEBUG
         print("[gesture] grip dropped: uncertain for \(Int((now - uncertainSince) * 1000)) ms")
         #endif
@@ -158,8 +169,8 @@ nonisolated struct GestureDetector {
         #if DEBUG
         print("[gesture] uncertain: \(reason)")
         #endif
-        state = .uncertain
+        state = isActive ? .uncertain : .neutral
         evidence = 0
-        if uncertainSince == nil { uncertainSince = now }
+        if isActive, uncertainSince == nil { uncertainSince = now }
     }
 }

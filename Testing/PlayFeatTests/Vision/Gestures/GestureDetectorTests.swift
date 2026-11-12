@@ -29,7 +29,7 @@ struct GestureDetectorTests {
     /// Between the two thresholds the frame neither makes nor lets go of the
     /// grip, so a hand at the boundary keeps its state.
     @Test func aGapBetweenTheThresholdsVotesNeitherWay() throws {
-        let vote = try GestureDetector.vote(for: reading(pinch: 0.4), grip: .pinch)
+        let vote = try GestureDetector.vote(for: reading(pinch: 0.35), grip: .pinch)
 
         #expect(vote == GestureDetector.Vote(makesGrip: false, releasesGrip: false))
     }
@@ -40,6 +40,14 @@ struct GestureDetectorTests {
         }
     }
 
+    /// Lowering or turning the hand to drop something often hides the finger
+    /// shapes; fingertips wide apart must still let go.
+    @Test func fPinchLetsGoWithoutFingerShapesOnceTheTipsPart() throws {
+        let vote = try GestureDetector.vote(for: reading(pinch: 0.6), grip: .fPinch)
+
+        #expect(vote.releasesGrip)
+    }
+
     @Test func fPinchCannotVoteWithoutFingerShapes() {
         #expect(throws: GestureDetector.Uncertainty.fingerShapesNotMeasured) {
             try GestureDetector.vote(for: reading(pinch: 0.1), grip: .fPinch)
@@ -48,24 +56,32 @@ struct GestureDetectorTests {
 
     // MARK: - Recording
 
-    @Test func aFrameThatCannotVoteReadsAsUncertain() {
+    /// An unreadable hand holding nothing can't grab, so it reads as open.
+    @Test func anUnreadableHandThatIsNotGrippingReadsAsNeutral() {
         var detector = GestureDetector()
 
         detector.record(reading(pinch: nil), grip: .pinch, at: 0)
 
+        #expect(detector.state == .neutral)
+    }
+
+    @Test func anUnreadableGripReadsAsUncertain() {
+        var detector = activePinch()
+
+        detector.record(reading(pinch: nil), grip: .pinch, at: 0.1)
+
         #expect(detector.state == .uncertain)
     }
 
-    /// A pinch whose fingertips stay unreadable lets go, rather than holding
-    /// an ingredient forever on a hand that may have opened.
-    @Test func aGripLetsGoAfterStayingUncertain() {
+    /// A pinch whose fingertips stay unreadable lets go, even if the hand is
+    /// never read clearly again: otherwise the scene would hold the ingredient
+    /// forever and it could never be put down.
+    @Test func aGripThatStaysUnreadableLetsGo() {
         var detector = activePinch()
         let lastPinch = 0.066
-        for frame in 1...10 {
+        for frame in 1...12 {
             detector.record(reading(pinch: nil), grip: .pinch, at: lastPinch + Double(frame) / 30)
         }
-
-        detector.record(reading(pinch: 0.4), grip: .pinch, at: lastPinch + 11.0 / 30)
 
         #expect(detector.state == .neutral)
     }
@@ -74,7 +90,7 @@ struct GestureDetectorTests {
         var detector = activePinch()
         detector.record(reading(pinch: nil), grip: .pinch, at: 0.1)
 
-        detector.record(reading(pinch: 0.4), grip: .pinch, at: 0.133)
+        detector.record(reading(pinch: 0.35), grip: .pinch, at: 0.133)
 
         #expect(detector.state == .active)
     }

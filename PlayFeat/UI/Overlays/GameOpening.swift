@@ -4,7 +4,7 @@
 //
 //  The app's start screen — shown straight after the splash. The old
 //  MainMenuView carousel is retired: there is a single game now, so this
-//  screen *is* the menu. "Tap to Play" drops straight into the run.
+//  screen *is* the menu. "Tap to Play" opens the planet board.
 //
 //  Everything is laid out with a GeometryReader and `.position`, as fractions
 //  of the screen, so the same arrangement holds from iPhone to iPad Pro.
@@ -127,7 +127,7 @@ struct GameOpening: View {
     }
 
     /// The orange tray with its plate, captioned "Tap to Play". The whole tray
-    /// is the tap target — reaching it starts the run.
+    /// is the tap target — reaching it opens the planet board.
     private func playTray(w: CGFloat) -> some View {
         Image("TrayPlate")
             .resizable()
@@ -150,7 +150,7 @@ struct GameOpening: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 audio.play(.uiClick)
-                sceneManager.play()
+                sceneManager.goToPlanetSelect()
             }
     }
 

@@ -221,6 +221,8 @@ struct DesignCanvasDebugBadge: View {
 ///                                 8s, to exercise a mid-game rotation
 ///     -debugGameplay YES          skip onboarding, tutorial and seat check
 ///                                 and open straight onto the board
+///     -debugSkipSeatCheck YES     open a planet kitchen without the seat
+///                                 check (the Simulator has no camera)
 ///     -debugLandscape YES         turn a phone to landscape at launch, for
 ///                                 checking the real Dynamic Island insets
 ///                                 (which -debugScreenSize can't fake)
@@ -240,6 +242,10 @@ enum DebugLaunch {
 
     static var skipToGameplay: Bool {
         UserDefaults.standard.bool(forKey: "debugGameplay")
+    }
+
+    static var skipSeatCheck: Bool {
+        UserDefaults.standard.bool(forKey: "debugSkipSeatCheck")
     }
 
     static func applyLandscapeIfRequested() {
