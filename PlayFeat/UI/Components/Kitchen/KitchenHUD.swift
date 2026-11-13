@@ -12,11 +12,10 @@ struct KitchenHUD: View {
     let day: KitchenDay
 
     var body: some View {
-        // TODO: coins and tips stay at 0 until serving a customer pays them.
         HStack(spacing: 22) {
             HUDCounter(icon: "StopwatchIcon", label: "Time Left", value: Self.clockText(day.timeLeft))
-            HUDCounter(icon: "CoinsIcon", label: "Coins", value: "0")
-            HUDCounter(icon: "TipsIcon", label: "Tips", value: "0")
+            HUDCounter(icon: "CoinsIcon", label: "Coins", value: "\(day.coins)")
+            HUDCounter(icon: "TipsIcon", label: "Tips", value: "\(day.tips)")
         }
         .padding(.leading, 29)
         .padding(.top, 31)

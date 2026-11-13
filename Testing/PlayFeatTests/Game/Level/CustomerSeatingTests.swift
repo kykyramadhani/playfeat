@@ -14,29 +14,48 @@ struct CustomerSeatingTests {
     }
 
     @Test func customersTakeFreeSeatsAsTheyArrive() {
-        let seated = CustomerSeating.seat([customer(at: 0), customer(at: 5)], seatCount: 2)
+        var seating = CustomerSeating(customers: [customer(at: 0), customer(at: 5)], seatCount: 2)
 
-        #expect(seated.map(\.seat) == [0, 1])
-        #expect(seated.map(\.seatedAt) == [0, 5])
+        _ = seating.advance(to: 6)
+
+        #expect(seating.present.map(\.seat) == [0, 1])
+        #expect(seating.present.map(\.seatedAt) == [0, 5])
     }
 
     @Test func aCustomerWhoFindsEverySeatTakenWaitsForTheNextToFree() {
-        let seated = CustomerSeating.seat(
-            [customer(at: 0, patience: 30), customer(at: 5, patience: 20), customer(at: 10)],
+        var seating = CustomerSeating(
+            customers: [customer(at: 0, patience: 30), customer(at: 5, patience: 20), customer(at: 10)],
             seatCount: 2
         )
 
-        // Seat 1 frees at 25, before seat 0 frees at 30.
-        #expect(seated[2].seat == 1)
-        #expect(seated[2].seatedAt == 25)
+        let gaveUp = seating.advance(to: 26)
+
+        // Seat 1 frees at 25, when its customer gives up, before seat 0 at 30.
+        #expect(gaveUp.map(\.seat) == [1])
+        #expect(seating.seats[1]?.seatedAt == 25)
+    }
+
+    /// Serving frees the seat at once, so whoever is waiting sits down then
+    /// rather than when the served customer would have run out of patience.
+    @Test func servingACustomerLetsTheNextOneSitDown() {
+        var seating = CustomerSeating(customers: [customer(at: 0), customer(at: 2)], seatCount: 1)
+        _ = seating.advance(to: 5)
+
+        let served = seating.serve(seat: 0, at: 5)
+        _ = seating.advance(to: 5.1)
+
+        #expect(served?.seatedAt == 0)
+        #expect(seating.seats[0]?.seatedAt == 5)
     }
 
     @Test func patienceRunsFromFullWhenSeatedToEmptyWhenTheyLeave() {
-        let seated = CustomerSeating.seat([customer(at: 10, patience: 20)], seatCount: 1)[0]
+        var seating = CustomerSeating(customers: [customer(at: 10, patience: 20)], seatCount: 1)
+        _ = seating.advance(to: 10)
+        let seated = seating.seats[0]
 
-        #expect(seated.patienceLeft(at: 10) == 1)
-        #expect(seated.patienceLeft(at: 20) == 0.5)
-        #expect(seated.isPresent(at: 29.9))
-        #expect(!seated.isPresent(at: 30))
+        #expect(seated?.patienceLeft(at: 10) == 1)
+        #expect(seated?.patienceLeft(at: 20) == 0.5)
+        #expect(seating.advance(to: 30).count == 1)
+        #expect(seating.present.isEmpty)
     }
 }

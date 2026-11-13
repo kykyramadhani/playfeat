@@ -42,6 +42,47 @@ struct KitchenDayTests {
         #expect(abs(day.elapsed - 0.3) < 0.0001)
     }
 
+    // MARK: - Serving
+
+    /// Plays the day up to `seconds` in small steps, as the scene would.
+    private func run(_ day: KitchenDay, for seconds: Double) {
+        day.start()
+        var time = 0.0
+        while time <= seconds {
+            day.tick(at: time)
+            time += 0.2
+        }
+    }
+
+    @Test func theFirstCustomerIsWaitingBeforeTheDayStarts() {
+        let day = makeDay()
+
+        #expect(day.presentCustomers.map(\.dish) == ["pepperFlatbread"])
+    }
+
+    @Test func servingTheOrderedDishPaysAndTheCustomerLeaves() {
+        let day = makeDay()
+        run(day, for: 9)
+
+        let served = day.serve("pepperFlatbread", at: 0)
+
+        #expect(served)
+        #expect(day.coins == KitchenDay.coinsPerDish)
+        // 45 s of patience, ~9 used: ~36 s left buys 11–12 tip points at one per 3 s.
+        #expect((11...12).contains(day.tips))
+        #expect(day.presentCustomers.isEmpty)
+    }
+
+    @Test func aDishTheCustomerDidntOrderIsTurnedAway() {
+        let day = makeDay()
+        run(day, for: 1)
+
+        #expect(!day.serve("mushroomFlatbread", at: 0))
+        #expect(!day.serve("pepperFlatbread", at: 1))
+        #expect(day.coins == 0)
+        #expect(day.presentCustomers.count == 1)
+    }
+
     @Test func theDayIsOverWhenItsDurationRunsOut() {
         let day = makeDay()
         day.start()

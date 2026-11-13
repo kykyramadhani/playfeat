@@ -85,6 +85,11 @@ nonisolated extension KitchenLayout {
         let alienImage: String
         let alien: CGRect
         let orderSheet: CGRect
+
+        /// Where a dish is handed over: one invisible box around the alien
+        /// and its order sheet, so the player only has to get the dish near
+        /// the customer, not onto the drawing itself.
+        var serveArea: CGRect { alien.union(orderSheet) }
     }
 }
 

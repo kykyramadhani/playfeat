@@ -4,7 +4,8 @@
 //  Created by kyky on 12/11/26.
 //
 //  The transparent SpriteKit layer of a planet kitchen: ingredient bubbles
-//  drifting through the window, and the player's hands carrying them. A
+//  drifting through the window, and the player's hands carrying them. A dish
+//  let go in a customer's serve area goes to them if they ordered it, a
 //  bubble let go over the trash hole is thrown away, over a station that
 //  takes it (grill, plate, glass) it is put down there, over a storage box it
 //  is parked, and anywhere else it falls out of the kitchen.
@@ -12,7 +13,7 @@
 //  The art underneath is SwiftUI (KitchenBackdrop); both place things with
 //  KitchenLayout, so the boxes and the hole are where they are drawn.
 //  Hand handling lives in KitchenScene/Hands.swift, the stations in
-//  KitchenScene/Stations.swift.
+//  KitchenScene/Stations.swift, handing dishes over in KitchenScene/ServeAreas.swift.
 //
 
 import SpriteKit
@@ -154,7 +155,9 @@ final class KitchenScene: SKScene {
         node.heldBy = nil
         node.zPosition = 2
 
-        if layout.sceneRect(KitchenLayout.trashHole).contains(node.position) {
+        if serve(node) {
+            return
+        } else if layout.sceneRect(KitchenLayout.trashHole).contains(node.position) {
             audio?.play(.reset)
             remove(node)
         } else if let station = station(taking: node) {
