@@ -52,6 +52,11 @@ struct ContentView: View {
                 .transition(.opacity)
                 .zIndex(50)
             }
+            
+            #if DEBUG
+            HandSkeletonView(handPoseManager: handPoseManager)
+            BodySkeletonView(handPoseManager: handPoseManager)
+            #endif
 
             // Above onboarding, so START comes before the first-launch pages.
             if showLaunchScreen {
