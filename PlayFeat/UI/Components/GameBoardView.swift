@@ -3,7 +3,7 @@
 //  PlayFeat
 //
 //  Hosts the transparent SpriteKit scene over the camera feed: the board
-//  during play, and the hand glow at all times. Keeps the scene sized to the
+//  during play, and the hand cursors at all times. Keeps the scene sized to the
 //  screen; the screen that owns the scene connects it to the game.
 //
 
@@ -13,7 +13,7 @@ import SwiftUI
 struct GameBoardView: View {
     let scene: GameScene
 
-    /// Plate and reset button on screen. Until then only the hand glow is drawn.
+    /// Plate and reset button on screen. Until then only the hand cursors are drawn.
     let showsBoard: Bool
 
     /// False out of the foreground: stops SpriteKit's Metal render loop, where

@@ -3,7 +3,7 @@
 //  PlayFeat
 //  Created by kyky on 12/11/26.
 //
-//  The kitchen's hand handling: the glow follows every hand, a fist grabs
+//  The kitchen's hand handling: a cartoon hand follows every hand, a fist grabs
 //  the nearest bubble (or parked item) it touches, and a hand that stays open
 //  lets go. Same feel as the classic board — same easing, release debounce
 //  and dropout grace — so a player moving between modes notices no change.
@@ -28,9 +28,9 @@ extension KitchenScene {
 
         for hand in handInput.hands {
             let cursor = convertPoint(fromView: handInput.cursor(for: hand, in: viewSize))
-            updateGlow(for: hand.id, at: cursor, isFist: hand.isClosedFist)
+            updateHandCursor(for: hand.id, at: cursor, isFist: hand.isClosedFist)
         }
-        retireVanishedGlows(stillLive: liveIDs)
+        retireVanishedHandCursors(stillLive: liveIDs)
 
         guard let day, day.isRunning, !day.isOver else {
             dropEverythingHeld()
@@ -46,7 +46,8 @@ extension KitchenScene {
             var tracked = hands[hand.id] ?? KitchenHand()
             tracked.lastSeen = now
             grabIfClosing(&tracked, handID: hand.id, state: state, joints: joints)
-            carry(tracked, toward: cursor, frameDelta: frameDelta)
+            let pinch = handCursors[hand.id]?.heldItemPosition ?? cursor
+            carry(tracked, toward: pinch, frameDelta: frameDelta)
             releaseIfOpen(&tracked, state: state, now: now)
             tracked.previousState = state
             hands[hand.id] = tracked
@@ -66,9 +67,10 @@ extension KitchenScene {
         audio?.play(.bubbleGrab)
     }
 
-    private func carry(_ hand: KitchenHand, toward cursor: CGPoint, frameDelta: TimeInterval) {
+    /// Held food sits in the drawn hand's pinch, not on the palm.
+    private func carry(_ hand: KitchenHand, toward pinch: CGPoint, frameDelta: TimeInterval) {
         guard let node = hand.held else { return }
-        let target = GameScene.clamped(cursor, radius: node.radius, in: size)
+        let target = GameScene.clamped(pinch, radius: node.radius, in: size)
         node.position = node.position.eased(
             toward: target,
             by: GameScene.easing(base: dragSmoothing, delta: frameDelta)
@@ -124,26 +126,26 @@ extension KitchenScene {
         hands.removeAll()
     }
 
-    // MARK: - Glow
+    // MARK: - Hand cursors
 
-    private func updateGlow(for id: Int, at position: CGPoint, isFist: Bool) {
-        let glow = glows[id] ?? {
-            let node = HandGlowNode(radius: bubbleRadius)
-            node.zPosition = Self.glowZ
+    private func updateHandCursor(for id: Int, at position: CGPoint, isFist: Bool) {
+        let cursor = handCursors[id] ?? {
+            let side = HandCursorNode.side(at: position, in: frame)
+            let node = HandCursorNode(side: side, bubbleRadius: bubbleRadius)
+            node.zPosition = Self.handZ
             addChild(node)
-            node.attachTrail(to: self)
-            glows[id] = node
+            handCursors[id] = node
             return node
         }()
-        glow.setVisible(true)
-        glow.position = position
-        glow.setGrabbing(isFist)
+        cursor.setVisible(true)
+        cursor.position = position
+        cursor.setGrabbing(isFist)
     }
 
-    private func retireVanishedGlows(stillLive: Set<Int>) {
-        for (id, glow) in glows where !stillLive.contains(id) {
-            glow.fadeOutAndRemove()
-            glows[id] = nil
+    private func retireVanishedHandCursors(stillLive: Set<Int>) {
+        for (id, cursor) in handCursors where !stillLive.contains(id) {
+            cursor.fadeOutAndRemove()
+            handCursors[id] = nil
         }
     }
 }

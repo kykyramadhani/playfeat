@@ -28,11 +28,11 @@ final class KitchenScene: SKScene {
     // MARK: - Tuning
 
     /// Bubble radius in art points (the Figma "S" bubble is 160 across).
-    static let bubbleArtRadius: CGFloat = 80
-    static let heldZ: CGFloat = 100
-    static let glowZ: CGFloat = 60
+    static let bubbleArtRadius: CGFloat = 70
+    static let heldZ: CGFloat = 0
+    static let handZ: CGFloat = 60
     /// Parked food is drawn smaller, to sit inside its box.
-    static let parkedScale: CGFloat = 0.7
+    static let parkedScale: CGFloat = 0.8
 
     let grabSlack: CGFloat = 30
     let dragSmoothing: CGFloat = 0.5
@@ -47,7 +47,7 @@ final class KitchenScene: SKScene {
     var plate = AssemblyStation.plate
     var glass = AssemblyStation.glass
     var hands: [Int: KitchenHand] = [:]
-    var glows: [Int: HandGlowNode] = [:]
+    var handCursors: [Int: HandCursorNode] = [:]
     var lastUpdateTime: TimeInterval = 0
 
     private var pantry: Set<String> = []

@@ -11,7 +11,7 @@ it whenever a decision below is made or changed.
 - **Either player can do anything:** grab any ingredient, drop it on the plate,
   reset the plate, or carry the finished dish to the bell.
 - Both screens show the same board. Each player sees their own hands as today and
-  their partner's hands as "ghost" glows in a second colour.
+  their partner's hands as see-through "ghosts" in a second colour.
 
 ### What does *not* change
 
@@ -132,7 +132,7 @@ The scene keys everything by a bare hand ID today:
 - `IngredientNode.heldBy: Int?`
 - `GameScene.plateHeldBy: Int?`
 - `trackers: [Int: HandTracker]`
-- `cursorNodes: [Int: HandGlowNode]`
+- `cursorNodes: [Int: HandCursorNode]`
 
 Remote hand IDs would collide with local ones, so these become
 `HandOwner(player: MatchRole, handID: Int)`.
@@ -172,7 +172,7 @@ so they stay in step with the host without sending every tick.
 3. A "Waiting for your partner…" overlay shows until both have sent `ready`.
 4. The host sends `startRun(at:)`. Both play the 3-2-1-GO countdown against that
    shared time.
-5. **Play.** The partner's hands appear as ghost glows: `HandGlowNode` gets a
+5. **Play.** The partner's hands appear as ghost hands: `HandCursorNode` gets a
    per-player tint from the asset catalog.
 6. **Game over** on both devices → `PostGameView` shows the team result.
 
@@ -223,7 +223,7 @@ Use one branch per step, as in CLAUDE.md, and run ⌘U before and after each one
    the "Play Together" button, the ready/start handshake, and new strings in
    `Localizable.xcstrings` with Indonesian translations (plus the
    `LocalizationTests` key list).
-5. `feature/coop-hands`: partner ghost glows, host-arbitrated grabs and plate
+5. `feature/coop-hands`: partner ghost hands, host-arbitrated grabs and plate
    carrying.
 6. `feature/coop-polish`: disconnect handling, shared pause, team results, and the
    leaderboard decision.

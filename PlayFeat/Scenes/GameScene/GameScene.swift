@@ -67,12 +67,11 @@ final class GameScene: SKScene {
 
     // MARK: - Draw order
     //
-    // The hand glow blends *additively*, so anything drawn underneath it gets
-    // brightened. Whatever the player is holding therefore has to sit above
-    // it, or picking an ingredient up lights the ingredient up too.
+    // Whatever the player is holding sits above the hand cursor, or the
+    // cartoon hand would cover the ingredient it carries.
 
-    /// The hand aura: above the board, below anything in hand.
-    static let glowZ: CGFloat = 60
+    /// The hand cursor: above the board, below anything in hand.
+    static let handZ: CGFloat = 60
 
     /// An ingredient or plate currently in a hand.
     static let heldZ: CGFloat = 100
@@ -122,7 +121,7 @@ final class GameScene: SKScene {
     /// Whether the playfield furniture belongs on screen.
     ///
     /// False during the seat check. The scene is mounted for that whole phase
-    /// so the hand glow can follow the player's hands from the moment they are
+    /// so the hand cursor can follow the player's hands from the moment they are
     /// detected, but the plate and bin must not sit behind the calibration
     /// frame while they are still finding their seat.
     var showsBoard: Bool = false {
@@ -149,7 +148,7 @@ final class GameScene: SKScene {
 
     // MARK: - Hand tracking state
     var trackers: [Int: HandTracker] = [:]
-    var cursorNodes: [Int: HandGlowNode] = [:]
+    var cursorNodes: [Int: HandCursorNode] = [:]
     var resetHoverDetector = HoverDetector()
 
     // MARK: - State-machine bookkeeping

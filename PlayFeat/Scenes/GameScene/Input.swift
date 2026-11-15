@@ -32,14 +32,14 @@ extension GameScene {
         let hands = handInput.hands
         let liveIDs = Set(hands.map(\.id))
 
-        // The glow is drawn *before* any game-state gate, so a hand lights up
+        // The cursor is drawn *before* any game-state gate, so a hand shows up
         // the moment it is detected — through the seat check and the countdown
         // as well as during play. Only the interaction below is gated.
         for hand in hands {
             let cursor = convertPoint(fromView: handInput.cursor(for: hand, in: viewSize))
             updateCursorNode(for: hand.id, at: cursor, isFist: hand.isClosedFist)
         }
-        retireVanishedGlows(stillLive: liveIDs)
+        retireVanishedCursors(stillLive: liveIDs)
 
         // Hands drive gameplay in two phases: cooking, where they move
         // ingredients, and serving, where they carry the whole plate to the
@@ -128,13 +128,15 @@ extension GameScene {
             // below rides that frame out.
             //
             // Eased rather than assigned, so the bubble glides between the
-            // tracker's 30Hz updates instead of stepping to each one.
+            // tracker's 30Hz updates instead of stepping to each one. It
+            // sits in the drawn hand's pinch, not on the palm.
             if let held = tracker.held {
+                let pinch = cursorNodes[hand.id]?.heldItemPosition ?? cursor
                 // Kept on screen, and kept off the reset button: carrying an
                 // ingredient over the control the player is about to need
                 // hides it, and used to delete the ingredient outright.
                 let target = Self.pushedOut(
-                    Self.clamped(cursor, radius: held.radius, in: size),
+                    Self.clamped(pinch, radius: held.radius, in: size),
                     awayFrom: resetNode.position,
                     keepOut: resetRadius + held.radius
                 )
@@ -210,8 +212,8 @@ extension GameScene {
             plateOpenSince = nil
             audio?.play(.bubbleGrab)
             plateNode.removeAllActions()
-            // Above the hand's glow, like a held ingredient — otherwise the
-            // additive aura washes over the plate the whole way to the tray.
+            // Above the hand cursor, like a held ingredient — otherwise the
+            // cartoon hand covers the plate the whole way to the tray.
             plateNode.zPosition = Self.heldZ
             // Shrink on pick-up, so the plate is already tray-sized by the
             // time it gets there — the player can see it will fit, instead of
@@ -473,19 +475,16 @@ extension GameScene {
 
     // MARK: - Cursors
 
-    /// Lights the hand up: a glowing aura on the palm, accent while open and
-    /// green while pinching, trailing fading circles as it moves.
+    /// Draws a cartoon hand on the palm: open while open, pinching while it grips.
     func updateCursorNode(for id: Int, at position: CGPoint, isFist: Bool) {
-        let node: HandGlowNode
+        let node: HandCursorNode
         if let existing = cursorNodes[id] {
             node = existing
         } else {
-            node = HandGlowNode(radius: ingredientRadius)
-            node.zPosition = Self.glowZ
+            let side = HandCursorNode.side(at: position, in: frame)
+            node = HandCursorNode(side: side, bubbleRadius: ingredientRadius)
+            node.zPosition = Self.handZ
             addChild(node)
-            // Emitted into the scene rather than into the glow, so the wake
-            // stays put as the hand moves on.
-            node.attachTrail(to: self)
             cursorNodes[id] = node
         }
         node.setVisible(true)
@@ -497,16 +496,16 @@ extension GameScene {
         cursorNodes.values.forEach { $0.setVisible(false) }
     }
 
-    /// Tears down the glow for any hand Vision is no longer reporting.
+    /// Tears down the cursor for any hand Vision is no longer reporting.
     ///
-    /// Separate from `retireVanishedHands` because the glow outlives the game
+    /// Separate from `retireVanishedHands` because the cursor outlives the game
     /// state that owns the trackers: it is drawn during the seat check and the
     /// countdown too, when there is nothing to be holding in the first place.
-    func retireVanishedGlows(stillLive: Set<Int>) {
+    func retireVanishedCursors(stillLive: Set<Int>) {
         for (id, node) in cursorNodes where !stillLive.contains(id) {
             // Faded rather than yanked. By the time a hand gets here it has
             // already coasted through the tracker's grace period, so it really
-            // is gone — but snapping the aura off still reads as a glitch.
+            // is gone — but snapping the hand off still reads as a glitch.
             node.fadeOutAndRemove()
             cursorNodes[id] = nil
         }
