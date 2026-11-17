@@ -52,7 +52,7 @@ struct SettingsView: View {
                     })
                 }
                 settingRow("Language", height: SegmentedPill.Size.regular.buttonSize.height) { languageChoice }
-                settingRow("Hand-mode", height: SegmentedPill.Size.regular.buttonSize.height) { handModeChoice }
+                settingRow("One Hand Mode", height: SegmentedPill.Size.regular.buttonSize.height) { handModeChoice }
                 settingRow("Pickup Gesture", height: SegmentedPill.Size.regular.buttonSize.height) {
                     SegmentedPill(
                         leftTitle: Text("Pinch"),

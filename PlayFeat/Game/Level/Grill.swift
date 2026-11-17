@@ -43,6 +43,18 @@ nonisolated struct Grill: Equatable {
         let cookedBefore: TimeInterval
     }
 
+    /// What the ring around a flatbread on the grill shows, as in the
+    /// prototype: filling yellow while it bakes, then red towards burning,
+    /// all black once burnt; and the warning sign just before it burns.
+    struct Gauge: Equatable {
+        enum Phase: Equatable { case baking, baked, burnt }
+
+        let phase: Phase
+        /// How much of the ring is filled, 0...1.
+        let fraction: Double
+        let isAboutToBurn: Bool
+    }
+
     // MARK: - Tuning
 
     /// Seconds to bake; the marathon's Faster Grill cards shorten it.
@@ -81,6 +93,24 @@ nonisolated struct Grill: Equatable {
 
     func doneness(onSlot slot: Int, at now: TimeInterval) -> Doneness? {
         cookedSeconds(onSlot: slot, at: now).map(doneness(afterCooking:))
+    }
+
+    func gauge(onSlot slot: Int, at now: TimeInterval) -> Gauge? {
+        cookedSeconds(onSlot: slot, at: now).map(gauge(afterCooking:))
+    }
+
+    func gauge(afterCooking seconds: TimeInterval) -> Gauge {
+        guard seconds >= bakeSec else {
+            return Gauge(phase: .baking, fraction: bakeSec > 0 ? seconds / bakeSec : 1, isAboutToBurn: false)
+        }
+        guard seconds < burnAt else { return Gauge(phase: .burnt, fraction: 1, isAboutToBurn: false) }
+        let sinceBaked = seconds - bakeSec
+        let burnAfter = burnAt - bakeSec
+        return Gauge(
+            phase: .baked,
+            fraction: sinceBaked / burnAfter,
+            isAboutToBurn: sinceBaked >= burnAfter - KitchenRules.burnWarningSec
+        )
     }
 
     func doneness(afterCooking seconds: TimeInterval) -> Doneness {

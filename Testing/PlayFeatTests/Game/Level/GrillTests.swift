@@ -75,4 +75,36 @@ struct GrillTests {
 
         #expect(grill.slots.count == 2)
     }
+
+    // MARK: - Cooking ring
+
+    @Test func theRingFillsYellowWhileBaking() {
+        let gauge = Grill().gauge(afterCooking: 3)
+
+        #expect(gauge.phase == .baking)
+        #expect(gauge.fraction == 0.5)
+    }
+
+    /// Once baked the ring fills red over the 12 s until the flatbread burns.
+    @Test func theRingFillsRedTowardsBurning() {
+        let gauge = Grill().gauge(afterCooking: 12)
+
+        #expect(gauge.phase == .baked)
+        #expect(gauge.fraction == 0.5)
+        #expect(!gauge.isAboutToBurn)
+    }
+
+    @Test func theWarningSignGoesUpThreeSecondsBeforeBurning() {
+        let grill = Grill()
+
+        #expect(!grill.gauge(afterCooking: 14.9).isAboutToBurn)
+        #expect(grill.gauge(afterCooking: 15).isAboutToBurn)
+    }
+
+    @Test func aBurntFlatbreadsRingIsFull() {
+        let gauge = Grill().gauge(afterCooking: 18)
+
+        #expect(gauge.phase == .burnt)
+        #expect(gauge.fraction == 1)
+    }
 }

@@ -100,6 +100,9 @@ extension KitchenScene {
         }
     }
 
+    /// Over the flatbread on the grill, under anything carried.
+    static let grillGaugeZ: CGFloat = 3
+
     // MARK: - Lifting off
 
     /// Takes `node` off the station it sits on, as the hand picks it up.
@@ -117,13 +120,34 @@ extension KitchenScene {
     // MARK: - Grill
 
     /// Bakes, warns about and burns the flatbreads on the grill as play
-    /// time passes.
+    /// time passes, with the cooking ring around each.
     func updateGrill(now: TimeInterval) {
         for flatbread in bubbles {
             guard case .grill(let slot) = flatbread.placement,
                   let doneness = grill.doneness(onSlot: slot, at: now) else { continue }
             flatbread.become(doneness.item)
             flatbread.setWarning(doneness.needsWarning)
+        }
+        updateGrillGauges(now: now)
+    }
+
+    /// A ring around every slot with a flatbread on it; none around an empty one.
+    private func updateGrillGauges(now: TimeInterval) {
+        for slot in grill.slots.indices {
+            guard let gauge = grill.gauge(onSlot: slot, at: now) else {
+                grillGauges[slot]?.removeFromParent()
+                grillGauges[slot] = nil
+                continue
+            }
+            let ring = grillGauges[slot] ?? {
+                let ring = GrillGaugeNode(scale: layout.scale)
+                ring.zPosition = Self.grillGaugeZ
+                addChild(ring)
+                grillGauges[slot] = ring
+                return ring
+            }()
+            ring.position = centre(of: .grill(slot))
+            ring.show(gauge)
         }
     }
 

@@ -4,10 +4,11 @@
 //  Created by kyky on 13/11/26.
 //
 //  Handing a finished dish to a customer. Each position has an invisible
-//  serve area around the alien and its order sheet. A dish let go in there
-//  goes to that customer: the dish they ordered is served; any other dish
-//  is turned away with a red cross and lost, as in the prototype. The
-//  payment and the customer leaving are KitchenDay's.
+//  serve area around the alien and its order sheet. A customer pulls in the
+//  dish they ordered as soon as it is carried near, like a magnet, without
+//  the hand having to open. Any other dish let go in there is turned away
+//  with a red cross and lost, as in the prototype. The payment and the
+//  customer leaving are KitchenDay's.
 //
 
 import SpriteKit
@@ -34,6 +35,19 @@ extension KitchenScene {
         }
     }
 
+    /// The customer who pulls a carried `node` in: one who ordered that
+    /// dish, with it within reach of their serve area.
+    func magnetSeat(for node: KitchenBubbleNode) -> Int? {
+        guard let day else { return nil }
+        let reach = layout.length(KitchenLayout.serveMagnetReach)
+        return KitchenLayout.seats.indices.first { seat in
+            day.wants(node.ingredient, at: seat)
+                && layout.sceneRect(KitchenLayout.seats[seat].serveArea)
+                    .insetBy(dx: -reach, dy: -reach)
+                    .contains(node.position)
+        }
+    }
+
     /// Serves the customer at `seat` if they ordered `node`; otherwise the
     /// dish is turned away and lost.
     func serveOrReject(_ node: KitchenBubbleNode, at seat: Int) {
@@ -47,13 +61,16 @@ extension KitchenScene {
         }
     }
 
-    /// The dish glides into the customer's order sheet and is gone.
+    /// The dish is drawn into the customer's order sheet, speeding up as it
+    /// goes, and is gone.
     private func handOver(_ node: KitchenBubbleNode, to seat: Int) {
         bubbles.removeAll { $0 === node }
         node.removeAllActions()
         let sheet = layout.sceneRect(KitchenLayout.seats[seat].orderSheet).center
+        let pull = SKAction.move(to: sheet, duration: 0.25)
+        pull.timingMode = .easeIn
         node.run(.sequence([
-            .group([.move(to: sheet, duration: 0.2), .scale(to: Self.parkedScale, duration: 0.2)]),
+            .group([pull, .scale(to: Self.parkedScale, duration: 0.25)]),
             .group([.scale(to: 0.1, duration: 0.15), .fadeOut(withDuration: 0.15)]),
             .removeFromParent(),
         ]))

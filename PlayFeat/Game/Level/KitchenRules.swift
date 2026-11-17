@@ -19,6 +19,8 @@ nonisolated enum KitchenRules {
     /// when it burns. Both are stretched by a level's burn multiplier.
     static let glowAfterBakedSec: TimeInterval = 8
     static let burnAfterBakedSec: TimeInterval = 12
+    /// The warning sign goes up this long before a flatbread burns.
+    static let burnWarningSec: TimeInterval = 3
 
     /// A refused item hangs where it was let go this long, then falls.
     static let refuseHoldSec: TimeInterval = 0.3

@@ -69,6 +69,8 @@ final class KitchenScene: SKScene {
     var hands: [Int: KitchenHand] = [:]
     /// The glove drawn over each tracked hand.
     var gloves: [Int: GloveNode] = [:]
+    /// The cooking ring around each grill slot's flatbread, by slot.
+    var grillGauges: [Int: GrillGaugeNode] = [:]
     /// Green outlines on the tools a carried item would land on.
     var dropGlows: [DropTarget: SKNode] = [:]
     var lastUpdateTime: TimeInterval = 0
