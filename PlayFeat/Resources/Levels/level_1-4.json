@@ -1,31 +1,54 @@
 {
   "id": "1-4",
+  "name": "Something Sweet",
   "planet": "kepler-186f",
   "durationSec": 90,
-  "gravity": { "direction": "down", "multiplier": 0.6 },
+  "refill": {
+    "counterSpots": 2,
+    "refillDelaySec": 2,
+    "firstOrder": "slimyTentacles",
+    "orderPool": {
+      "pepperFlatbread": 1,
+      "mushroomFlatbread": 1,
+      "slimyTentacles": 1
+    },
+    "angryAt": [],
+    "angryEvery": null,
+    "patienceSec": 40,
+    "angryPatienceSec": 25
+  },
+  "gravity": {
+    "direction": "down",
+    "multiplier": 0.6
+  },
   "bubbleLifeSec": 4,
   "bubbleEverySec": 2,
   "usefulBubbleShare": 0.6,
-  "storageSlots": 2,
-  "maxWaiting": 3,
-  "starTargets": [50, 85, 105],
-  "orderPool": { "pepperFlatbread": 1, "mushroomFlatbread": 2, "sunsetSorbet": 2 },
-  "customers": [
-    { "arriveAt": 0,  "type": "regular", "order": "pepperFlatbread", "patienceSec": 35 },
-    { "arriveAt": 9,  "type": "regular", "order": "random",          "patienceSec": 35 },
-    { "arriveAt": 18, "type": "regular", "order": "random",          "patienceSec": 35 },
-    { "arriveAt": 27, "type": "angry",   "order": "sunsetSorbet",    "patienceSec": 25 },
-    { "arriveAt": 36, "type": "regular", "order": "random",          "patienceSec": 35 },
-    { "arriveAt": 45, "type": "regular", "order": "random",          "patienceSec": 35 },
-    { "arriveAt": 54, "type": "angry",   "order": "sunsetSorbet",    "patienceSec": 25 },
-    { "arriveAt": 63, "type": "regular", "order": "random",          "patienceSec": 35 }
+  "cups": true,
+  "burnTimeMultiplier": 1,
+  "starTargets": [
+    35,
+    60,
+    75
+  ],
+  "energyCost": 4,
+  "pool": [
+    "duskFlatbread",
+    "emberPepper",
+    "duskMushroom",
+    "tentacle",
+    "slime"
   ],
   "bubbles": [
-    { "at": 0, "ingredient": "duskFlatbread", "lane": 2 },
-    { "at": 2, "ingredient": "emberPepper",   "lane": 3 },
-    { "at": 4, "ingredient": "slime",         "lane": 1 },
-    { "at": 6, "ingredient": "tentacle",      "lane": 4 },
-    { "at": 8, "ingredient": "slime",         "lane": 2 },
-    { "at": 10, "ingredient": "tentacle",     "lane": 3 }
+    {
+      "at": 0,
+      "ingredient": "tentacle",
+      "lane": 2
+    },
+    {
+      "at": 2,
+      "ingredient": "slime",
+      "lane": 3
+    }
   ]
 }

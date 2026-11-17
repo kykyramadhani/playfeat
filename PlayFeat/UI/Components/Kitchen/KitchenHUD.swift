@@ -3,28 +3,158 @@
 //  PlayFeat
 //  Created by kyky on 12/11/26.
 //
-//  The kitchen's top-left counters: time left in the day, coins and tips.
+//  The kitchen's counters as two metal plaques side by side on the
+//  counter's front: time left (in the day, or the marathon round), and the
+//  points with the tips beside them. In a marathon the second plaque counts
+//  marathon coins under the marathon coin, with the last tip beside them.
 //
 
 import SwiftUI
 
 struct KitchenHUD: View {
     let day: KitchenDay
+    /// Marathon coins to spend, in a marathon; nil on a level.
+    var marathonCoins: Int?
 
     var body: some View {
-        HStack(spacing: 22) {
-            HUDCounter(icon: "StopwatchIcon", label: "Time Left", value: Self.clockText(day.timeLeft))
-            HUDCounter(icon: "CoinsIcon", label: "Coins", value: "\(day.coins)")
-            HUDCounter(icon: "TipsIcon", label: "Tips", value: "\(day.tips)")
-        }
-        .padding(.leading, 29)
-        .padding(.top, 31)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        HStack(spacing: 0) { plaques }
+            .padding(.leading, 10)
+            .padding(.top, 911)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    /// "01:30" — whole seconds, rounded up so the clock reads 00:00 only at the end.
+    @ViewBuilder
+    private var plaques: some View {
+        Group {
+            HUDPlaque(iconDrop: -4, plaqueDrop: 15) {
+                Image("StopwatchIcon").resizable()
+            } value: {
+                Text(verbatim: Self.clockText(day.timeLeft))
+                    .font(.atkinson(size: 32, weight: .bold))
+            }
+            .accessibilityLabel(Text("Time Left"))
+
+            HUDPlaque(iconDrop: 0, plaqueDrop: 14) {
+                coinIcon
+            } value: {
+                coins
+            }
+            .accessibilityLabel(marathonCoins == nil ? Text("Coins") : Text("Marathon Coins"))
+        }
+        .tracking(0.64)
+        .foregroundStyle(Color.purple900)
+    }
+
+    @ViewBuilder
+    private var coinIcon: some View {
+        if marathonCoins == nil {
+            Image("HUDCoinsIcon").resizable().frame(width: 73, height: 69)
+        } else {
+            Image("CoinsIcon").resizable()
+        }
+    }
+
+    /// "150 +12": the points (or marathon coins) with the tips (or the last
+    /// tip) in small type after them.
+    private var coins: some View {
+        HStack(spacing: 0) {
+            Text(marathonCoins ?? day.points, format: .number)
+                .font(.atkinson(size: 32, weight: .bold))
+                .fixedSize()
+                .frame(minWidth: 59)
+            Text(verbatim: "+\(marathonCoins == nil ? day.tips : day.lastTip)")
+                .font(.atkinson(size: 16, weight: .bold))
+                .fixedSize()
+                .frame(minWidth: 41, alignment: .leading)
+        }
+        // Marathon coins run to three or four digits; the card holds them.
+        .minimumScaleFactor(0.7)
+        .frame(minWidth: 98)
+    }
+
+    /// "01:30" while a minute or more is left, then just the seconds: "59"
+    /// down to "00". Whole seconds, rounded up, so it reads 00 only at the end.
     static func clockText(_ seconds: TimeInterval) -> String {
-        Duration.seconds(seconds.rounded(.up))
-            .formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2)))
+        let wholeSeconds = Int(max(seconds, 0).rounded(.up))
+        guard wholeSeconds >= 60 else { return String(format: "%02d", wholeSeconds) }
+        return Duration.seconds(wholeSeconds).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2)))
+    }
+}
+
+/// One plaque: a screwed-on metal plate holding a white card with the
+/// value, and its icon overlapping the plate's left end. Sized 234×92 as in
+/// the design.
+private struct HUDPlaque<Icon: View, Value: View>: View {
+    /// How far the icon and the plate sit below the block's top; the
+    /// stopwatch's knob pokes up, so it sits a little higher.
+    let iconDrop: CGFloat
+    let plaqueDrop: CGFloat
+    @ViewBuilder let icon: Icon
+    @ViewBuilder let value: Value
+
+    // Computed: a generic type can't store statics.
+    private static var plateSize: CGSize { CGSize(width: 181, height: 73) }
+    private static var cornerRadius: CGFloat { 13.16 }
+    /// The screws' centres on the plate.
+    private static var screws: [CGPoint] {
+        [CGPoint(x: 10.2, y: 10.2), CGPoint(x: 10.4, y: 64.9), CGPoint(x: 169.4, y: 9.4), CGPoint(x: 169.9, y: 64.4)]
+    }
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            plate
+                .offset(x: 46, y: plaqueDrop)
+            icon
+                .frame(width: 92, height: 92)
+                .offset(y: iconDrop)
+        }
+        .frame(width: 234, height: 92, alignment: .topLeading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var plate: some View {
+        let shape = RoundedRectangle(cornerRadius: Self.cornerRadius)
+        return ZStack(alignment: .topLeading) {
+            ForEach(Self.screws.indices, id: \.self) { index in
+                Image("PopupScrew")
+                    .resizable()
+                    .frame(width: 6.83, height: 6.83)
+                    .position(Self.screws[index])
+            }
+            card
+                .offset(x: 15, y: 9)
+        }
+        .frame(width: Self.plateSize.width, height: Self.plateSize.height, alignment: .topLeading)
+        .background {
+            shape.fill(Color.metalPlaque).paperTexture(clippedTo: shape, opacity: 0.67)
+        }
+        .clipShape(shape)
+    }
+
+    private var card: some View {
+        value
+            .frame(width: 153.2, height: 56)
+            .background {
+                RoundedRectangle(cornerRadius: Self.cornerRadius)
+                    .fill(
+                        Color.neutralBackground
+                            .shadow(.inner(color: .black.opacity(0.37), radius: 1.1, y: -1.1))
+                            .shadow(.inner(color: .black.opacity(0.39), radius: 0.7, y: 1.1))
+                    )
+            }
+    }
+}
+
+#Preview {
+    let level = try? LevelLoader.load("1-1")
+    return Group {
+        if let level {
+            KitchenHUD(day: KitchenDay(
+                storyLevel: level, positionTypes: KitchenLayout.positionTypes,
+                tools: KitchenTools(plates: 1, glasses: 0)
+            ))
+            .background(Color.gray)
+            .designScaled()
+        }
     }
 }

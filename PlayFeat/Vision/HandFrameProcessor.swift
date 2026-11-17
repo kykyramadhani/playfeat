@@ -8,7 +8,9 @@
 //    2. Body: who the player is (PlayerSelector: the seat frame, then the lock)
 //    3. HandClassifier: palm, wrist and pinch gap for each hand Vision saw
 //    4. Body filter: keep only the player's hands, for the current input mode
-//    5. HandIdentityTracker: stable IDs, smoothing, pinch state, coasting
+//    5. HandSideAssigner: which is the left hand and which the right, from
+//       the body's wrists
+//    6. HandIdentityTracker: stable IDs, smoothing, pinch state, coasting
 //
 //  Runs on the camera's video queue, so it is `nonisolated` and owns all of
 //  its state — nothing here is touched from the main thread. The result of
@@ -194,7 +196,24 @@ nonisolated final class HandFrameProcessor: @unchecked Sendable {
         }
         #endif
 
-        return output(tracking: keep.map { classifications[$0] }, grip: grip, bufferSize: bufferSize)
+        let playerHands = placingSides(on: keep.map { classifications[$0] }, body: bodies[player])
+        return output(tracking: playerHands, grip: grip, bufferSize: bufferSize)
+    }
+
+    /// The hands with their sides set from `body`'s wrists, so a right hand
+    /// reaching across to the left of the screen stays the right hand.
+    private func placingSides(
+        on hands: [HandClassifier.Classification],
+        body: HumanBodyPoseManager.BodyCandidate
+    ) -> [HandClassifier.Classification] {
+        let sides = HandSideAssigner.sides(
+            ofHandsAt: hands.map(\.wrist), body: body, reach: body.scale * wristMatchTolerance
+        )
+        return zip(hands, sides).map { hand, side in
+            var placed = hand
+            placed.side = side
+            return placed
+        }
     }
 
     /// Which of this frame's hands are the player's, up to the hand limit.

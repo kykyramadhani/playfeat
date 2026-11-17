@@ -23,7 +23,7 @@ struct LevelDetailPopup: View {
             .padding(.top, 41.4)
             .frame(width: Self.cardSize.width, height: Self.cardSize.height, alignment: .top)
             .boardPanelBackground(cornerRadius: Self.innerRadius)
-            .overlay { screws }
+            .overlay { PopupScrews(size: 20.3, inset: 20.3) }
             .overlay(alignment: .topTrailing) { closeButton }
             .accessibilityElement(children: .contain)
             .accessibilityAddTraits(.isModal)
@@ -89,20 +89,35 @@ struct LevelDetailPopup: View {
                 .frame(width: 81, height: 81)
             RaisedTextButton(title: "Play", palette: .start, action: onPlay)
                 .frame(width: 208)
+                .overlay(alignment: .topTrailing) { energyCost.offset(x: 44.4, y: -20) }
         }
     }
 
-    private var screws: some View {
-        let alignments: [Alignment] = [.topLeading, .topTrailing, .bottomLeading, .bottomTrailing]
-
-        return ZStack {
-            ForEach(alignments.indices, id: \.self) { index in
-                Image("PopupScrew")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignments[index])
+    /// What PLAY costs, in a speech bubble on the button's corner.
+    @ViewBuilder
+    private var energyCost: some View {
+        if let cost = level.energyCost {
+            ZStack(alignment: .topLeading) {
+                Image("EnergyCostBubble")
+                    .resizable()
+                    .frame(width: 66, height: 49.2)
+                    .offset(y: 7)
+                HStack(spacing: 0) {
+                    Image("EnergyIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 22.3, height: 24)
+                    Text(verbatim: "-\(cost)")
+                        .font(.atkinson(size: 19.9, weight: .bold))
+                        .tracking(0.4)
+                        .foregroundStyle(Color.purple900)
+                }
+                .offset(x: 13, y: 16)
             }
+            .frame(width: 61, height: 56.2, alignment: .topLeading)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Costs \(cost) energy"))
         }
-        .padding(20.3)
-        .accessibilityHidden(true)
     }
 
     /// Hangs off the card's top-right corner.
@@ -120,12 +135,14 @@ extension LevelDetailPopup {
         let stars: Int
         /// Score needed for 1, 2 and 3 stars; empty when the level has no data yet.
         let starTargets: [Int]
+        /// Energy PLAY costs; nil when the level has no data yet.
+        var energyCost: Int?
     }
 }
 
 #Preview {
     LevelDetailPopup(
-        level: .init(number: 1, planetName: "Kepler-186f", stars: 3, starTargets: [20, 40, 60]),
+        level: .init(number: 1, planetName: "Kepler-186f", stars: 3, starTargets: [20, 40, 60], energyCost: 3),
         onPlay: {}, onShop: {}, onClose: {}
     )
     .environment(AudioManager())

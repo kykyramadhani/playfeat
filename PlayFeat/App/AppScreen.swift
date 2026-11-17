@@ -11,7 +11,9 @@ import Foundation
 
 enum AppScreen: Equatable {
     case mainMenu
-    /// A planet's level board, between the menu and a run.
+    /// The galaxy: the planets, opened from the main menu's Tap to Play.
+    case galaxy
+    /// A planet's level board, between the galaxy and a run.
     case planetSelect
     /// The planet's endless marathon: best score, leaderboard, PLAY.
     case marathon

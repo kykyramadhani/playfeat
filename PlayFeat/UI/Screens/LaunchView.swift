@@ -3,9 +3,9 @@
 //  PlayFeat
 //  Created by kyky on 10/11/26.
 //
-//  The space-themed title screen shown after the splash: the PlayFeat logo,
-//  a loading bar, and a START button that wakes up once the bar is full.
-//  Tapping START hands over to the rest of the app.
+//  The space-themed title screen the app opens on: the AstroFeast logo, a
+//  loading bar, and a START button that wakes up once the bar is full.
+//  Tapping START goes to the galaxy map.
 //
 
 import SwiftUI
@@ -28,11 +28,12 @@ struct LaunchView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 48) {
-                Image("PlayFeatLogo")
+                // The logo is drawn 7 points wider than the column on each side.
+                Image("AstroFeastLogo")
                     .resizable()
-                    .scaledToFit()
+                    .frame(width: 873, height: 407)
                     .frame(width: 859)
-                    .accessibilityLabel(Text(verbatim: "PlayFeat"))
+                    .accessibilityLabel(Text(verbatim: "AstroFeast"))
 
                 VStack(spacing: 40) {
                     LoadingBar(progress: progress)

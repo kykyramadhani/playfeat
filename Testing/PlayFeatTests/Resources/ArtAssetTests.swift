@@ -50,29 +50,27 @@ struct ArtAssetTests {
         #expect(UIImage(named: "ServedDish") != nil)
     }
 
-    /// The planet kitchen draws every pantry ingredient and every dish a
-    /// level can order by name; a missing one is an empty bubble or sheet.
-    @Test func everyKitchenIngredientAndDishHasArt() {
-        for ingredient in Planet.kepler186f.pantry {
-            let name = KitchenArt.ingredientImage(ingredient)
-            #expect(UIImage(named: name) != nil, "missing kitchen art '\(name)'")
-        }
-        for dish in ["pepperFlatbread", "mushroomFlatbread", "sunsetSorbet"] {
-            let layers = KitchenArt.dishLayers(dish)
-            #expect(!layers.isEmpty, "no art listed for dish '\(dish)'")
-            for name in layers {
-                #expect(UIImage(named: name) != nil, "missing dish art '\(name)'")
-            }
+    /// The planet kitchen draws every item by name, in a bubble and once put
+    /// down; a missing picture is an empty bubble, sheet or station.
+    @Test(arguments: [
+        KitchenMenu.rawFlatbread, KitchenMenu.bakedFlatbread, KitchenMenu.burntFlatbread,
+        KitchenMenu.pepper, KitchenMenu.mushroom, KitchenMenu.slime, KitchenMenu.tentacle,
+        KitchenMenu.pepperFlatbread, KitchenMenu.mushroomFlatbread, KitchenMenu.slimyTentacles,
+    ])
+    func everyKitchenItemHasArt(item: String) {
+        for name in [KitchenArt.image(of: item), KitchenArt.placedImage(of: item)] {
+            #expect(UIImage(named: name) != nil, "missing kitchen art '\(name)' for '\(item)'")
         }
     }
 
-    /// Items made in the kitchen rather than found in bubbles, and the drink
-    /// ingredients only some levels use, need art (or a placeholder) too.
-    @Test(arguments: [KitchenMenu.bakedFlatbread, KitchenMenu.burntFlatbread, KitchenMenu.slime, KitchenMenu.tentacle])
-    func everyKitchenItemHasArt(item: String) {
-        for name in KitchenArt.layers(for: item) {
-            #expect(UIImage(named: name) != nil, "missing kitchen art '\(name)' for '\(item)'")
-        }
+    /// The premium (glowing) versions from the assets page, ready for when
+    /// premium bubbles are added to the game.
+    @Test(arguments: [
+        "PremiumFlatbreadRaw", "PremiumFlatbreadBaked", "PremiumGlowyMushroom", "PremiumMushroomTopping",
+        "PremiumTentacle", "PremiumSlime", "PremiumTentacleGlass", "PremiumSlimyTentaclesGlass",
+    ])
+    func premiumArtExists(name: String) {
+        #expect(UIImage(named: name) != nil)
     }
 
     /// The source art sits on 1920×1080 canvases with the subject filling as

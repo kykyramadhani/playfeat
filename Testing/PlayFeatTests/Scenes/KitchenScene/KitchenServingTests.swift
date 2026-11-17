@@ -3,8 +3,8 @@
 //  PlayFeatTests
 //  Created by kyky on 13/11/26.
 //
-//  Handing dishes to customers through each seat's invisible serve area.
-//  Driven straight through `settle`, so no camera or hands are needed.
+//  Handing dishes to customers through each position's invisible serve
+//  area. Driven straight through `settle`, so no camera or hands are needed.
 //
 
 import CoreGraphics
@@ -16,17 +16,11 @@ import Testing
 struct KitchenServingTests {
 
     /// A kitchen with a pepper-flatbread customer and a mushroom-flatbread
-    /// customer, both seated from the opening bell.
+    /// customer, both at the counter from the opening bell.
     private func makeScene() -> (KitchenScene, KitchenDay) {
-        let scene = KitchenScene(size: KitchenLayout.artSize)
-        var generator = SeededGenerator(state: 1)
-        let level = makeLevel(customers: [
-            .init(arriveAt: 0, type: .regular, order: KitchenMenu.pepperFlatbread, patienceSec: 45),
-            .init(arriveAt: 0, type: .regular, order: KitchenMenu.mushroomFlatbread, patienceSec: 45),
-        ])
-        let day = KitchenDay(level: level, seatCount: 2, using: &generator)
-        scene.prepare(for: day, pantry: Planet.kepler186f.pantry)
-        return (scene, day)
+        makeKitchenScene(level: makeLevel(
+            counterSpots: 2, orderPool: [KitchenMenu.mushroomFlatbread: 1], refillDelaySec: 0
+        ))
     }
 
     private func letGo(_ item: String, atArtPoint point: CGPoint, in scene: KitchenScene) -> KitchenBubbleNode {
@@ -54,30 +48,45 @@ struct KitchenServingTests {
         let dish = letGo(KitchenMenu.pepperFlatbread, atArtPoint: corner, in: scene)
 
         #expect(!scene.bubbles.contains { $0 === dish })
-        #expect(day.coins == KitchenDay.coinsPerDish)
+        #expect(day.points == DishPricing.unupgraded.pay(for: KitchenMenu.pepperFlatbread))
         #expect(day.presentCustomers.map(\.dish) == [KitchenMenu.mushroomFlatbread])
     }
 
-    @Test func aDishNobodyThereOrderedIsNotServed() throws {
+    /// As in the prototype, a dish the customer didn't order is turned away
+    /// and lost.
+    @Test func aWrongDishAtACustomerIsTurnedAwayAndLost() throws {
         let (scene, day) = makeScene()
         let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
 
-        let dish = letGo(KitchenMenu.sunsetSorbet, atArtPoint: KitchenLayout.seats[seat].orderSheet.center, in: scene)
+        let dish = letGo(KitchenMenu.slimyTentacles, atArtPoint: KitchenLayout.seats[seat].orderSheet.center, in: scene)
 
-        #expect(dish.fallingSince != nil)
-        #expect(day.coins == 0)
+        #expect(!scene.bubbles.contains { $0 === dish })
+        #expect(day.points == 0)
         #expect(day.presentCustomers.count == 2)
     }
 
-    /// The two seats' areas overlap above the first alien's head; a dish let
-    /// go there goes to whichever customer ordered it.
-    @Test func whereServeAreasOverlapTheCustomerWhoOrderedItGetsIt() {
+    /// Only dishes are handed over: an ingredient over a customer just falls.
+    @Test func anIngredientOverACustomerFalls() throws {
         let (scene, day) = makeScene()
-        let overlap = KitchenLayout.seats[0].serveArea.intersection(KitchenLayout.seats[1].serveArea)
+        let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
+
+        let pepper = letGo(KitchenMenu.pepper, atArtPoint: KitchenLayout.seats[seat].orderSheet.center, in: scene)
+
+        #expect(pepper.fallingSince != nil)
+        #expect(day.presentCustomers.count == 2)
+    }
+
+    /// The left alien's area and the red alien's overlap above the left
+    /// alien's head; a dish let go there goes to whichever customer ordered it.
+    @Test func whereServeAreasOverlapTheCustomerWhoOrderedItGetsIt() {
+        let (scene, day) = makeKitchenScene(level: makeLevel(
+            counterSpots: 2, firstOrder: KitchenMenu.mushroomFlatbread, angryAt: [2], refillDelaySec: 0
+        ))
+        let overlap = KitchenLayout.seats[0].serveArea.intersection(KitchenLayout.seats[2].serveArea)
         #expect(!overlap.isEmpty)
 
         _ = letGo(KitchenMenu.mushroomFlatbread, atArtPoint: overlap.center, in: scene)
 
-        #expect(day.presentCustomers.map(\.dish) == [KitchenMenu.pepperFlatbread])
+        #expect(day.presentCustomers.map(\.dish) == [KitchenMenu.angryOrder])
     }
 }

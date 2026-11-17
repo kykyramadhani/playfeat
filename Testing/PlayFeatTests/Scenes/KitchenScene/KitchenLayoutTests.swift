@@ -33,13 +33,43 @@ struct KitchenLayoutTests {
         #expect(layout.scenePoint(CGPoint(x: 100, y: 1024)) == CGPoint(x: 50, y: 0))
     }
 
-    /// The trash hole hugs the bottom-left corner, so in SpriteKit space its
-    /// rectangle starts at the scene's origin.
-    @Test func theTrashHoleSitsInTheScenesBottomLeftCorner() {
+    /// The window starts at the top of the art, so in SpriteKit space its
+    /// top edge is the scene's top.
+    @Test func theWindowReachesTheScenesTop() {
         let layout = KitchenLayout(screenSize: KitchenLayout.artSize)
-        let hole = layout.sceneRect(KitchenLayout.trashHole)
 
-        #expect(hole.origin == .zero)
-        #expect(hole.size == KitchenLayout.trashHole.size)
+        #expect(layout.sceneRect(KitchenLayout.window).maxY == KitchenLayout.artSize.height)
+    }
+
+    /// One plate stands beside the grill; a second goes further left, and
+    /// never more than the counter has spots for.
+    @Test func plateSpotsKeepTheFirstPlateBesideTheGrill() {
+        let one = KitchenLayout.plates(1)
+        let two = KitchenLayout.plates(2)
+
+        #expect(one.count == 1)
+        #expect(two.last == one.first)
+        #expect(two[0].maxX < two[1].minX)
+        #expect(KitchenLayout.plates(5).count == KitchenLayout.maxPlates)
+    }
+
+    @Test func glassSpotsKeepTheFirstGlassBesideTheGrill() {
+        let two = KitchenLayout.glasses(2)
+
+        #expect(KitchenLayout.glasses(1) == [two[0]])
+        #expect(two[0].maxX < two[1].minX)
+        #expect(KitchenLayout.glasses(0).isEmpty)
+    }
+
+    /// The two green aliens take regular customers; the red one is the angry alien's.
+    @Test func theRedAliensPositionIsTheAngryCustomers() {
+        #expect(KitchenLayout.positionTypes == [.regular, .regular, .angry])
+    }
+
+    @Test func twoGrillSlotsSitEitherSideOfTheRing() {
+        let slots = KitchenLayout.grillSlots(2)
+
+        #expect(KitchenLayout.grillSlots(1) == [KitchenLayout.grillRing])
+        #expect(slots[0].x < KitchenLayout.grillRing.x && KitchenLayout.grillRing.x < slots[1].x)
     }
 }

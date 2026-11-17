@@ -3,8 +3,8 @@
 //  PlayFeatTests
 //  Created by Owen Limantoro on 12/11/26.
 //
-//  The plate and the glass: what each takes, in any order, and the dish the
-//  ingredients become once they make a recipe.
+//  The plate and the glass, by the prototype's placement table: what each
+//  takes, in either order, and the dish a base and a topping become.
 //
 
 import Testing
@@ -16,15 +16,24 @@ struct AssemblyStationTests {
 
     // MARK: - Plate
 
-    @Test(arguments: [Menu.bakedFlatbread, Menu.pepper, Menu.mushroom])
+    /// A raw flatbread may sit on an empty plate too, though nothing goes on it.
+    @Test(arguments: [Menu.bakedFlatbread, Menu.rawFlatbread, Menu.pepper, Menu.mushroom])
     func anEmptyPlateTakesEachOfItsIngredients(item: String) {
         #expect(AssemblyStation.plate.accepts(item))
     }
 
-    /// Raw flatbread must be grilled first, and burnt flatbread is no use.
-    @Test(arguments: [Menu.rawFlatbread, Menu.burntFlatbread, Menu.slime, Menu.tentacle])
+    /// Burnt flatbread is no use, and the dessert's are the glass's.
+    @Test(arguments: [Menu.burntFlatbread, Menu.slime, Menu.tentacle])
     func thePlateRefusesAnythingElse(item: String) {
         #expect(!AssemblyStation.plate.accepts(item))
+    }
+
+    @Test func nothingGoesOnARawFlatbread() throws {
+        var plate = AssemblyStation.plate
+        try plate.add(Menu.rawFlatbread)
+
+        #expect(!plate.accepts(Menu.pepper))
+        #expect(!plate.accepts(Menu.bakedFlatbread))
     }
 
     @Test func thePlateTakesOneOfEachIngredient() throws {
@@ -51,12 +60,13 @@ struct AssemblyStationTests {
         #expect(plate.completedDish == Menu.mushroomFlatbread)
     }
 
-    @Test func twoToppingsWithoutBreadMakeNothing() throws {
+    /// A topping only takes the baked bread on top, never a second topping.
+    @Test func aToppingTakesOnlyTheBread() throws {
         var plate = AssemblyStation.plate
         try plate.add(Menu.pepper)
-        try plate.add(Menu.mushroom)
 
-        #expect(plate.completedDish == nil)
+        #expect(!plate.accepts(Menu.mushroom))
+        #expect(plate.accepts(Menu.bakedFlatbread))
     }
 
     @Test func combiningLeavesOnlyTheDish() throws {
@@ -99,12 +109,27 @@ struct AssemblyStationTests {
 
     // MARK: - Glass
 
-    @Test func slimeAndTentacleMakeTheSorbet() throws {
+    @Test func aTentacleThenSlimeMakeTheSlimyTentacles() throws {
         var glass = AssemblyStation.glass
         try glass.add(Menu.tentacle)
         try glass.add(Menu.slime)
 
-        #expect(glass.completedDish == Menu.sunsetSorbet)
+        #expect(glass.completedDish == Menu.slimyTentacles)
+    }
+
+    /// As in the prototype, the slime can go in first too.
+    @Test func slimeThenATentacleMakeTheDessertToo() throws {
+        var glass = AssemblyStation.glass
+        try glass.add(Menu.slime)
+        try glass.add(Menu.tentacle)
+
+        #expect(glass.completedDish == Menu.slimyTentacles)
+    }
+
+    /// The plate has no order: a topping can wait there for the bread.
+    @Test func thePlateTakesItsIngredientsInAnyOrder() {
+        #expect(AssemblyStation.plate.accepts(Menu.pepper))
+        #expect(AssemblyStation.plate.accepts(Menu.bakedFlatbread))
     }
 
     @Test(arguments: [Menu.pepper, Menu.mushroom, Menu.bakedFlatbread, Menu.rawFlatbread])

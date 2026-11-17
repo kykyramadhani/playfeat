@@ -27,6 +27,13 @@ struct HandIdentityTrackerTests {
         )
     }
 
+    /// A reading the body placed on `side`.
+    private func reading(at point: CGPoint, side: HandSide?) -> HandClassifier.Classification {
+        var placed = reading(at: point)
+        placed.side = side
+        return placed
+    }
+
     private let centre = CGPoint(x: 0.5, y: 0.5)
 
     // MARK: - Identity
@@ -225,5 +232,34 @@ struct HandIdentityTrackerTests {
     private func droopingFinger() -> GestureGeometry.Finger? {
         let joints = [CGPoint(x: 0, y: 1), CGPoint(x: 0, y: 1.3), CGPoint(x: 0.115, y: 1.464), CGPoint(x: 0.258, y: 1.669)]
         return GestureGeometry.Finger(joints: joints, wrist: .zero, palmLength: 1)
+    }
+
+    // MARK: - Sides
+
+    /// The body pose runs less often than the hand pose, so a frame without
+    /// a body keeps the side the hand already had.
+    @Test func aHandKeepsItsSideBetweenBodyPoses() {
+        var tracker = HandIdentityTracker()
+
+        _ = tracker.update(with: [reading(at: centre, side: .right)], at: 0)
+        let unplaced = tracker.update(with: [reading(at: centre, side: nil)], at: 0.033)
+
+        #expect(unplaced.map(\.side) == [.right])
+    }
+
+    /// A hand still remembering "left" gives way to the hand the body has
+    /// just placed as the left one, so there are never two left hands.
+    @Test func twoHandsNeverShareASide() {
+        var tracker = HandIdentityTracker()
+        let leftSpot = CGPoint(x: 0.3, y: 0.5)
+        let rightSpot = CGPoint(x: 0.7, y: 0.5)
+        _ = tracker.update(with: [reading(at: leftSpot, side: .left)], at: 0)
+
+        let hands = tracker.update(
+            with: [reading(at: leftSpot, side: nil), reading(at: rightSpot, side: .left)], at: 0.033
+        )
+
+        #expect(Set(hands.compactMap(\.side)) == [.left, .right])
+        #expect(hands.first { $0.cursorPosition.x > 0.5 }?.side == .left)
     }
 }

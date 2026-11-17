@@ -47,16 +47,8 @@ struct OrderSheet: View {
     }
 
     private var dishArt: some View {
-        let layers = KitchenArt.dishLayers(dish)
-        return ZStack {
-            ForEach(layers.indices, id: \.self) { index in
-                Image(layers[index])
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: index == 0 ? 100 : 80, height: index == 0 ? 100 : 60)
-            }
-        }
-        .frame(width: 106, height: 100)
+        KitchenItemArt(item: dish)
+            .frame(width: 106, height: 100)
     }
 }
 

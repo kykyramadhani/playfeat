@@ -3,10 +3,12 @@
 //  PlayFeat
 //  Created by Owen Limantoro on 12/11/26.
 //
-//  A spot in the kitchen where ingredients are put together into a dish: the
-//  plate for flatbreads, the glass for drinks. It takes its own ingredients in
-//  any order, one of each, and once they make a recipe they become that dish.
-//  Remembers only what sits on it; the scene draws and moves the items.
+//  A spot in the kitchen where a dish is put together: the plate for the
+//  flatbreads, the glass for the dessert. What each takes follows the
+//  prototype's placement table: an empty plate takes a flatbread (even a raw
+//  one, which then only sits there), a topping or a finished dish; a base
+//  and a topping go together in either order and make the dish. Remembers
+//  only what sits on it; the scene draws and moves the items.
 //
 
 nonisolated enum AssemblyStationError: Error, Equatable {
@@ -15,40 +17,43 @@ nonisolated enum AssemblyStationError: Error, Equatable {
 }
 
 nonisolated struct AssemblyStation: Equatable {
-    /// The ingredients this station collects.
-    let ingredients: Set<String>
-    /// Finished dishes it can hold, put back down after being carried off.
-    let dishes: Set<String>
+    /// What may go on top of each thing that can sit here alone; the
+    /// `emptyKey` entry is what an empty station takes.
+    let placementRules: [String: Set<String>]
 
     /// What sits here, in the order it was put down.
     private(set) var contents: [String] = []
 
-    static let plate = AssemblyStation(
-        ingredients: [KitchenMenu.bakedFlatbread, KitchenMenu.pepper, KitchenMenu.mushroom],
-        dishes: [KitchenMenu.pepperFlatbread, KitchenMenu.mushroomFlatbread]
-    )
+    static let emptyKey = ""
 
-    static let glass = AssemblyStation(
-        ingredients: [KitchenMenu.slime, KitchenMenu.tentacle],
-        dishes: [KitchenMenu.sunsetSorbet]
-    )
+    static let plate = AssemblyStation(placementRules: [
+        emptyKey: [
+            KitchenMenu.rawFlatbread, KitchenMenu.bakedFlatbread, KitchenMenu.pepper, KitchenMenu.mushroom,
+            KitchenMenu.pepperFlatbread, KitchenMenu.mushroomFlatbread,
+        ],
+        KitchenMenu.bakedFlatbread: [KitchenMenu.pepper, KitchenMenu.mushroom],
+        KitchenMenu.pepper: [KitchenMenu.bakedFlatbread],
+        KitchenMenu.mushroom: [KitchenMenu.bakedFlatbread],
+    ])
+
+    static let glass = AssemblyStation(placementRules: [
+        emptyKey: [KitchenMenu.tentacle, KitchenMenu.slime, KitchenMenu.slimyTentacles],
+        KitchenMenu.tentacle: [KitchenMenu.slime],
+        KitchenMenu.slime: [KitchenMenu.tentacle],
+    ])
 
     // MARK: - Queries
 
-    /// Whether `item` can be put down here now. A dish needs the station to
-    /// itself; an ingredient needs to be one of this station's, not already
-    /// here, and no finished dish in the way.
+    /// Whether `item` can be put down here now.
     func accepts(_ item: String) -> Bool {
-        if dishes.contains(item) { return contents.isEmpty }
-        return ingredients.contains(item) && !contents.contains(item) && !holdsDish
+        guard contents.count <= 1 else { return false }
+        return placementRules[contents.first ?? Self.emptyKey]?.contains(item) ?? false
     }
 
     /// The dish the ingredients here make, ready for `combine()`.
     var completedDish: String? {
-        holdsDish ? nil : KitchenMenu.dish(madeFrom: contents)
+        contents.count > 1 ? KitchenMenu.dish(madeFrom: contents) : nil
     }
-
-    private var holdsDish: Bool { contents.contains(where: dishes.contains) }
 
     // MARK: - Commands
 

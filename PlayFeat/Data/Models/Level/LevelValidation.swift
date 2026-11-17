@@ -3,33 +3,31 @@
 //  PlayFeat
 //  Created by kyky on 07/11/26.
 //
-//  Checks a level file against the allowed values in "6. Level data files",
-//  so a typo in the JSON fails loudly at load time instead of mid-game.
+//  Checks a level file against the allowed values, so a typo in the JSON
+//  fails loudly at load time instead of mid-game.
 //
 
 import Foundation
 
 nonisolated enum LevelDataError: Error, Equatable {
-    case storageSlotsOutOfRange(Int)
-    case maxWaitingOutOfRange(Int)
+    case missingRefill
+    case counterSpotsOutOfRange(Int)
     case starTargetsNotThreeRising([Int])
     case laneOutOfRange(Int)
     case usefulBubbleShareOutOfRange(Double)
-    /// The number of `random` customers must equal the dishes in `orderPool`.
-    case orderPoolMismatch(randomCustomers: Int, poolDishes: Int)
+    case emptyOrderPool
+    case unknownItem(String)
 }
 
 nonisolated extension LevelData {
-    static let storageSlotRange = 0...4
-    static let maxWaitingRange = 1...3
+    /// The counter has three aliens' worth of room.
+    static let counterSpotRange = 1...3
 
     /// Throws the first rule this level breaks.
     func validate() throws(LevelDataError) {
-        guard Self.storageSlotRange.contains(storageSlots) else {
-            throw .storageSlotsOutOfRange(storageSlots)
-        }
-        guard Self.maxWaitingRange.contains(maxWaiting) else {
-            throw .maxWaitingOutOfRange(maxWaiting)
+        guard let refill else { throw .missingRefill }
+        guard Self.counterSpotRange.contains(refill.counterSpots) else {
+            throw .counterSpotsOutOfRange(refill.counterSpots)
         }
         guard starTargets.count == 3, zip(starTargets, starTargets.dropFirst()).allSatisfy(<) else {
             throw .starTargetsNotThreeRising(starTargets)
@@ -37,17 +35,17 @@ nonisolated extension LevelData {
         if let badLane = bubbles.map(\.lane).first(where: { !(1...BubbleEntry.laneCount).contains($0) }) {
             throw .laneOutOfRange(badLane)
         }
-        if let share = usefulBubbleShare, !(0...1).contains(share) {
-            throw .usefulBubbleShareOutOfRange(share)
-        }
-        try validateOrderPool()
+        guard (0...1).contains(usefulBubbleShare) else { throw .usefulBubbleShareOutOfRange(usefulBubbleShare) }
+        guard refill.orderPool.values.contains(where: { $0 > 0 }) else { throw .emptyOrderPool }
+        try validateItems(refill)
     }
 
-    private func validateOrderPool() throws(LevelDataError) {
-        let randomCustomers = customers.filter(\.takesRandomOrder).count
-        let poolDishes = orderPool?.values.reduce(0, +) ?? 0
-        guard randomCustomers == poolDishes else {
-            throw .orderPoolMismatch(randomCustomers: randomCustomers, poolDishes: poolDishes)
+    private func validateItems(_ refill: Refill) throws(LevelDataError) {
+        let dishes = [refill.firstOrder] + refill.orderPool.keys
+        if let unknown = dishes.first(where: { KitchenMenu.recipes[$0] == nil }) { throw .unknownItem(unknown) }
+        let ingredients = pool + bubbles.map(\.ingredient)
+        if let unknown = ingredients.first(where: { !KitchenMenu.bubbleItems.contains($0) }) {
+            throw .unknownItem(unknown)
         }
     }
 }

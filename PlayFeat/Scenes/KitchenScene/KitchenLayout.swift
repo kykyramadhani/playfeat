@@ -5,9 +5,9 @@
 //
 //  The kitchen art is one 1366×1024 picture that fills the screen, cropped
 //  evenly when the screen is a different shape. Everything placed on it —
-//  props, customers, the trash hole, the storage boxes — is measured in that
-//  picture's points (origin top-left) and mapped onto the screen here, so the
-//  SwiftUI art and the SpriteKit hit areas always line up.
+//  props and customers — is measured in that picture's points (origin
+//  top-left) and mapped onto the screen here, so the SwiftUI art and the
+//  SpriteKit hit areas always line up.
 //
 
 import CoreGraphics
@@ -49,40 +49,72 @@ nonisolated struct KitchenLayout {
 // MARK: - Landmarks, in art points
 
 nonisolated extension KitchenLayout {
-    /// The dark hole in the counter's bottom-left corner.
-    static let trashHole = CGRect(x: 0, y: 870, width: 300, height: 154)
+    /// The window bubbles drift through: the gap in the counter art, from
+    /// the top of the screen down to the table's back edge.
+    static let window = CGRect(x: 108, y: 0, width: 1151, height: 697)
 
-    /// The pink boxes in the bottom-right corner, where one item each can be parked.
-    static let storageBoxes: [CGRect] = [
-        CGRect(x: 1049, y: 732, width: 414, height: 332),
-        CGRect(x: 1122, y: 797, width: 414, height: 332),
+    static let grill = CGRect(x: 551, y: 755, width: 305, height: 166)
+    /// The middle of the grill's hot ring, where food cooks. The grill is
+    /// drawn in perspective, so it sits up and left of the box's centre.
+    static let grillRing = CGPoint(x: 719, y: 813)
+    /// How far apart two flatbreads sit when the grill holds two.
+    static let grillSlotGap: CGFloat = 110
+
+    /// Where each of `count` flatbreads cooks, left to right.
+    static func grillSlots(_ count: Int) -> [CGPoint] {
+        guard count > 1 else { return [grillRing] }
+        let start = grillRing.x - grillSlotGap * CGFloat(count - 1) / 2
+        return (0..<count).map { CGPoint(x: start + grillSlotGap * CGFloat($0), y: grillRing.y) }
+    }
+
+    /// Plate spots, left to right. A single plate takes the one beside the
+    /// grill; a second, bought in the shop, goes further left.
+    private static let plateSpots = [
+        CGRect(x: 42, y: 778, width: 205, height: 117),
+        CGRect(x: 284, y: 778, width: 205, height: 117),
     ]
 
-    /// Where a parked item sits in each box — the middle of the visible tray.
-    static let storageSlots: [CGPoint] = [
-        CGPoint(x: 1245, y: 901),
-        CGPoint(x: 1318, y: 966),
+    /// How wide the counter glass's mug is drawn, without its handle; what's
+    /// put in the glass is drawn to match it.
+    static let glassMugWidth: CGFloat = 144
+
+    /// Glass spots, left to right: the first beside the grill, a second further right.
+    private static let glassSpots = [
+        CGRect(x: 933, y: 769, width: 150, height: 137),
+        CGRect(x: 1130, y: 769, width: 150, height: 137),
     ]
 
-    /// The window bubbles drift through, top to counter.
-    static let window = CGRect(x: 108, y: 95, width: 1150, height: 705)
+    static let maxPlates = plateSpots.count
+    static let maxGlasses = glassSpots.count
 
-    static let plate = CGRect(x: 308, y: 899, width: 188, height: 83)
-    static let grill = CGRect(x: 570, y: 846, width: 345, height: 189)
-    static let glass = CGRect(x: 989, y: 891, width: 110, height: 99)
+    /// Where `count` plates stand, left to right.
+    static func plates(_ count: Int) -> [CGRect] {
+        Array(plateSpots.suffix(min(max(count, 0), maxPlates)))
+    }
 
-    /// One seat per customer art: the alien and its order sheet.
+    /// Where `count` glasses stand, left to right.
+    static func glasses(_ count: Int) -> [CGRect] {
+        Array(glassSpots.prefix(min(max(count, 0), maxGlasses)))
+    }
+
+    /// One seat per alien drawing. The two green aliens serve regular
+    /// customers; the red one at the top left is the angry customer's.
     static let seats: [Seat] = [
-        Seat(alienImage: "KitchenAlienGreen",
-             alien: CGRect(x: 52, y: 202, width: 253, height: 318),
-             orderSheet: CGRect(x: 259, y: 262, width: 226, height: 190)),
-        Seat(alienImage: "KitchenAlienRed",
-             alien: CGRect(x: 357, y: -9, width: 326, height: 357),
-             orderSheet: CGRect(x: 630, y: 157, width: 226, height: 190)),
+        Seat(alienImage: "KitchenAlienLeft", customerType: .regular,
+             alien: CGRect(x: 47, y: 248, width: 260, height: 297),
+             orderSheet: CGRect(x: 262, y: 290, width: 226, height: 190)),
+        Seat(alienImage: "KitchenAlienTop", customerType: .regular,
+             alien: CGRect(x: 756, y: 0, width: 255, height: 255),
+             orderSheet: CGRect(x: 1000, y: 120, width: 226, height: 190)),
+        Seat(alienImage: "KitchenAlienRed", customerType: .angry,
+             alien: CGRect(x: 287, y: 0, width: 218, height: 221),
+             orderSheet: CGRect(x: 490, y: 90, width: 226, height: 190)),
     ]
 
     struct Seat {
         let alienImage: String
+        /// Who sits here: an angry customer only ever takes the red alien's seat.
+        let customerType: CustomerType
         let alien: CGRect
         let orderSheet: CGRect
 
@@ -91,6 +123,10 @@ nonisolated extension KitchenLayout {
         /// the customer, not onto the drawing itself.
         var serveArea: CGRect { alien.union(orderSheet) }
     }
+
+    /// Who each counter position takes: the regular aliens' first, then the
+    /// angry alien's. How many stand there at once is the level's call.
+    static let positionTypes: [CustomerType] = seats.map(\.customerType)
 }
 
 extension CGRect {

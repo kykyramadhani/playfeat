@@ -3,8 +3,9 @@
 //  PlayFeatTests
 //  Created by kyky on 12/11/26.
 //
-//  Where a let-go ingredient ends up: the trash hole, a storage box, or the
-//  floor. Driven straight through `settle`, so no camera or hands are needed.
+//  Where a let-go ingredient ends up: a station, behind the table, or falling
+//  from mid-air. Driven straight through `settle`, so no camera or hands are
+//  needed.
 //
 
 import CoreGraphics
@@ -15,12 +16,8 @@ import Testing
 @MainActor
 struct KitchenSceneTests {
 
-    private func makeScene() -> KitchenScene {
-        let scene = KitchenScene(size: KitchenLayout.artSize)
-        var generator = SeededGenerator(state: 1)
-        let day = KitchenDay(level: makeLevel(), seatCount: 2, using: &generator)
-        scene.prepare(for: day, pantry: Planet.kepler186f.pantry)
-        return scene
+    private func makeScene(ownedPlates: Int = 1) -> KitchenScene {
+        makeKitchenScene(ownedPlates: ownedPlates).scene
     }
 
     private func letGo(_ ingredient: String, atArtPoint point: CGPoint, in scene: KitchenScene) -> KitchenBubbleNode {
@@ -32,32 +29,25 @@ struct KitchenSceneTests {
         return node
     }
 
-    @Test func anItemLetGoOverTheTrashHoleIsThrownAway() {
+    /// There is no bin: an unwanted item let go over the bare table goes
+    /// behind it and is thrown away.
+    @Test func anItemLetGoOverTheBareTableIsThrownAway() {
         let scene = makeScene()
 
-        _ = letGo("emberPepper", atArtPoint: KitchenLayout.trashHole.center, in: scene)
+        _ = letGo("emberPepper", atArtPoint: CGPoint(x: 1200, y: 950), in: scene)
 
         #expect(scene.bubbles.isEmpty)
     }
 
-    @Test func anItemLetGoOverAStorageBoxIsParkedThere() {
-        let scene = makeScene()
+    /// With two plates, an item goes on the one it was let go over.
+    @Test func withTwoPlatesAnItemGoesOnTheOneItWasLetGoOver() {
+        let scene = makeScene(ownedPlates: 2)
 
-        let node = letGo("duskFlatbread", atArtPoint: KitchenLayout.storageSlots[0], in: scene)
+        let node = letGo(KitchenMenu.bakedFlatbread, atArtPoint: scene.artRect(of: .plate(0)).center, in: scene)
 
-        #expect(node.parkedIn == 0)
-        #expect(scene.storage.slots[0] === node)
-    }
-
-    /// One item per box: a second one let go over a full box falls instead.
-    @Test func aFullBoxTurnsTheNextItemAway() {
-        let scene = makeScene()
-        _ = letGo("duskFlatbread", atArtPoint: KitchenLayout.storageSlots[0], in: scene)
-
-        let second = letGo("emberPepper", atArtPoint: CGPoint(x: 1100, y: 800), in: scene)
-
-        #expect(second.parkedIn == nil)
-        #expect(second.fallingSince != nil)
+        #expect(node.placement == .plate(0))
+        #expect(scene.plates[0].contents == [KitchenMenu.bakedFlatbread])
+        #expect(scene.plates[1].contents.isEmpty)
     }
 
     @Test func anItemLetGoInMidAirFalls() {

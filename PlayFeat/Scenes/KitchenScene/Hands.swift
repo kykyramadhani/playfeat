@@ -3,8 +3,8 @@
 //  PlayFeat
 //  Created by kyky on 12/11/26.
 //
-//  The kitchen's hand handling: the glow follows every hand, a fist grabs
-//  the nearest bubble (or parked item) it touches, and a hand that stays open
+//  The kitchen's hand handling: a glove follows every hand, a fist grabs
+//  the nearest bubble (or item put down) it touches, and a hand that stays open
 //  lets go. Same feel as the classic board — same easing, release debounce
 //  and dropout grace — so a player moving between modes notices no change.
 //
@@ -27,12 +27,11 @@ extension KitchenScene {
         let liveIDs = Set(handInput.hands.map(\.id))
 
         for hand in handInput.hands {
-            let cursor = convertPoint(fromView: handInput.cursor(for: hand, in: viewSize))
-            updateGlow(for: hand.id, at: cursor, isFist: hand.isClosedFist)
+            updateGlove(for: hand, at: convertPoint(fromView: handInput.cursor(for: hand, in: viewSize)))
         }
-        retireVanishedGlows(stillLive: liveIDs)
+        retireVanishedGloves(stillLive: liveIDs)
 
-        guard let day, day.isRunning, !day.isOver else {
+        guard let day, day.isRunning, !day.isOver, !day.isRoundOver else {
             dropEverythingHeld()
             return
         }
@@ -92,10 +91,11 @@ extension KitchenScene {
         hand.openSince = nil
     }
 
-    /// The nearest free bubble or parked item any joint of the hand touches.
+    /// The nearest free bubble or put-down item any joint of the hand touches.
     private func grabCandidate(touchedBy joints: [CGPoint]) -> KitchenBubbleNode? {
         var best: (node: KitchenBubbleNode, distance: CGFloat)?
-        for node in bubbles where node.heldBy == nil {
+        let now = day?.elapsed ?? 0
+        for node in bubbles where node.heldBy == nil && !node.isRefused(at: now) {
             guard let nearest = joints.map({ $0.distance(to: node.position) }).min(),
                   nearest <= node.radius + grabSlack,
                   nearest < best?.distance ?? .infinity else { continue }
@@ -124,26 +124,24 @@ extension KitchenScene {
         hands.removeAll()
     }
 
-    // MARK: - Glow
+    // MARK: - Gloves
 
-    private func updateGlow(for id: Int, at position: CGPoint, isFist: Bool) {
-        let glow = glows[id] ?? {
-            let node = HandGlowNode(radius: bubbleRadius)
+    private func updateGlove(for hand: HandData, at position: CGPoint) {
+        let glove = gloves[hand.id] ?? {
+            let node = GloveNode(bubbleRadius: bubbleRadius)
             node.zPosition = Self.glowZ
             addChild(node)
-            node.attachTrail(to: self)
-            glows[id] = node
+            gloves[hand.id] = node
             return node
         }()
-        glow.setVisible(true)
-        glow.position = position
-        glow.setGrabbing(isFist)
+        glove.position = position
+        glove.show(pinching: hand.isClosedFist, side: hand.side)
     }
 
-    private func retireVanishedGlows(stillLive: Set<Int>) {
-        for (id, glow) in glows where !stillLive.contains(id) {
-            glow.fadeOutAndRemove()
-            glows[id] = nil
+    private func retireVanishedGloves(stillLive: Set<Int>) {
+        for (id, glove) in gloves where !stillLive.contains(id) {
+            glove.fadeOutAndRemove()
+            gloves[id] = nil
         }
     }
 }

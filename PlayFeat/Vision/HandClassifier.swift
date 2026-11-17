@@ -37,6 +37,9 @@ nonisolated enum HandClassifier {
         /// Each finger's shape. Only measured for grips judged from them
         /// (see `GripGesture.usesFingerShapes`).
         var geometry: GestureGeometry? = nil
+        /// Which of the player's hands this is, placed from the body pose
+        /// (see `HandSideAssigner`); nil when the body couldn't tell.
+        var side: HandSide? = nil
     }
 
     enum ClassificationError: Error {

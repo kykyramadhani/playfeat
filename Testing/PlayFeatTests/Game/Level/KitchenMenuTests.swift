@@ -27,7 +27,7 @@ struct KitchenMenuTests {
     }
 
     /// Every dish a level can order has a recipe.
-    @Test(arguments: ["pepperFlatbread", "mushroomFlatbread", "sunsetSorbet"])
+    @Test(arguments: ["pepperFlatbread", "mushroomFlatbread", "slimyTentacles"])
     func everyOrderableDishHasARecipe(dish: String) {
         #expect(KitchenMenu.recipes[dish] != nil)
     }

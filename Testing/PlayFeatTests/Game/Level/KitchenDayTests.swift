@@ -3,6 +3,10 @@
 //  PlayFeatTests
 //  Created by kyky on 12/11/26.
 //
+//  A story day by the prototype's rules: the clock, the refill customer
+//  flow with its overtime, and the scoring (dish points, zone tips, the
+//  penalty for a lost customer that never takes the score below zero).
+//
 
 import Testing
 @testable import PlayFeat
@@ -10,10 +14,17 @@ import Testing
 @MainActor
 struct KitchenDayTests {
 
-    private func makeDay() -> KitchenDay {
-        var generator = SeededGenerator(state: 1)
-        return KitchenDay(level: makeLevel(), seatCount: 2, using: &generator)
+    /// Plays the day from 0 to `seconds` in small steps, as the scene would.
+    private func run(_ day: KitchenDay, to seconds: Double, from start: Double = 0) {
+        day.start()
+        var time = start
+        while time <= seconds {
+            day.tick(at: time)
+            time += 0.2
+        }
     }
+
+    // MARK: - Clock
 
     @Test func theClockOnlyRunsOnceTheDayHasStarted() {
         let day = makeDay()
@@ -42,57 +53,138 @@ struct KitchenDayTests {
         #expect(abs(day.elapsed - 0.3) < 0.0001)
     }
 
-    // MARK: - Serving
+    // MARK: - Refill flow
 
-    /// Plays the day up to `seconds` in small steps, as the scene would.
-    private func run(_ day: KitchenDay, for seconds: Double) {
-        day.start()
-        var time = 0.0
-        while time <= seconds {
-            day.tick(at: time)
-            time += 0.2
-        }
-    }
-
-    @Test func theFirstCustomerIsWaitingBeforeTheDayStarts() {
+    @Test func theFirstCustomerOrdersTheFirstOrderAtTheOpeningBell() {
         let day = makeDay()
 
-        #expect(day.presentCustomers.map(\.dish) == ["pepperFlatbread"])
+        #expect(day.presentCustomers.map(\.dish) == [KitchenMenu.pepperFlatbread])
     }
 
-    @Test func servingTheOrderedDishPaysAndTheCustomerLeaves() {
+    /// The other counter spots fill `refillDelaySec` apart.
+    @Test func theOtherSpotsFillOneDelayApart() {
+        let day = makeDay(makeLevel(counterSpots: 2, orderPool: [KitchenMenu.mushroomFlatbread: 1]))
+        run(day, to: 1.8)
+        #expect(day.presentCustomers.count == 1)
+
+        run(day, to: 2.2, from: 2)
+
+        #expect(day.presentCustomers.map(\.dish).sorted() == [KitchenMenu.mushroomFlatbread, KitchenMenu.pepperFlatbread])
+    }
+
+    @Test func aServedCustomersSpotRefillsAfterTheDelay() {
         let day = makeDay()
-        run(day, for: 9)
+        run(day, to: 1)
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
 
-        let served = day.serve("pepperFlatbread", at: 0)
-
-        #expect(served)
-        #expect(day.coins == KitchenDay.coinsPerDish)
-        // 45 s of patience, ~9 used: ~36 s left buys 11–12 tip points at one per 3 s.
-        #expect((11...12).contains(day.tips))
+        run(day, to: 2.8, from: 1.2)
         #expect(day.presentCustomers.isEmpty)
+        run(day, to: 3.4, from: 3)
+
+        #expect(day.presentCustomers.count == 1)
+    }
+
+    @Test func theLevelsAngryCustomersOrderTheDessert() {
+        let day = makeDay(makeLevel(counterSpots: 2, angryAt: [2], refillDelaySec: 0))
+
+        let angry = day.presentCustomers.first { $0.type == .angry }
+        #expect(angry?.dish == KitchenMenu.angryOrder)
+        #expect(angry?.patienceSec == 25)
+    }
+
+    /// No one new steps up after the day's 90 s; whoever is at the counter
+    /// can still be served, and the day ends once they're gone.
+    @Test func overtimeLastsUntilTheCounterIsEmpty() {
+        let day = makeDay(makeLevel(patienceSec: 200))
+        run(day, to: 91)
+        #expect(day.timeLeft == 0)
+        #expect(!day.isOver)
+
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        run(day, to: 95, from: 91.2)
+
+        #expect(day.presentCustomers.isEmpty)
+        #expect(day.isOver)
+    }
+
+    // MARK: - Scoring
+
+    /// Pepper Flatbread is a flatbread (10) and a pepper (10).
+    @Test func servingPaysTheDishsIngredientPoints() {
+        let day = makeDay()
+        run(day, to: 1)
+
+        #expect(day.serve(KitchenMenu.pepperFlatbread, at: 0))
+        #expect(day.points == 20)
+        #expect(day.presentCustomers.isEmpty)
+    }
+
+    /// Over half the patience left is the green zone's 5-point tip.
+    @Test func aQuickServeTipsTheGreenZone() {
+        let day = makeDay()
+        run(day, to: 5)
+
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+
+        #expect(day.tips == 5)
+        #expect(day.total == 25)
+    }
+
+    /// Between 20% and 50% of the patience left is the yellow zone's 2 points.
+    @Test func aSlowServeTipsTheYellowZone() {
+        let day = makeDay()
+        run(day, to: 30)
+
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+
+        #expect(day.tips == 2)
+    }
+
+    @Test func anAngryCustomersTipCountsDouble() {
+        let day = makeDay(makeLevel(firstOrder: KitchenMenu.slimyTentacles, angryAt: [1]))
+        run(day, to: 1)
+
+        _ = day.serve(KitchenMenu.slimyTentacles, at: 2)
+
+        #expect(day.tips == 10)
     }
 
     @Test func aDishTheCustomerDidntOrderIsTurnedAway() {
         let day = makeDay()
-        run(day, for: 1)
+        run(day, to: 1)
 
-        #expect(!day.serve("mushroomFlatbread", at: 0))
-        #expect(!day.serve("pepperFlatbread", at: 1))
-        #expect(day.coins == 0)
-        #expect(day.presentCustomers.count == 1)
+        #expect(!day.serve(KitchenMenu.mushroomFlatbread, at: 0))
+        #expect(day.points == 0)
     }
 
-    @Test func theDayIsOverWhenItsDurationRunsOut() {
-        let day = makeDay()
-        day.start()
-        var time = 0.0
-        while !day.isOver, time < 200 {
-            day.tick(at: time)
-            time += 0.2
-        }
+    /// A customer who gives up takes 10 points off, but never below zero.
+    @Test func aLostCustomerCostsTenPointsButNeverBelowZero() {
+        let day = makeDay(makeLevel(patienceSec: 5))
+        run(day, to: 6)
 
-        #expect(day.isOver)
-        #expect(day.timeLeft == 0)
+        #expect(day.ordersMissed == 1)
+        #expect(day.points == 0)
+        #expect(day.pointsLost == 0)
+    }
+
+    @Test func aLostCustomerAfterAServeTakesTheirTenPoints() {
+        let day = makeDay(makeLevel(patienceSec: 5))
+        run(day, to: 1)
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+
+        run(day, to: 9, from: 1.2)
+
+        #expect(day.ordersMissed == 1)
+        #expect(day.points == 10)
+        #expect(day.pointsLost == 10)
+    }
+
+    @Test func starsCountFromTheTotal() {
+        let day = makeDay()
+        run(day, to: 1)
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+
+        // 20 points + 5 tip = 25: one star of [20, 40, 60].
+        #expect(day.stars == 1)
     }
 }

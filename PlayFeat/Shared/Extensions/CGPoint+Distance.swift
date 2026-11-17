@@ -27,8 +27,8 @@ nonisolated extension CGPoint {
     }
 }
 
-nonisolated extension CGFloat {
-    func clamped(to range: ClosedRange<CGFloat>) -> CGFloat {
+nonisolated extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
         Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
     }
 }

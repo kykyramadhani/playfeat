@@ -27,6 +27,9 @@ nonisolated struct HandData: Identifiable, Equatable {
     var isClosedFist: Bool
     /// One chain of joints per finger (thumb → little), normalized Vision space.
     var skeleton: [[CGPoint]]
+    /// The player's left or right hand, from the body pose; nil until the
+    /// body has placed it. Two hands never share a side.
+    var side: HandSide? = nil
 
     /// Every detected joint of this hand as a flat list.
     var recognizedJoints: [CGPoint] { skeleton.flatMap { $0 } }

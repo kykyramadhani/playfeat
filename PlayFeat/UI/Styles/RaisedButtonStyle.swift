@@ -18,8 +18,10 @@ struct RaisedButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(palette.face, in: Capsule())
-            .paperTexture(clippedTo: Capsule())
+            // Texture under the label, so the crayon marks never cross the text.
+            .background {
+                Capsule().fill(palette.face).paperTexture(clippedTo: Capsule())
+            }
             .overlay(Capsule().strokeBorder(.white.opacity(0.5), lineWidth: 3))
             .offset(y: configuration.isPressed ? lipHeight / 2 : 0)
             .padding(.bottom, lipHeight)
@@ -32,6 +34,12 @@ enum RaisedButtonPalette {
     case pink
     case yellow
     case cyan
+    /// Cyan face on a deep blue lip, white label (the report's BACK).
+    case blue
+    /// Green buy button in the shop.
+    case green
+    /// The shop's buy button when the player can't afford it.
+    case greenDisabled
     case start
     case startDisabled
 
@@ -40,6 +48,9 @@ enum RaisedButtonPalette {
         case .pink: .white
         case .yellow: .starYellow
         case .cyan: .galacticCyanLight
+        case .blue: .galacticCyan
+        case .green: .green500
+        case .greenDisabled: .green100
         case .start: .electricPink
         case .startDisabled: .disabledButtonFace
         }
@@ -49,7 +60,8 @@ enum RaisedButtonPalette {
     var label: Color {
         switch self {
         case .pink, .yellow, .cyan: .purple900
-        case .start: .white
+        case .start, .blue, .green: .white
+        case .greenDisabled: .disabledPriceText
         case .startDisabled: .disabledButtonText
         }
     }
@@ -59,6 +71,9 @@ enum RaisedButtonPalette {
         case .pink: .nebulaPink
         case .yellow: .solarOrange
         case .cyan: .galacticCyan
+        case .blue: .cosmicBlue
+        case .green: .green500Lip
+        case .greenDisabled: .green100Lip
         case .start: .startLip
         case .startDisabled: .startLipDisabled
         }
