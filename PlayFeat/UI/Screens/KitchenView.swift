@@ -9,9 +9,11 @@
 //  drawn as cartoon hands over the kitchen.
 //
 //  Layers, back to front: the kitchen art (KitchenBackdrop), the SpriteKit
-//  bubbles and hands (KitchenScene), then the HUD and overlays. When the
-//  day's clock runs out the shift ends and the player goes back to the
-//  planet board.
+//  bubbles and hands (KitchenScene), then the HUD and overlays. When a
+//  story day ends its stars and income are banked and the report shows over
+//  the level board. A marathon is one continuous day: each round's end
+//  freezes it for the card break, and losing three customers ends it with
+//  the marathon report. STOP pauses either.
 //
 
 import AVFoundation
@@ -31,7 +33,14 @@ struct KitchenView: View {
     @State private var hasCalibrated = false
     /// 3 → 0 ("GO!") during a get-ready beat, -1 otherwise.
     @State private var countdown = 3
-    @State private var showShiftOver = false
+    /// Set while a marathon is being played; levels leave it nil.
+    private let marathon: MarathonSession?
+    /// What shows over a finished marathon round.
+    @State private var marathonStep: MarathonStep?
+    @State private var isPaused = false
+    @State private var showSettings = false
+    /// New Tools / New Menu popups still to show before the countdown.
+    @State private var introductions: [KitchenIntroduction]
     /// The app left the foreground while the day was running.
     @State private var isInterrupted = false
     /// It went as far as the background: coming back plays a fresh 3-2-1.
@@ -40,9 +49,20 @@ struct KitchenView: View {
 
     init(sceneManager: SceneManager, level: LevelData) {
         self.sceneManager = sceneManager
-        var generator = SystemRandomNumberGenerator()
-        let day = KitchenDay(level: level, seatCount: KitchenLayout.seats.count, using: &generator)
+        marathon = sceneManager.marathon
+        let day = sceneManager.marathon?.day ?? KitchenDay(
+            storyLevel: level,
+            positionTypes: KitchenLayout.positionTypes,
+            pricing: GameStorage.dishPricing,
+            tools: KitchenTools(
+                for: level, ownedPlates: GameStorage.kitchenPlates, ownedGlasses: GameStorage.kitchenGlasses
+            )
+        )
         _day = State(initialValue: day)
+        let seen = GameStorage.seenIntroductions
+        _introductions = State(initialValue: KitchenIntroduction.introduced(byLevel: level.id).filter {
+            !seen.contains($0.id)
+        })
         #if DEBUG
         _hasCalibrated = State(initialValue: DebugLaunch.skipSeatCheck)
         #endif
@@ -69,17 +89,23 @@ struct KitchenView: View {
                 .designScaled()
             }
 
-            if showShiftOver {
-                GameOverOverlay { sceneManager.goToPlanetSelect() }
-                    .designScaled()
+            if let marathon, let marathonStep {
+                marathonOverlay(marathonStep, of: marathon)
+                    .transition(.opacity)
                     .zIndex(200)
             }
+
         }
         .onAppear(perform: setUp)
         .onDisappear(perform: tearDown)
         .onChange(of: day.isOver) { _, isOver in
-            if isOver { endShift() }
+            if isOver { endDay() }
         }
+        .onChange(of: day.isRoundOver) { _, isRoundOver in
+            if isRoundOver { startBreak() }
+        }
+        .onChange(of: day.ordersDelivered) { marathon?.refreshTools() }
+        .onChange(of: day.presentCustomers.count) { marathon?.refreshTools() }
         .onChange(of: scenePhase) { _, phase in
             handleScenePhase(phase)
         }
@@ -103,11 +129,20 @@ struct KitchenView: View {
 
     private var dayOverlays: some View {
         ZStack {
-            KitchenHUD(day: day)
+            KitchenHUD(day: day, marathonCoins: marathon?.coins)
 
-            if countdown >= 0 {
+            if countdown >= 0, introductions.isEmpty {
                 GetReadyOverlay(count: countdown)
                     .ignoresSafeArea()
+            }
+
+            if let introduction = introductions.first {
+                IntroductionPopup(introduction: introduction) {
+                    GameStorage.markIntroductionSeen(introduction.id)
+                    introductions.removeFirst()
+                }
+                .id(introduction.id)
+                .transition(.opacity)
             }
 
             if handPoseManager.authorizationStatus == .denied
@@ -115,15 +150,31 @@ struct KitchenView: View {
                 CameraPermissionDeniedOverlay()
             }
 
-            if countdown < 0, !showShiftOver {
-                StopButtonLayer(onStop: endShift)
+            if countdown < 0, !day.isOver, marathonStep == nil {
+                StopButtonLayer(onStop: pauseDay)
+            }
+
+            if isPaused {
+                PausePopup(
+                    labels: marathon == nil ? .level : .marathon,
+                    onResume: resumeDay,
+                    onRestart: restartDay,
+                    onSettings: { showSettings = true },
+                    onHome: sceneManager.goToPlanetSelect
+                )
+            }
+
+            if showSettings {
+                SettingsView(onClose: { showSettings = false })
             }
         }
-        .task {
-            guard await playGetReadyCountdown() else { return }
+        // Runs again as each introduction closes; counts down once none are left.
+        .task(id: introductions.count) {
+            guard introductions.isEmpty, await playGetReadyCountdown() else { return }
             day.start()
             audio.startMusic()
         }
+        .animation(.easeOut(duration: 0.2), value: introductions.count)
         .task(id: resumeCountdownRequest) {
             guard resumeCountdownRequest > 0,
                   await playGetReadyCountdown(),
@@ -136,7 +187,13 @@ struct KitchenView: View {
     // MARK: - Lifecycle
 
     private func setUp() {
-        scene.prepare(for: day, pantry: Planet.kepler186f.pantry)
+        let supply: any BubbleSupply = marathon == nil ? StoryBubbleSupply(level: day.level) : MarathonBubbleSupply()
+        scene.prepare(for: day, bubbleSupply: supply)
+        scene.grill = Grill(
+            bakeSec: marathon?.bakeSec ?? KitchenRules.bakeSec,
+            burnMultiplier: day.level.burnTimeMultiplier,
+            slotCount: marathon?.grillSlots ?? 1
+        )
         scene.handInput = handPoseManager
         scene.audio = audio
         handPoseManager.start()
@@ -165,11 +222,73 @@ struct KitchenView: View {
         return true
     }
 
-    private func endShift() {
-        guard !showShiftOver else { return }
+    /// Play is over: a story day banks its stars and income and shows its
+    /// report over the level board; a marathon shows its report here.
+    private func endDay() {
+        guard marathonStep != .report else { return }
         day.pause()
         audio.stopMusic()
-        showShiftOver = true
+        if marathon != nil {
+            withAnimation(.easeOut(duration: 0.3)) { marathonStep = .report }
+        } else {
+            let previousBest = GameStorage.bestStars(forLevel: day.level.id)
+            GameStorage.recordDay(onLevel: day.level.id, stars: day.stars, income: day.total)
+            sceneManager.showReport(LevelReport(day: day, previousBestStars: previousBest))
+        }
+    }
+
+    // MARK: - Marathon
+
+    enum MarathonStep { case upgrades, report }
+
+    /// A round's time is up: play freezes and the break's cards come up.
+    private func startBreak() {
+        guard let marathon, !day.isOver else { return }
+        marathon.startBreak()
+        withAnimation(.easeOut(duration: 0.3)) { marathonStep = .upgrades }
+    }
+
+    /// Buys the card picked, if any, puts its upgrade on the grill, and
+    /// plays on into the next round.
+    private func endBreak(buying card: MarathonCard?) {
+        guard let marathon else { return }
+        if let card {
+            // The overlay only lets an affordable card from the offer be picked.
+            try? marathon.buy(card)
+        }
+        scene.grill.bakeSec = marathon.bakeSec
+        scene.grill.growSlots(to: marathon.grillSlots)
+        marathon.endBreak()
+        withAnimation(.easeOut(duration: 0.3)) { marathonStep = nil }
+    }
+
+    @ViewBuilder
+    private func marathonOverlay(_ step: MarathonStep, of marathon: MarathonSession) -> some View {
+        switch step {
+        case .upgrades:
+            RoundCompleteOverlay(session: marathon, onContinue: endBreak(buying:))
+        case .report:
+            MarathonReportView(session: marathon, onNext: sceneManager.goToPlanetSelect)
+        }
+    }
+
+    private func pauseDay() {
+        day.pause()
+        isPaused = true
+    }
+
+    private func resumeDay() {
+        isPaused = false
+        day.start()
+    }
+
+    /// Starts this level, or the whole marathon, over from its beginning.
+    private func restartDay() {
+        if marathon == nil {
+            sceneManager.goToKitchen(day.level)
+        } else {
+            sceneManager.startMarathon()
+        }
     }
 
     // MARK: - Leaving and returning to the foreground
@@ -179,7 +298,7 @@ struct KitchenView: View {
     private func handleScenePhase(_ phase: ScenePhase) {
         switch phase {
         case .active:
-            guard isInterrupted else { return }
+            guard isInterrupted, !day.isOver else { return }
             isInterrupted = false
             if needsGetReadyOnReturn {
                 needsGetReadyOnReturn = false

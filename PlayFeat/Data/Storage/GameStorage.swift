@@ -31,6 +31,11 @@ struct GameStorage {
 
     static func bestStarsKey(forLevel levelID: String) -> String { "bestStars_\(levelID)" }
 
+    /// A planet's progress from the best stars saved for its levels.
+    static func progress(on planet: Planet) -> PlanetProgress {
+        PlanetProgress(bestStars: planet.levelIDs.map(bestStars(forLevel:)))
+    }
+
     static func bestStars(forLevel levelID: String) -> Int {
         UserDefaults.standard.integer(forKey: bestStarsKey(forLevel: levelID))
     }
@@ -39,6 +44,75 @@ struct GameStorage {
     static func recordStars(_ stars: Int, forLevel levelID: String) {
         guard stars > bestStars(forLevel: levelID) else { return }
         UserDefaults.standard.set(stars, forKey: bestStarsKey(forLevel: levelID))
+    }
+
+    static let seenIntroductionsKey = "seenIntroductions"
+
+    /// IDs of the New Tools / New Menu popups already shown.
+    static var seenIntroductions: Set<String> {
+        Set(UserDefaults.standard.stringArray(forKey: seenIntroductionsKey) ?? [])
+    }
+
+    static func markIntroductionSeen(_ id: String) {
+        let seen = seenIntroductions.union([id])
+        UserDefaults.standard.set(Array(seen).sorted(), forKey: seenIntroductionsKey)
+    }
+
+    // MARK: - Kitchen shop
+
+    static func upgradeLevelKey(_ id: String) -> String { "upgrade_\(id)" }
+
+    /// How many levels of a KitchenShop upgrade the player has bought.
+    static func upgradeLevel(_ id: String) -> Int {
+        UserDefaults.standard.integer(forKey: upgradeLevelKey(id))
+    }
+
+    /// Pays `price` coins for the next level of upgrade `id`.
+    static func buyUpgrade(_ id: String, price: Int) throws(ShopPurchaseError) {
+        guard coins >= price else { throw .notEnoughCoins(have: coins, price: price) }
+        coins -= price
+        UserDefaults.standard.set(upgradeLevel(id) + 1, forKey: upgradeLevelKey(id))
+    }
+
+    /// Plates on the kitchen counter: one to start, two with the shop's upgrade.
+    static var kitchenPlates: Int { ownedTools(KitchenShop.plateID) }
+
+    /// Glasses, the same way as plates.
+    static var kitchenGlasses: Int { ownedTools(KitchenShop.glassID) }
+
+    private static func ownedTools(_ id: String) -> Int {
+        KitchenShop.upgrade(id)?.value(atLevel: upgradeLevel(id)) ?? 1
+    }
+
+    /// What each ingredient adds to a dish's pay, after its upgrade.
+    static var dishPricing: DishPricing {
+        let values = KitchenShop.ingredientUpgrades.map { item in
+            (item.ingredient, item.upgrade.value(atLevel: upgradeLevel(item.upgrade.id)))
+        }
+        return DishPricing(ingredientValues: Dictionary(uniqueKeysWithValues: values))
+    }
+
+    /// Banks a finished planet-kitchen day: its stars, if they beat the
+    /// level's best, and its income.
+    static func recordDay(onLevel levelID: String, stars: Int, income: Int) {
+        recordStars(stars, forLevel: levelID)
+        coins = max(coins + income, 0)
+    }
+
+    /// Levels finished with at least one star: what the shop and the
+    /// marathon open on.
+    static func clearedLevels(on planet: Planet) -> Set<String> {
+        Set(planet.levelIDs.filter { bestStars(forLevel: $0) > 0 })
+    }
+
+    // MARK: - Marathon spoiler warning
+
+    static let marathonSpoilerSeenKey = "marathonSpoilerSeen"
+
+    /// The marathon's spoiler warning has been shown once already.
+    static var hasSeenMarathonSpoiler: Bool {
+        get { UserDefaults.standard.bool(forKey: marathonSpoilerSeenKey) }
+        set { UserDefaults.standard.set(newValue, forKey: marathonSpoilerSeenKey) }
     }
 
     /// Banks a finished run: its coins, and its dish count if that beats the

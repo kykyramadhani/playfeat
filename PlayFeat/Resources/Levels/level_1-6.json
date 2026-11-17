@@ -1,0 +1,54 @@
+{
+  "id": "1-6",
+  "name": "Double Trouble",
+  "planet": "kepler-186f",
+  "durationSec": 90,
+  "refill": {
+    "counterSpots": 3,
+    "refillDelaySec": 2,
+    "firstOrder": "pepperFlatbread",
+    "orderPool": {
+      "pepperFlatbread": 1,
+      "mushroomFlatbread": 1,
+      "slimyTentacles": 1
+    },
+    "angryAt": [],
+    "angryEvery": 3,
+    "patienceSec": 35,
+    "angryPatienceSec": 25
+  },
+  "gravity": {
+    "direction": "down",
+    "multiplier": 0.6
+  },
+  "bubbleLifeSec": 4,
+  "bubbleEverySec": 2,
+  "usefulBubbleShare": 0.6,
+  "cups": true,
+  "burnTimeMultiplier": 1,
+  "starTargets": [
+    50,
+    85,
+    105
+  ],
+  "energyCost": 5,
+  "pool": [
+    "duskFlatbread",
+    "emberPepper",
+    "duskMushroom",
+    "tentacle",
+    "slime"
+  ],
+  "bubbles": [
+    {
+      "at": 0,
+      "ingredient": "duskFlatbread",
+      "lane": 2
+    },
+    {
+      "at": 2,
+      "ingredient": "emberPepper",
+      "lane": 3
+    }
+  ]
+}

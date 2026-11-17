@@ -1,0 +1,51 @@
+{
+  "id": "1-3",
+  "name": "Two Toppings",
+  "planet": "kepler-186f",
+  "durationSec": 90,
+  "refill": {
+    "counterSpots": 2,
+    "refillDelaySec": 2,
+    "firstOrder": "pepperFlatbread",
+    "orderPool": {
+      "pepperFlatbread": 1,
+      "mushroomFlatbread": 1
+    },
+    "angryAt": [],
+    "angryEvery": null,
+    "patienceSec": 40,
+    "angryPatienceSec": 25
+  },
+  "gravity": {
+    "direction": "down",
+    "multiplier": 0.5
+  },
+  "bubbleLifeSec": 5,
+  "bubbleEverySec": 2.5,
+  "usefulBubbleShare": 0.65,
+  "cups": false,
+  "burnTimeMultiplier": 1,
+  "starTargets": [
+    20,
+    45,
+    65
+  ],
+  "energyCost": 3,
+  "pool": [
+    "duskFlatbread",
+    "emberPepper",
+    "duskMushroom"
+  ],
+  "bubbles": [
+    {
+      "at": 0,
+      "ingredient": "duskFlatbread",
+      "lane": 2
+    },
+    {
+      "at": 2,
+      "ingredient": "emberPepper",
+      "lane": 3
+    }
+  ]
+}

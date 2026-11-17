@@ -3,64 +3,76 @@
 //  PlayFeatTests
 //  Created by Owen Limantoro on 12/11/26.
 //
-//  The grill's timing: raw, baked at 6 s, warned about at 8 s, burnt at 12 s.
+//  The grill by the prototype's timings: baked at 6 s, glowing 8 s after
+//  that, burnt 12 s after that, both stretched by a level's multiplier.
 //
 
 import Testing
-import Foundation
 @testable import PlayFeat
 
 struct GrillTests {
 
-    @Test(arguments: [
-        (0.0, Grill.Doneness.cooking),
-        (5.9, .cooking),
-        (6.0, .cooked),
-        (7.9, .cooked),
-        (8.0, .overcooking),
-        (11.9, .overcooking),
-        (12.0, .burnt),
-        (60.0, .burnt),
-    ])
-    func donenessFollowsTimeOnTheGrill(seconds: TimeInterval, expected: Grill.Doneness) {
-        #expect(Grill.doneness(after: seconds) == expected)
+    @Test func aFlatbreadBakesGlowsThenBurns() {
+        let grill = Grill()
+
+        #expect(grill.doneness(afterCooking: 5.9) == .cooking)
+        #expect(grill.doneness(afterCooking: 6) == .cooked)
+        #expect(grill.doneness(afterCooking: 14) == .overcooking)
+        #expect(grill.doneness(afterCooking: 18) == .burnt)
     }
 
-    @Test func aBakedFlatbreadIsStillBakedWhileTheWarningShows() {
-        #expect(Grill.Doneness.overcooking.item == KitchenMenu.bakedFlatbread)
-        #expect(Grill.Doneness.overcooking.needsWarning)
-        #expect(!Grill.Doneness.cooked.needsWarning)
+    /// Level 1-1 doubles the time a baked flatbread lasts.
+    @Test func theBurnMultiplierStretchesTheTimeAfterBaking() {
+        let grill = Grill(burnMultiplier: 2)
+
+        #expect(grill.doneness(afterCooking: 6) == .cooked)
+        #expect(grill.doneness(afterCooking: 21.9) == .cooked)
+        #expect(grill.doneness(afterCooking: 22) == .overcooking)
+        #expect(grill.doneness(afterCooking: 30) == .burnt)
     }
 
-    @Test func burntFlatbreadIsItsOwnItem() {
-        #expect(Grill.Doneness.burnt.item == KitchenMenu.burntFlatbread)
-    }
-
-    @Test func onlyARawFlatbreadGoesOnTheGrill() {
+    @Test func itTakesRawAndBakedFlatbreadsOnly() {
         let grill = Grill()
 
         #expect(grill.accepts(KitchenMenu.rawFlatbread))
-        #expect(!grill.accepts(KitchenMenu.bakedFlatbread))
+        #expect(grill.accepts(KitchenMenu.bakedFlatbread))
+        #expect(!grill.accepts(KitchenMenu.burntFlatbread))
         #expect(!grill.accepts(KitchenMenu.pepper))
     }
 
-    @Test func theGrillCooksOneFlatbreadAtATime() {
+    @Test func cookingCountsFromWhenTheFlatbreadWentOn() {
         var grill = Grill()
-        grill.place(at: 0)
 
-        #expect(!grill.accepts(KitchenMenu.rawFlatbread))
+        grill.place(onSlot: 0, at: 10, cookedBefore: 0)
+
+        #expect(grill.doneness(onSlot: 0, at: 15) == .cooking)
+        #expect(grill.doneness(onSlot: 0, at: 16) == .cooked)
     }
 
-    /// Timed from when it went on, in play time.
-    @Test func donenessCountsFromWhenItWasPutOn() {
+    /// A baked flatbread put back carries on from where it was.
+    @Test func aBakedFlatbreadPutBackCarriesOn() {
         var grill = Grill()
-        grill.place(at: 10)
 
-        #expect(grill.doneness(at: 15) == .cooking)
-        #expect(grill.doneness(at: 16) == .cooked)
+        grill.place(onSlot: 0, at: 0, cookedBefore: grill.cookedBefore(KitchenMenu.bakedFlatbread, remembered: 13))
+
+        #expect(grill.doneness(onSlot: 0, at: 1) == .overcooking)
     }
 
-    @Test func anEmptyGrillCooksNothing() {
-        #expect(Grill().doneness(at: 100) == nil)
+    @Test func clearingASlotEmptiesIt() {
+        var grill = Grill()
+        grill.place(onSlot: 0, at: 0, cookedBefore: 0)
+
+        grill.clear(0)
+
+        #expect(!grill.isTaken(0))
+        #expect(grill.doneness(onSlot: 0, at: 5) == nil)
+    }
+
+    @Test func theSecondGrillSpotAddsASlot() {
+        var grill = Grill()
+
+        grill.growSlots(to: 2)
+
+        #expect(grill.slots.count == 2)
     }
 }

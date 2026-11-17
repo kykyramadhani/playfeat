@@ -23,7 +23,9 @@ struct KitchenBackdrop: View {
             ZStack(alignment: .topLeading) {
                 Image("KitchenWindowView").resizable()
                 KitchenCustomers(day: day, part: .aliens)
+                // Figma cuts the counter one point short at the bottom.
                 Image("KitchenCounter").resizable()
+                    .frame(width: KitchenLayout.artSize.width, height: KitchenLayout.artSize.height - 1)
                 props
                 KitchenCustomers(day: day, part: .orderSheets)
             }
@@ -38,11 +40,12 @@ struct KitchenBackdrop: View {
 
     private var props: some View {
         ZStack(alignment: .topLeading) {
-            Image("KitchenPlate").resizable().placed(in: KitchenLayout.plate)
+            ForEach(KitchenLayout.plates(day.tools.plates), id: \.minX) { spot in
+                Image("KitchenPlate").resizable().placed(in: spot)
+            }
             Image("KitchenGrill").resizable().placed(in: KitchenLayout.grill)
-            Image("KitchenGlass").resizable().placed(in: KitchenLayout.glass)
-            ForEach(KitchenLayout.storageBoxes.indices, id: \.self) { index in
-                Image("KitchenStorageBox").resizable().placed(in: KitchenLayout.storageBoxes[index])
+            ForEach(KitchenLayout.glasses(day.tools.glasses), id: \.minX) { spot in
+                Image("KitchenGlass").resizable().placed(in: spot)
             }
         }
     }
@@ -59,7 +62,7 @@ private struct KitchenCustomers: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             ForEach(day.presentCustomers, id: \.seat) { customer in
-                let seat = KitchenLayout.seats[customer.seat % KitchenLayout.seats.count]
+                let seat = KitchenLayout.seats[customer.seat]
                 switch part {
                 case .aliens:
                     Image(seat.alienImage).resizable().placed(in: seat.alien)

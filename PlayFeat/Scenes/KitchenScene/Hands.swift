@@ -32,7 +32,7 @@ extension KitchenScene {
         }
         retireVanishedHandCursors(stillLive: liveIDs)
 
-        guard let day, day.isRunning, !day.isOver else {
+        guard let day, day.isRunning, !day.isOver, !day.isRoundOver else {
             dropEverythingHeld()
             return
         }
@@ -94,10 +94,11 @@ extension KitchenScene {
         hand.openSince = nil
     }
 
-    /// The nearest free bubble or parked item any joint of the hand touches.
+    /// The nearest free bubble or put-down item any joint of the hand touches.
     private func grabCandidate(touchedBy joints: [CGPoint]) -> KitchenBubbleNode? {
         var best: (node: KitchenBubbleNode, distance: CGFloat)?
-        for node in bubbles where node.heldBy == nil {
+        let now = day?.elapsed ?? 0
+        for node in bubbles where node.heldBy == nil && !node.isRefused(at: now) {
             guard let nearest = joints.map({ $0.distance(to: node.position) }).min(),
                   nearest <= node.radius + grabSlack,
                   nearest < best?.distance ?? .infinity else { continue }

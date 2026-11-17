@@ -5,7 +5,7 @@
 //
 //  The trophy under the level board that opens the planet's endless
 //  marathon. It glows gold once unlocked; until then the trophy is a dark
-//  silhouette behind a padlock and nothing happens on tap.
+//  silhouette behind a padlock, and a tap says how to unlock it.
 //
 
 import SwiftUI
@@ -15,12 +15,8 @@ struct MarathonModeButton: View {
     let action: () -> Void
 
     var body: some View {
-        if isUnlocked {
-            ClickButton(action: action) { badge }
-                .buttonStyle(.plain)
-        } else {
-            badge
-        }
+        ClickButton(action: action) { badge }
+            .buttonStyle(.plain)
     }
 
     /// Laid out on the Figma frame's own 275×207 grid: the art is a
@@ -47,8 +43,8 @@ struct MarathonModeButton: View {
             if !isUnlocked {
                 Image("MarathonLock")
                     .resizable()
-                    .frame(width: 103, height: 103)
-                    .position(x: 137.5, y: 82.5)
+                    .frame(width: 103, height: 121)
+                    .position(x: 137.5, y: 91.5)
             }
 
             label
@@ -57,7 +53,6 @@ struct MarathonModeButton: View {
         .frame(width: 275, height: 207)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
-        .accessibilityAddTraits(isUnlocked ? .isButton : [])
     }
 
     private var label: some View {

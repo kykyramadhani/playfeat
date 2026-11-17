@@ -14,12 +14,11 @@ nonisolated struct Planet {
     /// Shown on the planet's banner; a proper noun, so the same in every language.
     let name: String
     let levelIDs: [String]
-    /// Every ingredient this planet's bubbles can hold.
-    let pantry: Set<String>
 
+    /// Levels 1–3 teach the grill and the two flatbreads, level 4 brings the
+    /// glass and its dessert, and from level 5 the angry red alien comes in.
     static let kepler186f = Planet(
         name: "Kepler-186f",
-        levelIDs: ["1-1", "1-2", "1-3", "1-4"],
-        pantry: ["duskFlatbread", "emberPepper", "duskMushroom"]
+        levelIDs: ["1-1", "1-2", "1-3", "1-4", "1-5", "1-6"]
     )
 }
