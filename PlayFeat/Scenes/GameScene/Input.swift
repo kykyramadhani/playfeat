@@ -37,7 +37,7 @@ extension GameScene {
         // as well as during play. Only the interaction below is gated.
         for hand in hands {
             let cursor = convertPoint(fromView: handInput.cursor(for: hand, in: viewSize))
-            updateCursorNode(for: hand.id, at: cursor, isFist: hand.isClosedFist)
+            updateCursorNode(for: hand, at: cursor)
         }
         retireVanishedCursors(stillLive: liveIDs)
 
@@ -476,20 +476,20 @@ extension GameScene {
     // MARK: - Cursors
 
     /// Draws a cartoon hand on the palm: open while open, pinching while it grips.
-    func updateCursorNode(for id: Int, at position: CGPoint, isFist: Bool) {
+    func updateCursorNode(for hand: HandData, at position: CGPoint) {
         let node: HandCursorNode
-        if let existing = cursorNodes[id] {
+        if let existing = cursorNodes[hand.id] {
             node = existing
         } else {
-            let side = HandCursorNode.side(at: position, in: frame)
-            node = HandCursorNode(side: side, bubbleRadius: ingredientRadius)
+            node = HandCursorNode(chirality: hand.chirality, bubbleRadius: ingredientRadius)
             node.zPosition = Self.handZ
             addChild(node)
-            cursorNodes[id] = node
+            cursorNodes[hand.id] = node
         }
         node.setVisible(true)
         node.position = position
-        node.setGrabbing(isFist)
+        node.setChirality(hand.chirality)
+        node.setGrabbing(hand.isClosedFist)
     }
 
     func hideAllCursors() {

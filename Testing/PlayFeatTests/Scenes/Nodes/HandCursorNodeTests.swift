@@ -8,20 +8,62 @@
 //
 
 import CoreGraphics
+import SpriteKit
 import Testing
 import UIKit
+import Vision
 @testable import PlayFeat
 
+@MainActor
 struct HandCursorNodeTests {
 
-    private let screen = CGRect(x: 0, y: 0, width: 1000, height: 700)
+    @Test(arguments: [VNChirality.left, .right])
+    func chiralityControlsTheArtworkOnEitherHalfOfTheScreen(chirality: VNChirality) throws {
+        let scene = GameScene(size: CGSize(width: 1000, height: 700))
+        let hand = HandData(id: 0, cursorPosition: .zero, grabPoint: .zero,
+                            isOpenHand: true, isClosedFist: false, skeleton: [], chirality: chirality)
 
-    @Test func aHandFirstSeenOnTheLeftHalfIsDrawnAsALeftHand() {
-        #expect(HandCursorNode.side(at: CGPoint(x: 300, y: 350), in: screen) == .left)
+        for x: CGFloat in [300, 700] {
+            scene.updateCursorNode(for: hand, at: CGPoint(x: x, y: 350))
+            let cursor = try #require(scene.cursorNodes[hand.id])
+            let art = try #require(cursor.children.first as? SKSpriteNode)
+            #expect(art.xScale == (chirality == .left ? -1 : 1))
+        }
     }
 
-    @Test func aHandFirstSeenOnTheRightHalfIsDrawnAsARightHand() {
-        #expect(HandCursorNode.side(at: CGPoint(x: 700, y: 350), in: screen) == .right)
+    @Test(arguments: [VNChirality.left, .right])
+    func unknownChiralityKeepsTheArtworkAndHeldFoodPosition(chirality: VNChirality) throws {
+        let cursor = HandCursorNode(chirality: chirality, bubbleRadius: 80)
+        cursor.position = CGPoint(x: 500, y: 350)
+        let previousPinch = cursor.heldItemPosition
+
+        cursor.setChirality(.unknown)
+
+        let art = try #require(cursor.children.first as? SKSpriteNode)
+        #expect(art.xScale == (chirality == .left ? -1 : 1))
+        #expect(cursor.heldItemPosition == previousPinch)
+    }
+
+    @Test func aKnownReadingUpdatesBothTheArtworkAndHeldFoodPosition() throws {
+        let cursor = HandCursorNode(chirality: .right, bubbleRadius: 80)
+        let rightPinch = cursor.heldItemPosition
+
+        cursor.setChirality(.left)
+
+        let art = try #require(cursor.children.first as? SKSpriteNode)
+        #expect(art.xScale == -1)
+        #expect(cursor.heldItemPosition.x == -rightPinch.x)
+        #expect(cursor.heldItemPosition.y == rightPinch.y)
+    }
+
+    @Test func anInitiallyUnknownCursorUsesDefaultArtUntilIdentified() throws {
+        let cursor = HandCursorNode(chirality: .unknown, bubbleRadius: 80)
+        let art = try #require(cursor.children.first as? SKSpriteNode)
+        #expect(art.xScale == 1)
+
+        cursor.setChirality(.left)
+
+        #expect(art.xScale == -1)
     }
 
     /// A missing image would leave the player's hands invisible during play.
@@ -32,27 +74,27 @@ struct HandCursorNodeTests {
 }
 
 /// Held food sits in the drawn hand's pinch: up from the palm and toward
-/// the thumb side, which is the inside of the screen for either hand.
+/// the thumb side, independent of where the hand is on screen.
 struct HandCursorPinchOffsetTests {
 
     @Test func aRightHandHoldsFoodUpAndToTheLeftOfThePalm() {
-        let offset = HandCursorNode.pinchOffset(side: .right, bubbleRadius: 80)
+        let offset = HandCursorNode.pinchOffset(chirality: .right, bubbleRadius: 80)
 
         #expect(offset.dx < 0)
         #expect(offset.dy > 0)
     }
 
     @Test func aLeftHandHoldsFoodAtTheMirroredSpot() {
-        let right = HandCursorNode.pinchOffset(side: .right, bubbleRadius: 80)
-        let left = HandCursorNode.pinchOffset(side: .left, bubbleRadius: 80)
+        let right = HandCursorNode.pinchOffset(chirality: .right, bubbleRadius: 80)
+        let left = HandCursorNode.pinchOffset(chirality: .left, bubbleRadius: 80)
 
         #expect(left.dx == -right.dx)
         #expect(left.dy == right.dy)
     }
 
     @Test func theOffsetGrowsWithTheHand() {
-        let small = HandCursorNode.pinchOffset(side: .right, bubbleRadius: 40)
-        let large = HandCursorNode.pinchOffset(side: .right, bubbleRadius: 80)
+        let small = HandCursorNode.pinchOffset(chirality: .right, bubbleRadius: 40)
+        let large = HandCursorNode.pinchOffset(chirality: .right, bubbleRadius: 80)
 
         #expect(large.dy == small.dy * 2)
     }

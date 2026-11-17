@@ -9,6 +9,7 @@
 //
 
 import SpriteKit
+import Vision
 
 final class HandCursorNode: SKNode {
 
@@ -24,7 +25,7 @@ final class HandCursorNode: SKNode {
 
     /// Where the thumb and index tips meet in the pinching art (unit
     /// coordinates, origin bottom-left). Held food is drawn here.
-    private static let pinchInArt = CGPoint(x: 0.26, y: 0.60)
+    private static let pinchInArt = CGPoint(x: 0.05, y: 0.6)
 
     /// The art's size relative to an ingredient bubble's radius: a hand a
     /// little larger than the bubble it grabs.
@@ -33,34 +34,36 @@ final class HandCursorNode: SKNode {
     private static let popKey = "pop"
 
     private let art: SKSpriteNode
-    private let pinchOffset: CGVector
+    private let bubbleRadius: CGFloat
+    private var chirality: VNChirality = .unknown
     private var isGrabbing = false
 
-    /// `side` is the hand on screen. The art is a right hand, mirrored for
-    /// the left one.
-    init(side: HandSide, bubbleRadius: CGFloat) {
+    /// The art is a right hand, mirrored when Vision identifies a left hand.
+    /// Until the first known reading, an unknown hand uses the unmirrored art.
+    init(chirality: VNChirality, bubbleRadius: CGFloat) {
         art = SKSpriteNode(texture: Self.openTexture)
-        pinchOffset = Self.pinchOffset(side: side, bubbleRadius: bubbleRadius)
+        self.bubbleRadius = bubbleRadius
         super.init()
 
         let length = bubbleRadius * Self.sizePerBubbleRadius
         art.size = CGSize(width: length, height: length)
         art.anchorPoint = Self.palmAnchor
-        art.xScale = side == .left ? -1 : 1
         addChild(art)
+        setChirality(chirality)
     }
 
     /// Where held food goes: the drawn fingertips, not the palm. Follows
     /// the art rather than the real fingertips, so the food always sits in
     /// the cartoon hand's pinch whatever size the hand is drawn.
     var heldItemPosition: CGPoint {
-        CGPoint(x: position.x + pinchOffset.dx, y: position.y + pinchOffset.dy)
+        let offset = Self.pinchOffset(chirality: chirality, bubbleRadius: bubbleRadius)
+        return CGPoint(x: position.x + offset.dx, y: position.y + offset.dy)
     }
 
     /// From the palm to the drawn pinch, mirrored for a left hand.
-    static func pinchOffset(side: HandSide, bubbleRadius: CGFloat) -> CGVector {
+    static func pinchOffset(chirality: VNChirality, bubbleRadius: CGFloat) -> CGVector {
         let length = bubbleRadius * sizePerBubbleRadius
-        let mirror: CGFloat = side == .left ? -1 : 1
+        let mirror: CGFloat = chirality == .left ? 1 : -1
         return CGVector(
             dx: (pinchInArt.x - palmAnchor.x) * length * mirror,
             dy: (pinchInArt.y - palmAnchor.y) * length
@@ -71,11 +74,13 @@ final class HandCursorNode: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// Which hand a newly seen hand most likely is. The preview is mirrored,
-    /// so the player's left hand shows on the left half. Settled once, when
-    /// the hand appears, so the art never flips mid-move.
-    static func side(at position: CGPoint, in frame: CGRect) -> HandSide {
-        position.x < frame.midX ? .left : .right
+    /// Unknown readings preserve the previous artwork and held-food orientation.
+    func setChirality(_ chirality: VNChirality) {
+        guard chirality != .unknown, chirality != self.chirality else { return }
+        self.chirality = chirality
+        
+        // Mirror the art for a left hand.
+        art.xScale = chirality == .left ? 1 : -1
     }
 
     /// Shows the pinching art while the hand grips, the open art otherwise.

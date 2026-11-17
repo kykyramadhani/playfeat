@@ -10,20 +10,26 @@
 
 import Testing
 import CoreGraphics
+import Vision
 @testable import PlayFeat
 
 struct HandIdentityTrackerTests {
 
     /// One frame's reading for a hand at `point`. `pinch` is the thumb-to-index
     /// gap in palm lengths: 1.0 is wide open, 0.1 is pinched.
-    private func reading(at point: CGPoint, pinch: CGFloat = 1.0) -> HandClassifier.Classification {
+    private func reading(
+        at point: CGPoint,
+        pinch: CGFloat = 1.0,
+        chirality: VNChirality = .unknown
+    ) -> HandClassifier.Classification {
         HandClassifier.Classification(
             location: point,
             grabPoint: point,
             wrist: point,
             palmLength: 0.1,
             pinchRatio: pinch,
-            skeleton: []
+            skeleton: [],
+            chirality: chirality
         )
     }
 
@@ -50,6 +56,59 @@ struct HandIdentityTrackerTests {
         )
 
         #expect(Set(hands.map(\.id)) == [0, 1])
+    }
+
+    // MARK: - Chirality
+
+    @Test(arguments: [VNChirality.left, .right])
+    func unknownChiralityKeepsThePreviousReading(chirality: VNChirality) {
+        var tracker = HandIdentityTracker()
+        let first = tracker.update(with: [reading(at: centre, chirality: chirality)], at: 0)
+        let unknown = tracker.update(with: [reading(at: centre)], at: 0.033)
+        let coasting = tracker.update(with: [], at: 0.066)
+
+        #expect(first.first?.chirality == chirality)
+        #expect(unknown.first?.chirality == chirality)
+        #expect(coasting.first?.chirality == chirality)
+    }
+
+    @Test func anInitiallyUnknownHandLearnsItsChirality() {
+        var tracker = HandIdentityTracker()
+        let unknown = tracker.update(with: [reading(at: centre)], at: 0)
+        let identified = tracker.update(with: [reading(at: centre, chirality: .left)], at: 0.033)
+
+        #expect(unknown.first?.chirality == .unknown)
+        #expect(identified.first?.id == unknown.first?.id)
+        #expect(identified.first?.chirality == .left)
+    }
+
+    @Test func aNewKnownReadingUpdatesThePreviousChirality() {
+        var tracker = HandIdentityTracker()
+        _ = tracker.update(with: [reading(at: centre, chirality: .left)], at: 0)
+        let updated = tracker.update(with: [reading(at: centre, chirality: .right)], at: 0.033)
+
+        #expect(updated.first?.chirality == .right)
+    }
+
+    @Test func eachHandKeepsItsOwnChiralityWhenObservationsAreReordered() {
+        var tracker = HandIdentityTracker()
+        let left = CGPoint(x: 0.8, y: 0.5)
+        let right = CGPoint(x: 0.2, y: 0.5)
+        _ = tracker.update(with: [reading(at: left, chirality: .left),
+                                 reading(at: right, chirality: .right)], at: 0)
+        let reordered = tracker.update(with: [reading(at: right), reading(at: left)], at: 0.033)
+
+        #expect(reordered.map(\.id) == [1, 0])
+        #expect(reordered.map(\.chirality) == [.right, .left])
+    }
+
+    @Test func aNewHandDoesNotInheritAnExpiredHandsChirality() {
+        var tracker = HandIdentityTracker()
+        _ = tracker.update(with: [reading(at: centre, chirality: .left)], at: 0)
+        let newHand = tracker.update(with: [reading(at: centre)], at: tracker.gracePeriod + 0.1)
+
+        #expect(newHand.first?.id == 1)
+        #expect(newHand.first?.chirality == .unknown)
     }
 
     // MARK: - Grace period

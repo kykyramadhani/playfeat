@@ -28,7 +28,7 @@ extension KitchenScene {
 
         for hand in handInput.hands {
             let cursor = convertPoint(fromView: handInput.cursor(for: hand, in: viewSize))
-            updateHandCursor(for: hand.id, at: cursor, isFist: hand.isClosedFist)
+            updateHandCursor(for: hand, at: cursor)
         }
         retireVanishedHandCursors(stillLive: liveIDs)
 
@@ -128,18 +128,18 @@ extension KitchenScene {
 
     // MARK: - Hand cursors
 
-    private func updateHandCursor(for id: Int, at position: CGPoint, isFist: Bool) {
-        let cursor = handCursors[id] ?? {
-            let side = HandCursorNode.side(at: position, in: frame)
-            let node = HandCursorNode(side: side, bubbleRadius: bubbleRadius)
+    private func updateHandCursor(for hand: HandData, at position: CGPoint) {
+        let cursor = handCursors[hand.id] ?? {
+            let node = HandCursorNode(chirality: hand.chirality, bubbleRadius: bubbleRadius)
             node.zPosition = Self.handZ
             addChild(node)
-            handCursors[id] = node
+            handCursors[hand.id] = node
             return node
         }()
         cursor.setVisible(true)
         cursor.position = position
-        cursor.setGrabbing(isFist)
+        cursor.setChirality(hand.chirality)
+        cursor.setGrabbing(hand.isClosedFist)
     }
 
     private func retireVanishedHandCursors(stillLive: Set<Int>) {
