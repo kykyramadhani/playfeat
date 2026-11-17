@@ -2,8 +2,9 @@
 //  GameCenter.swift
 //  GetCooking
 //
-//  Game Center in three calls: sign in at launch, submit the run's dish count
-//  when a run ends, and open the dashboard from the Most Dishes Served card.
+//  Game Center in four calls: sign in at launch, submit the run's dish count
+//  when a run ends, read the top scores for the marathon screen, and open the
+//  dashboard from the Most Dishes Served card.
 //
 //  Everything here fails quietly on purpose. A player who declined the sign-in
 //  prompt, or has no network, still gets the whole game — GameStorage.highscore
@@ -39,6 +40,29 @@ enum GameCenter {
                 context: 0,
                 player: GKLocalPlayer.local,
                 leaderboardIDs: [leaderboardID]
+            )
+        }
+    }
+
+    /// The best `count` players of all time. Empty when signed out, offline,
+    /// or nobody has a score yet — the screen shows its empty state for all three.
+    static func topEntries(count: Int) async -> [LeaderboardEntry] {
+        guard GKLocalPlayer.local.isAuthenticated,
+              let leaderboard = try? await GKLeaderboard.loadLeaderboards(IDs: [leaderboardID]).first,
+              let (_, entries, _) = try? await leaderboard.loadEntries(
+                  for: .global,
+                  timeScope: .allTime,
+                  range: NSRange(location: 1, length: count)
+              )
+        else { return [] }
+
+        let localPlayerID = GKLocalPlayer.local.gamePlayerID
+        return entries.map { entry in
+            LeaderboardEntry(
+                rank: entry.rank,
+                name: entry.player.displayName,
+                score: entry.score,
+                isLocalPlayer: entry.player.gamePlayerID == localPlayerID
             )
         }
     }

@@ -1,0 +1,12 @@
+{
+  "images": [
+    {
+      "filename": "KitchenAlienTop.png",
+      "idiom": "universal"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}

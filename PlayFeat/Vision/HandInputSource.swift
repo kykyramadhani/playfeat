@@ -22,6 +22,10 @@ protocol HandInputSource: AnyObject {
 
     /// The hand's joints in view space, used to test what it is touching.
     func jointPoints(for hand: HandData, in size: CGSize) -> [CGPoint]
+
+    /// Where the hand's grip holds things, in view space. Decides which of the
+    /// bubbles it touches a grab takes.
+    func grabPoint(for hand: HandData, in size: CGSize) -> CGPoint
 }
 
 extension HandPoseManager: HandInputSource {}

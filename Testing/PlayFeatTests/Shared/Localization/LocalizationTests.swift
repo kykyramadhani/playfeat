@@ -91,7 +91,7 @@ struct LocalizationTests {
         let keys: [String.LocalizationValue] = [
             // Settings sheet
             "Music", "Sound Effects", "Language", "One-hand Mode", "OFF", "ON",
-            "Left Hand", "Right Hand",
+            "Left Hand", "Right Hand", "Pickup Gesture", "Pinch", "F Pinch",
             // Seat check
             "Adjust your seat to fit in the frame",
             "Adjust your seat and raise your left hand",
@@ -100,6 +100,37 @@ struct LocalizationTests {
             "Speed Bonus", "Dishes Served", "Play Again", "Shop", "Main Menu",
             // Main menu
             "Most Dishes Served",
+            // Launch screen and planet board
+            "Start", "Marathon Mode", "Energy", "Coins", "Fuel", "Settings", "Help",
+            "Recipe Book", "Galaxy Map",
+            // Level popup and marathon screen
+            "Play", "Close", "Story Mode", "Highest Score", "Leaderboard",
+            "It’s a little empty here...", "You",
+            // Planet kitchen
+            "Time Left", "Tips",
+            // Settings, level report, recipe book, introductions, shop
+            "Hand-mode", "Recap", "Order Delivered", "Order Missed", "Total Income",
+            "Next", "Back", "Retry", "Recipe", "Description", "How to Cook", "Locked",
+            "Baked Flatbread", "Pepper Flatbread", "Mushroom Flatbread", "Slimy Tentacles",
+            "New Tools", "New Menu", "Sun Grill", "Glass", "Max",
+            "Desserts are put together in the glass.",
+            "Bake a flatbread on the grill, put it on the plate, then add a pepper.",
+            "Bake a flatbread on the grill, put it on the plate, then add a mushroom.",
+            "Put a tentacle in the glass, then pour green slime over it.",
+            // Marathon rounds, pause and report
+            "Continue", "Faster Grill I", "Second Grill Spot", "Cozy Seats", "Golden Flatbread", "Round Pause",
+            "Resume", "Restart Marathon", "Home", "Nothing left to buy. Take a breather.",
+            "Grill holds 2 flatbreads at once", "Both flatbreads +6 points", "Marathon Complete", "Total Marathon Points", "Rounds Played",
+            "Average Dishes / Round", "Customers Served", "Total Points",
+            "Choose 1 upgrade for the next round, or skip to save your coins.", "Marathon Coins",
+            "Game Pause", "Resume Level", "Retry Level",
+            // Notices and the new planet
+            "Complete previous level to unlock this level", "Complete the first level to unlock marathon mode",
+            "You have to finish all six levels to continue to the next planet", "Energy renews every 15 minutes",
+            "Congratulations!!", "You’ve unlocked a new planet", "Proceed to Planet",
+            // Level board, shop, marathon warning
+            "Back to Galaxy", "Ingredients", "Tools",
+            "Marathon is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go.",
         ]
 
         defer { AppLocalization.apply(.english) }

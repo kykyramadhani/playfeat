@@ -13,10 +13,11 @@ struct SceneManagerTests {
 
     private let result = GameResult(dishesByType: ["salad": 2], speedBonus: 5)
 
-    @Test func theAppOpensOnTheMainMenuWithTheTutorialStillToRead() {
+    /// AstroFeast skips the classic main menu: START lands on the galaxy map.
+    @Test func theAppOpensOnTheGalaxyMapWithTheTutorialStillToRead() {
         let manager = SceneManager()
 
-        #expect(manager.screen == .mainMenu)
+        #expect(manager.screen == .galaxy)
         #expect(manager.isInTutorial)
     }
 
@@ -45,6 +46,62 @@ struct SceneManagerTests {
         manager.replayGame()
 
         #expect(manager.screen == .gameplay)
+    }
+
+    /// Tap to Play opens the galaxy; a planet there opens its board.
+    @Test func theGalaxyLeadsToAPlanetsBoard() {
+        let manager = SceneManager()
+
+        manager.goToGalaxy()
+        #expect(manager.screen == .galaxy)
+
+        manager.goToPlanetSelect()
+        #expect(manager.screen == .planetSelect)
+    }
+
+    /// The planet board opens first; a level there starts the run.
+    @Test func thePlanetBoardSitsBetweenTheMenuAndARun() {
+        let manager = SceneManager()
+
+        manager.goToPlanetSelect()
+        #expect(manager.screen == .planetSelect)
+
+        manager.play()
+        #expect(manager.screen == .gameplay)
+    }
+
+    /// The unlocked trophy opens the marathon; STORY MODE goes back to the board.
+    @Test func theMarathonOpensFromThePlanetBoardAndLeadsBackToIt() {
+        let manager = SceneManager()
+        manager.goToPlanetSelect()
+
+        manager.goToMarathon()
+        #expect(manager.screen == .marathon)
+
+        manager.goToPlanetSelect()
+        #expect(manager.screen == .planetSelect)
+    }
+
+    /// A planet level opens its kitchen, carrying the level it plays.
+    @Test func aLevelOpensItsKitchen() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+
+        manager.goToKitchen(level)
+
+        #expect(manager.screen == .kitchen(level))
+    }
+
+    /// RETRY goes to the level already on screen; the visit count still
+    /// moves, so the kitchen is rebuilt and the day starts over.
+    @Test func retryingALevelCountsAsANewVisit() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        manager.goToKitchen(level)
+
+        manager.goToKitchen(level)
+
+        #expect(manager.kitchenVisit == 2)
     }
 
     @Test func theShopIsReachableAndItsBackButtonReturnsToTheMenu() {

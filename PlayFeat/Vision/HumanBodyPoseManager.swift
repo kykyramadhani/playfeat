@@ -113,11 +113,11 @@ nonisolated final class HumanBodyPoseManager {
 
     /// Run the body detector on one frame in this many, reusing the last
     /// result in between.
-    var bodyPoseFrameInterval = 2
+    var bodyPoseFrameInterval = 3
 
     /// How far a hand's own wrist may sit from a body's wrist and still count
     /// as that body's, as a multiple of that body's shoulder span.
-    var wristMatchTolerance: CGFloat = 0.3
+    var wristMatchTolerance: CGFloat = 0.6
 
     /// Minimum Vision joint confidence to trust a point.
     var jointConfidenceThreshold: Float = 0.25

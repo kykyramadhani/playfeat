@@ -151,6 +151,11 @@ final class HandPoseManager {
         mapping.viewPoint(hand.cursorPosition, in: size)
     }
 
+    /// A hand's grab point in view space (origin top-left, y-down).
+    func grabPoint(for hand: HandData, in size: CGSize) -> CGPoint {
+        mapping.viewPoint(hand.grabPoint, in: size)
+    }
+
     /// A hand's skeleton mapped into view space, one chain per finger.
     func jointChains(for hand: HandData, in size: CGSize) -> [[CGPoint]] {
         hand.skeleton.map { chain in chain.map { mapping.viewPoint($0, in: size) } }

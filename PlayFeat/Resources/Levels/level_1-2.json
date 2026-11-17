@@ -1,0 +1,75 @@
+{
+  "id": "1-2",
+  "name": "Hot Grill",
+  "planet": "kepler-186f",
+  "durationSec": 90,
+  "refill": {
+    "counterSpots": 1,
+    "refillDelaySec": 2,
+    "firstOrder": "pepperFlatbread",
+    "orderPool": {
+      "pepperFlatbread": 1
+    },
+    "angryAt": [],
+    "angryEvery": null,
+    "patienceSec": 45,
+    "angryPatienceSec": 25
+  },
+  "gravity": {
+    "direction": "down",
+    "multiplier": 0.4
+  },
+  "bubbleLifeSec": 6,
+  "bubbleEverySec": 3,
+  "usefulBubbleShare": 0.8,
+  "cups": false,
+  "burnTimeMultiplier": 1,
+  "starTargets": [
+    20,
+    40,
+    60
+  ],
+  "energyCost": 3,
+  "pool": [
+    "duskFlatbread",
+    "emberPepper",
+    "duskMushroom"
+  ],
+  "bubbles": [
+    {
+      "at": 0,
+      "ingredient": "duskFlatbread",
+      "lane": 2
+    },
+    {
+      "at": 3,
+      "ingredient": "emberPepper",
+      "lane": 3
+    },
+    {
+      "at": 6,
+      "ingredient": "duskFlatbread",
+      "lane": 1
+    },
+    {
+      "at": 9,
+      "ingredient": "emberPepper",
+      "lane": 2
+    },
+    {
+      "at": 12,
+      "ingredient": "duskMushroom",
+      "lane": 4
+    },
+    {
+      "at": 15,
+      "ingredient": "duskFlatbread",
+      "lane": 2
+    },
+    {
+      "at": 18,
+      "ingredient": "emberPepper",
+      "lane": 3
+    }
+  ]
+}

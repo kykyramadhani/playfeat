@@ -98,4 +98,35 @@ struct PinchClassifierTests {
             palmLength: 0
         ) == nil)
     }
+
+    /// The same 100 px gap in a 1920 × 1440 frame, once sideways and once
+    /// upright. Normalized, the sideways one reads a quarter shorter; in
+    /// metric space they match, so a turned hand pinches at the same gap.
+    @Test func aGapMeasuresTheSameSidewaysAndUpright() {
+        let aspectRatio: CGFloat = 1920.0 / 1440.0
+        func metric(_ point: CGPoint) -> CGPoint {
+            HandClassifier.metricPoint(point, aspectRatio: aspectRatio)
+        }
+
+        let sideways = metric(.zero).distance(to: metric(CGPoint(x: 100.0 / 1920, y: 0)))
+        let upright = metric(.zero).distance(to: metric(CGPoint(x: 0, y: 100.0 / 1440)))
+
+        #expect(abs(sideways - upright) < 1e-9)
+    }
+
+    // MARK: - Grab point
+
+    @Test func aPinchHoldsBetweenItsFingertips() {
+        let point = HandClassifier.grabPoint(palmCentre: CGPoint(x: 0.5, y: 0.4),
+                                             thumbTip: CGPoint(x: 0.48, y: 0.6),
+                                             indexTip: CGPoint(x: 0.52, y: 0.6))
+
+        #expect(point.distance(to: CGPoint(x: 0.5, y: 0.6)) < 0.001)
+    }
+
+    @Test func aPinchWithAFingertipMissingHoldsInThePalm() {
+        let palm = CGPoint(x: 0.5, y: 0.4)
+
+        #expect(HandClassifier.grabPoint(palmCentre: palm, thumbTip: nil, indexTip: CGPoint(x: 0.52, y: 0.6)) == palm)
+    }
 }

@@ -12,7 +12,8 @@ import Foundation
 
 @Observable
 final class SceneManager {
-    private(set) var screen: AppScreen = .mainMenu
+    /// AstroFeast opens on the galaxy map, straight from START.
+    private(set) var screen: AppScreen = .galaxy
 
     /// True until the walkthrough has been read or skipped this launch.
     private(set) var isInTutorial = true
@@ -20,6 +21,58 @@ final class SceneManager {
     /// Walkthrough read, or skipped.
     func finishTutorial() {
         isInTutorial = false
+    }
+
+    func goToGalaxy() {
+        screen = .galaxy
+    }
+
+    func goToPlanetSelect() {
+        screen = .planetSelect
+    }
+
+    /// The report of the story day just played, shown over the level board
+    /// until the player moves on.
+    private(set) var levelReport: LevelReport?
+
+    /// Back to the board with `report` on top of it.
+    func showReport(_ report: LevelReport) {
+        levelReport = report
+        screen = .planetSelect
+    }
+
+    func dismissReport() {
+        levelReport = nil
+    }
+
+    func goToMarathon() {
+        screen = .marathon
+    }
+
+    /// Counts trips into a kitchen. RETRY sends the player to the level
+    /// they are already on, which leaves `screen` unchanged; ContentView keys
+    /// the kitchen on this so the day starts over all the same.
+    private(set) var kitchenVisit = 0
+
+    /// The marathon being played; nil on a level.
+    private(set) var marathon: MarathonSession?
+
+    func goToKitchen(_ level: LevelData) {
+        marathon = nil
+        levelReport = nil
+        enterKitchen(level)
+    }
+
+    /// Starts a fresh marathon run, one continuous day of rounds and breaks.
+    func startMarathon() {
+        let marathon = MarathonSession(positionTypes: KitchenLayout.positionTypes)
+        self.marathon = marathon
+        enterKitchen(marathon.day.level)
+    }
+
+    private func enterKitchen(_ level: LevelData) {
+        kitchenVisit += 1
+        screen = .kitchen(level)
     }
 
     func play() {

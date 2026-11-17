@@ -50,6 +50,29 @@ struct ArtAssetTests {
         #expect(UIImage(named: "ServedDish") != nil)
     }
 
+    /// The planet kitchen draws every item by name, in a bubble and once put
+    /// down; a missing picture is an empty bubble, sheet or station.
+    @Test(arguments: [
+        KitchenMenu.rawFlatbread, KitchenMenu.bakedFlatbread, KitchenMenu.burntFlatbread,
+        KitchenMenu.pepper, KitchenMenu.mushroom, KitchenMenu.slime, KitchenMenu.tentacle,
+        KitchenMenu.pepperFlatbread, KitchenMenu.mushroomFlatbread, KitchenMenu.slimyTentacles,
+    ])
+    func everyKitchenItemHasArt(item: String) {
+        for name in [KitchenArt.image(of: item), KitchenArt.placedImage(of: item)] {
+            #expect(UIImage(named: name) != nil, "missing kitchen art '\(name)' for '\(item)'")
+        }
+    }
+
+    /// The premium (glowing) versions from the assets page, ready for when
+    /// premium bubbles are added to the game.
+    @Test(arguments: [
+        "PremiumFlatbreadRaw", "PremiumFlatbreadBaked", "PremiumGlowyMushroom", "PremiumMushroomTopping",
+        "PremiumTentacle", "PremiumSlime", "PremiumTentacleGlass", "PremiumSlimyTentaclesGlass",
+    ])
+    func premiumArtExists(name: String) {
+        #expect(UIImage(named: name) != nil)
+    }
+
     /// The source art sits on 1920×1080 canvases with the subject filling as
     /// little as 28% of the width. If trimming regresses, every bubble silently
     /// renders a fraction of its intended size.
