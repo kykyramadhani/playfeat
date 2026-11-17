@@ -34,25 +34,11 @@ struct ContentView: View {
             currentScreen
                 .tint(.appSecondaryText)
 
-            // First-launch onboarding, above the menu but below the splash so
-            // the splash still plays first. Dismissing it flips the flag, which
-            // removes it for good.
-            if !hasCompletedOnboarding {
-                OnboardingView {
-                    withAnimation(.easeInOut(duration: 0.4)) {
-                        hasCompletedOnboarding = true
-                    }
-                }
-                .transition(.opacity)
-                .zIndex(50)
-            }
-            
             #if DEBUG
             HandSkeletonView(handPoseManager: handPoseManager)
             BodySkeletonView(handPoseManager: handPoseManager)
             #endif
 
-            // Above onboarding, so START comes before the first-launch pages.
             if showLaunchScreen {
                 LaunchView {
                     withAnimation(.easeInOut(duration: 0.4)) {
