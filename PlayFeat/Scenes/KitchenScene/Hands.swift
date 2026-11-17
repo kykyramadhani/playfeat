@@ -4,7 +4,7 @@
 //  Created by kyky on 12/11/26.
 //
 //  The kitchen's hand handling: a cartoon hand follows every hand, a fist grabs
-//  the nearest bubble (or parked item) it touches, and a hand that stays open
+//  the nearest bubble (or item put down) it touches, and a hand that stays open
 //  lets go. Same feel as the classic board — same easing, release debounce
 //  and dropout grace — so a player moving between modes notices no change.
 //

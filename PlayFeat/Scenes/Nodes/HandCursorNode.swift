@@ -29,7 +29,7 @@ final class HandCursorNode: SKNode {
 
     /// The art's size relative to an ingredient bubble's radius: a hand a
     /// little larger than the bubble it grabs.
-    static let sizePerBubbleRadius: CGFloat = 3
+    static let sizePerBubbleRadius: CGFloat = 2.5
 
     private static let popKey = "pop"
 
