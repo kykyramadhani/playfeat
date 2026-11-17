@@ -36,7 +36,7 @@ final class KitchenScene: SKScene {
 
     let grabSlack: CGFloat = 30
     let dragSmoothing: CGFloat = 0.5
-    let releaseDelay: TimeInterval = 0.18
+    let releaseDelay: TimeInterval = 0.1
     let heldHandGrace: TimeInterval = 0.35
 
     // MARK: - State

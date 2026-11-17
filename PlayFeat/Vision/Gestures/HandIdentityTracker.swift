@@ -18,6 +18,7 @@
 
 import CoreGraphics
 import Foundation
+import Vision
 
 /// `nonisolated` so it can run on the camera's background queue: it is a plain
 /// value with no shared state.
@@ -28,7 +29,7 @@ nonisolated struct HandIdentityTracker {
     // these, so they are tuning knobs, not constants.
 
     /// Exponential smoothing applied to each cursor (0 = frozen, 1 = raw).
-    var cursorSmoothing: CGFloat = 0.35
+    var cursorSmoothing: CGFloat = 0.5
 
     /// How far (in normalized units) a hand may travel between frames and still
     /// be considered the same hand.
@@ -60,6 +61,7 @@ nonisolated struct HandIdentityTracker {
         /// coasting through a dropped frame can still be drawn where it was,
         /// rather than blinking out.
         var skeleton: [[CGPoint]]
+        var chirality: VNChirality = .unknown
         /// Last time Vision actually reported this hand; drives the grace period.
         var lastSeen: TimeInterval
 
@@ -70,7 +72,8 @@ nonisolated struct HandIdentityTracker {
                 grabPoint: grabPoint,
                 isOpenHand: gesture.state == .neutral,
                 isClosedFist: gesture.state == .active,
-                skeleton: skeleton
+                skeleton: skeleton,
+                chirality: chirality
             )
         }
     }
@@ -126,6 +129,8 @@ nonisolated struct HandIdentityTracker {
             hand.location = reading.location
             hand.grabPoint = reading.grabPoint
             hand.skeleton = reading.skeleton
+            // An unreadable frame must not undo this hand's last known orientation.
+            if reading.chirality != .unknown { hand.chirality = reading.chirality }
 
             // Smooth the cursor: Vision's per-frame jitter is easily 20–30pt on
             // screen, enough to slide off an ingredient mid-grab.
