@@ -48,6 +48,7 @@ nonisolated struct GestureDetector {
     /// Pinch: the thumb-to-index gap, in palm lengths.
     static let pinchCloseRatio: CGFloat = 0.3
     static let pinchOpenRatio: CGFloat = 0.4
+    
     /// F-Pinch closes tighter, since the raised fingers already make it
     /// deliberate.
     static let fPinchCloseRatio: CGFloat = 0.23
@@ -55,7 +56,7 @@ nonisolated struct GestureDetector {
 
     /// Agreeing frames, and time, needed before the state changes: about a
     /// tenth of a second at 30 fps, long enough to outlast a stray bad frame.
-    static let framesToCommit = 3
+    static let framesToCommit = 1
     static let minimumCommitTime: TimeInterval = 0.05
     /// A longer gap between frames means the hand left and came back, so
     /// nothing from before it still counts.

@@ -18,6 +18,7 @@
 
 import CoreGraphics
 import Foundation
+import Vision
 
 /// `nonisolated` so it can run on the camera's background queue: it is a plain
 /// value with no shared state.
@@ -28,7 +29,7 @@ nonisolated struct HandIdentityTracker {
     // these, so they are tuning knobs, not constants.
 
     /// Exponential smoothing applied to each cursor (0 = frozen, 1 = raw).
-    var cursorSmoothing: CGFloat = 0.35
+    var cursorSmoothing: CGFloat = 0.5
 
     /// How far (in normalized units) a hand may travel between frames and still
     /// be considered the same hand.
@@ -60,10 +61,9 @@ nonisolated struct HandIdentityTracker {
         /// coasting through a dropped frame can still be drawn where it was,
         /// rather than blinking out.
         var skeleton: [[CGPoint]]
+        var chirality: VNChirality = .unknown
         /// Last time Vision actually reported this hand; drives the grace period.
         var lastSeen: TimeInterval
-        /// Kept between body poses, which run less often than hand poses.
-        var side: HandSide?
 
         var published: HandData {
             HandData(
@@ -73,7 +73,7 @@ nonisolated struct HandIdentityTracker {
                 isOpenHand: gesture.state == .neutral,
                 isClosedFist: gesture.state == .active,
                 skeleton: skeleton,
-                side: side
+                chirality: chirality
             )
         }
     }
@@ -108,8 +108,6 @@ nonisolated struct HandIdentityTracker {
         )
 
         var stillTracked: [TrackedHand] = []
-        /// Hands whose side the body gave this frame, rather than remembered.
-        var placedNow = Set<Int>()
 
         for (index, reading) in readings.enumerated() {
             var hand: TrackedHand
@@ -120,7 +118,7 @@ nonisolated struct HandIdentityTracker {
             } else {
                 hand = TrackedHand(id: nextHandID, smoothed: reading.location,
                                    location: reading.location, grabPoint: reading.grabPoint,
-                                   skeleton: reading.skeleton, lastSeen: now, side: reading.side)
+                                   skeleton: reading.skeleton, lastSeen: now)
                 #if DEBUG
                 print("[gesture] hand \(nextHandID) is new: no tracked hand within the match radius,"
                       + " so its detector starts from scratch")
@@ -131,10 +129,8 @@ nonisolated struct HandIdentityTracker {
             hand.location = reading.location
             hand.grabPoint = reading.grabPoint
             hand.skeleton = reading.skeleton
-            if let side = reading.side {
-                hand.side = side
-                placedNow.insert(hand.id)
-            }
+            // An unreadable frame must not undo this hand's last known orientation.
+            if reading.chirality != .unknown { hand.chirality = reading.chirality }
 
             // Smooth the cursor: Vision's per-frame jitter is easily 20–30pt on
             // screen, enough to slide off an ingredient mid-grab.
@@ -170,24 +166,8 @@ nonisolated struct HandIdentityTracker {
             stillTracked.append(coasting)
         }
 
-        tracked = Self.withoutSharedSides(stillTracked, placedNow: placedNow)
-        return tracked.map(\.published)
-    }
-
-    /// Two hands can't both be the left one. A hand the body placed this
-    /// frame keeps its side; one still carrying an older side gives way and
-    /// takes the other, or none when that one is taken too.
-    private static func withoutSharedSides(_ hands: [TrackedHand], placedNow: Set<Int>) -> [TrackedHand] {
-        var result = hands
-        for index in result.indices {
-            guard let side = result[index].side, !placedNow.contains(result[index].id) else { continue }
-            let clashes = result.indices.contains { $0 != index && result[$0].side == side }
-            guard clashes else { continue }
-            let opposite = side.opposite
-            let oppositeTaken = result.indices.contains { $0 != index && result[$0].side == opposite }
-            result[index].side = oppositeTaken ? nil : opposite
-        }
-        return result
+        tracked = stillTracked
+        return stillTracked.map(\.published)
     }
 
     private mutating func restartDetectorsIfGripChanged(to grip: GripGesture) {

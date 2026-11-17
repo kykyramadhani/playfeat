@@ -31,11 +31,12 @@ final class KitchenScene: SKScene {
     // MARK: - Tuning
 
     /// Bubble radius in art points (the Figma "S" bubble is 160 across).
-    static let bubbleArtRadius: CGFloat = 80
-    static let heldZ: CGFloat = 100
-    static let glowZ: CGFloat = 60
-    /// A dish handed over shrinks to this on its way into the order sheet.
-    static let parkedScale: CGFloat = 0.7
+    static let bubbleArtRadius: CGFloat = 70
+    static let heldZ: CGFloat = 0
+    static let handZ: CGFloat = 60
+    /// Parked food is drawn smaller, to sit inside its box.
+    static let parkedScale: CGFloat = 0.8
+
     /// How wide food sits on the grill and the plate, in art points: big
     /// enough to fill the grill's hot ring and most of the plate.
     static let cookwareFoodWidth: CGFloat = 118
@@ -52,7 +53,7 @@ final class KitchenScene: SKScene {
 
     let grabSlack: CGFloat = 30
     let dragSmoothing: CGFloat = 0.5
-    let releaseDelay: TimeInterval = 0.18
+    let releaseDelay: TimeInterval = 0.1
     let heldHandGrace: TimeInterval = 0.35
 
     // MARK: - State
@@ -67,8 +68,8 @@ final class KitchenScene: SKScene {
     var plateSpots: [CGRect] = []
     var glassSpots: [CGRect] = []
     var hands: [Int: KitchenHand] = [:]
-    /// The glove drawn over each tracked hand.
-    var gloves: [Int: GloveNode] = [:]
+    var handCursors: [Int: HandCursorNode] = [:]
+
     /// Green outlines on the tools a carried item would land on.
     var dropGlows: [DropTarget: SKNode] = [:]
     var lastUpdateTime: TimeInterval = 0

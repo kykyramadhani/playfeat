@@ -6,7 +6,7 @@
 //  One day of a planet level, played in the planet's illustrated kitchen
 //  instead of over the camera picture. The camera shows only during the seat
 //  check; after that hand tracking keeps running and the player's hands are
-//  drawn as glows over the kitchen.
+//  drawn as cartoon hands over the kitchen.
 //
 //  Layers, back to front: the kitchen art (KitchenBackdrop), the SpriteKit
 //  bubbles and hands (KitchenScene), then the HUD and overlays. When a

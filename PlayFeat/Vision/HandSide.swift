@@ -2,8 +2,7 @@
 //  HandSide.swift
 //  GetCooking
 //
-//  The player's left or right hand: the one one-hand mode asks the player to
-//  calibrate with, and the side each tracked hand is on (see HandSideAssigner).
+//  Which hand one-hand mode asks the player to calibrate with.
 //
 
 import SwiftUI
@@ -14,13 +13,6 @@ nonisolated enum HandSide: String, CaseIterable, Identifiable {
     case right
 
     var id: String { rawValue }
-
-    var opposite: HandSide {
-        switch self {
-        case .left: .right
-        case .right: .left
-        }
-    }
 
     /// Shown on the settings picker.
     ///

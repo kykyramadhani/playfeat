@@ -34,9 +34,11 @@ struct ContentView: View {
             currentScreen
                 .tint(.appSecondaryText)
 
-//            HandSkeletonView(handPoseManager: handPoseManager)
-//            BodySkeletonView(handPoseManager: handPoseManager)
-            
+            #if DEBUG
+            HandSkeletonView(handPoseManager: handPoseManager)
+            BodySkeletonView(handPoseManager: handPoseManager)
+            #endif
+
             if showLaunchScreen {
                 LaunchView {
                     withAnimation(.easeInOut(duration: 0.4)) {

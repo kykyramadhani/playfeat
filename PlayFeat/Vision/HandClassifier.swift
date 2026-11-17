@@ -37,9 +37,8 @@ nonisolated enum HandClassifier {
         /// Each finger's shape. Only measured for grips judged from them
         /// (see `GripGesture.usesFingerShapes`).
         var geometry: GestureGeometry? = nil
-        /// Which of the player's hands this is, placed from the body pose
-        /// (see `HandSideAssigner`); nil when the body couldn't tell.
-        var side: HandSide? = nil
+        /// Handedness reported by Vision, independent of the hand's screen position.
+        var chirality: VNChirality = .unknown
     }
 
     enum ClassificationError: Error {
@@ -155,7 +154,8 @@ nonisolated enum HandClassifier {
             skeleton: skeleton,
             geometry: grip.usesFingerShapes
                 ? fingerShapes(of: joints, palmLength: palmLength, aspectRatio: aspectRatio)
-                : nil
+                : nil,
+            chirality: observation.chirality
         )
     }
 

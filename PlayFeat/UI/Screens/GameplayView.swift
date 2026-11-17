@@ -86,7 +86,7 @@ struct GameplayView: View {
     }
     
     /// The seat check is done (or was never needed), so the playfield belongs
-    /// on screen. Until then only the hand glow is drawn.
+    /// on screen. Until then only the hand cursors are drawn.
     private var boardIsUp: Bool {
         !sceneManager.isInTutorial && (hasCalibrated || !needsCalibration)
     }
@@ -107,7 +107,7 @@ struct GameplayView: View {
                 .ignoresSafeArea()
 
             // Mounted here rather than inside `gameBody` so the scene is alive
-            // for the whole screen, seat check included. The hand glow lives in
+            // for the whole screen, seat check included. The hand cursor lives in
             // the scene, and the player should see their hands light up the
             // moment they are detected — during calibration and the countdown,
             // not only once play starts. `showsBoard` keeps the plate and bin
@@ -143,7 +143,7 @@ struct GameplayView: View {
             #endif
 
             // The run-over cover. Sits above the whole stack so it dims the
-            // board, the HUD and the hand glow alike. It owns its own timing
+            // board, the HUD and the hand cursors alike. It owns its own timing
             // and calls back when it is done, at which point the results screen
             // is shown (which unmounts this view and the cover with it).
             if showGameOverCover {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Vision
 
 /// One tracked hand, as published to the UI and the scene.
 ///
@@ -27,9 +28,8 @@ nonisolated struct HandData: Identifiable, Equatable {
     var isClosedFist: Bool
     /// One chain of joints per finger (thumb → little), normalized Vision space.
     var skeleton: [[CGPoint]]
-    /// The player's left or right hand, from the body pose; nil until the
-    /// body has placed it. Two hands never share a side.
-    var side: HandSide? = nil
+    /// Last known Vision handedness for this hand ID; unknown until first identified.
+    var chirality: VNChirality = .unknown
 
     /// Every detected joint of this hand as a flat list.
     var recognizedJoints: [CGPoint] { skeleton.flatMap { $0 } }

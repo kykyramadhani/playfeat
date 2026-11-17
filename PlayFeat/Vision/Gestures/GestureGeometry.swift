@@ -24,7 +24,7 @@ nonisolated struct GestureGeometry: Equatable, Sendable {
         private static let extendedReach: CGFloat = 0.83
 
         /// How much of the extended thresholds a finger needs to count as
-        /// mostly extended: 20% below them.
+        /// mostly extended: 30% below them.
         private static let droopAllowance: CGFloat = 0.7
 
         var isExtended: Bool { alignment >= Self.extendedAlignment && reach >= Self.extendedReach }
