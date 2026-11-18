@@ -17,6 +17,8 @@ nonisolated enum LevelDataError: Error, Equatable {
     case usefulBubbleShareOutOfRange(Double)
     case emptyOrderPool
     case unknownItem(String)
+    /// A cooking tool the level's planet doesn't have.
+    case unknownTool(CookingTool.Kind)
 }
 
 nonisolated extension LevelData {
@@ -40,9 +42,13 @@ nonisolated extension LevelData {
         try validateItems(refill)
     }
 
+    /// Dishes must be on the planet's menu, bubbles must bring kitchen
+    /// items, and tools must be the planet's.
     private func validateItems(_ refill: Refill) throws(LevelDataError) {
+        let kitchen = PlanetCatalog.planet(planet).kitchen
         let dishes = [refill.firstOrder] + refill.orderPool.keys
-        if let unknown = dishes.first(where: { KitchenMenu.recipes[$0] == nil }) { throw .unknownItem(unknown) }
+        if let unknown = dishes.first(where: { !kitchen.dishes.contains($0) }) { throw .unknownItem(unknown) }
+        if let unknown = tools?.first(where: { kitchen.tools[$0] == nil }) { throw .unknownTool(unknown) }
         let ingredients = pool + bubbles.map(\.ingredient)
         if let unknown = ingredients.first(where: { !KitchenMenu.bubbleItems.contains($0) }) {
             throw .unknownItem(unknown)

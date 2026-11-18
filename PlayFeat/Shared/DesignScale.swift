@@ -226,6 +226,8 @@ struct DesignCanvasDebugBadge: View {
 ///     -debugLandscape YES         turn a phone to landscape at launch, for
 ///                                 checking the real Dynamic Island insets
 ///                                 (which -debugScreenSize can't fake)
+///     -debugLevel 2-1             open straight onto that story day
+///     -debugBuffet k2-332b        open straight onto that planet's Buffet
 enum DebugLaunch {
     static var screenSize: CGSize? {
         let parts = (UserDefaults.standard.string(forKey: "debugScreenSize") ?? "")
@@ -246,6 +248,14 @@ enum DebugLaunch {
 
     static var skipSeatCheck: Bool {
         UserDefaults.standard.bool(forKey: "debugSkipSeatCheck")
+    }
+
+    static var levelID: String? {
+        UserDefaults.standard.string(forKey: "debugLevel")
+    }
+
+    static var buffetPlanet: Planet.ID? {
+        UserDefaults.standard.string(forKey: "debugBuffet").flatMap(Planet.ID.init(rawValue:))
     }
 
     static func applyLandscapeIfRequested() {

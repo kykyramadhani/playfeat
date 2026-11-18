@@ -11,7 +11,7 @@
 //  Layers, back to front: the kitchen art (KitchenBackdrop), the SpriteKit
 //  bubbles and hands (KitchenScene), then the HUD and overlays. When a
 //  story day ends its stars and income are banked and the report shows over
-//  the level board. A marathon is one continuous day: each round's end
+//  the frozen kitchen. A marathon is one continuous day: each round's end
 //  freezes it for the card break, and losing three customers ends it with
 //  the marathon report. STOP pauses either.
 //
@@ -95,6 +95,7 @@ struct KitchenView: View {
                     .zIndex(200)
             }
 
+            storyReportOverlay
         }
         .onAppear(perform: setUp)
         .onDisappear(perform: tearDown)
@@ -118,7 +119,7 @@ struct KitchenView: View {
             SpriteView(
                 scene: scene,
                 // No GPU work outside the foreground — iOS rejects it.
-                isPaused: scenePhase != .active,
+                isPaused: scenePhase != .active || day.isOver,
                 options: [.allowsTransparency, .ignoresSiblingOrder]
             )
             .onAppear { scene.size = proxy.size }
@@ -187,13 +188,10 @@ struct KitchenView: View {
     // MARK: - Lifecycle
 
     private func setUp() {
-        let supply: any BubbleSupply = marathon == nil ? StoryBubbleSupply(level: day.level) : MarathonBubbleSupply()
+        let supply: any BubbleSupply = marathon.map { MarathonBubbleSupply(starters: $0.planet.buffet.starters) }
+            ?? StoryBubbleSupply(level: day.level)
         scene.prepare(for: day, bubbleSupply: supply)
-        scene.grill = Grill(
-            bakeSec: marathon?.bakeSec ?? KitchenRules.bakeSec,
-            burnMultiplier: day.level.burnTimeMultiplier,
-            slotCount: marathon?.grillSlots ?? 1
-        )
+        if let marathon { applyUpgrades(of: marathon) }
         scene.handInput = handPoseManager
         scene.audio = audio
         handPoseManager.start()
@@ -222,18 +220,36 @@ struct KitchenView: View {
         return true
     }
 
-    /// Play is over: a story day banks its stars and income and shows its
-    /// report over the level board; a marathon shows its report here.
+    /// Both reports keep the finished kitchen visible. Income is banked only once.
     private func endDay() {
-        guard marathonStep != .report else { return }
+        guard sceneManager.levelReport == nil, marathonStep != .report else { return }
         day.pause()
         audio.stopMusic()
+        handPoseManager.stop()
+        UIApplication.shared.isIdleTimerDisabled = false
         if marathon != nil {
             withAnimation(.easeOut(duration: 0.3)) { marathonStep = .report }
         } else {
             let previousBest = GameStorage.bestStars(forLevel: day.level.id)
             GameStorage.recordDay(onLevel: day.level.id, stars: day.stars, income: day.total)
-            sceneManager.showReport(LevelReport(day: day, previousBestStars: previousBest))
+            withAnimation(.easeOut(duration: 0.3)) {
+                sceneManager.showReport(LevelReport(day: day, previousBestStars: previousBest))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var storyReportOverlay: some View {
+        if let report = sceneManager.levelReport {
+            LevelReportView(
+                report: report,
+                levelNumber: PlanetCatalog.dayNumber(of: report.level.id) ?? 1,
+                onNext: { sceneManager.goToNextLevel(after: report.level) },
+                onBack: sceneManager.goToPlanetSelect,
+                onRetry: { sceneManager.goToKitchen(report.level) }
+            )
+            .transition(.opacity)
+            .zIndex(200)
         }
     }
 
@@ -256,10 +272,15 @@ struct KitchenView: View {
             // The overlay only lets an affordable card from the offer be picked.
             try? marathon.buy(card)
         }
-        scene.grill.bakeSec = marathon.bakeSec
-        scene.grill.growSlots(to: marathon.grillSlots)
+        applyUpgrades(of: marathon)
         marathon.endBreak()
         withAnimation(.easeOut(duration: 0.3)) { marathonStep = nil }
+    }
+
+    /// The marathon's tool cards, on the scene's cooking tools.
+    private func applyUpgrades(of marathon: MarathonSession) {
+        for (tool, seconds) in marathon.cookSec { scene.cookers[tool]?.cookSec = seconds }
+        scene.cookers[.grill]?.growSlots(to: marathon.grillSlots)
     }
 
     @ViewBuilder
@@ -284,10 +305,10 @@ struct KitchenView: View {
 
     /// Starts this level, or the whole marathon, over from its beginning.
     private func restartDay() {
-        if marathon == nil {
-            sceneManager.goToKitchen(day.level)
+        if let marathon {
+            sceneManager.startMarathon(on: marathon.planet.id)
         } else {
-            sceneManager.startMarathon()
+            sceneManager.goToKitchen(day.level)
         }
     }
 

@@ -1,0 +1,62 @@
+{
+  "id": "2-5",
+  "name": "Angry Again",
+  "planet": "k2-332b",
+  "durationSec": 90,
+  "refill": {
+    "counterSpots": 2,
+    "refillDelaySec": 2,
+    "firstOrder": "coralNoodles",
+    "orderPool": {
+      "coralNoodles": 1,
+      "urchinNoodles": 1,
+      "clamNoodles": 1,
+      "starCookie": 1
+    },
+    "angryAt": [
+      4
+    ],
+    "angryEvery": null,
+    "patienceSec": 35,
+    "angryPatienceSec": 25
+  },
+  "gravity": {
+    "direction": "up",
+    "multiplier": 0.6
+  },
+  "bubbleLifeSec": 4,
+  "bubbleEverySec": 2,
+  "usefulBubbleShare": 0.6,
+  "cups": true,
+  "tools": [
+    "pot",
+    "grill"
+  ],
+  "burnTimeMultiplier": 1,
+  "starTargets": [
+    35,
+    60,
+    75
+  ],
+  "energyCost": 4,
+  "pool": [
+    "tideNoodles",
+    "coralLeaf",
+    "bubbleUrchin",
+    "lanternClam",
+    "seaCookie",
+    "starfishSugar"
+  ],
+  "bubbles": [
+    {
+      "at": 0,
+      "ingredient": "tideNoodles",
+      "lane": 2
+    },
+    {
+      "at": 2,
+      "ingredient": "coralLeaf",
+      "lane": 3
+    }
+  ]
+}

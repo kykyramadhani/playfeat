@@ -13,11 +13,25 @@ import Testing
 
 struct LevelLoaderTests {
 
-    @Test(arguments: Planet.kepler186f.levelIDs)
+    @Test(arguments: PlanetCatalog.all.flatMap(\.levelIDs))
     func shippedLevelLoads(_ levelID: String) throws {
         let level = try LevelLoader.load(levelID)
 
         #expect(level.id == levelID)
+        #expect(PlanetCatalog.planet(forLevel: levelID)?.id == level.planet)
+    }
+
+    /// No day orders a dish its counter has no tool to cook.
+    @Test(arguments: PlanetCatalog.all.flatMap(\.levelIDs))
+    func everyDishADayServesCanBeCookedThere(_ levelID: String) throws {
+        let level = try LevelLoader.load(levelID)
+        let kitchen = PlanetCatalog.planet(level.planet).kitchen
+        let recipes = kitchen.toolKinds(on: level).flatMap { kitchen.tools[$0] ?? [] }
+        let needed = KitchenMenu.dishes(servedOn: level)
+            .flatMap(KitchenMenu.bubbleIngredients(of:))
+            .compactMap(CookingRecipe.recipe(of:))
+
+        #expect(needed.allSatisfy { recipe in recipes.contains { $0.raw == recipe.raw } })
     }
 
     // MARK: - Kepler-186f's progression, as in the prototype
@@ -57,6 +71,44 @@ struct LevelLoaderTests {
         #expect(level.burnTimeMultiplier == 2)
         #expect(level.energyCost == 3)
         #expect(level.starTargets == [20, 40, 60])
+    }
+
+    // MARK: - K2-332 b's progression, as in the Planet 2 level design
+
+    /// Gravity is flipped on every Planet 2 day, rising slowly at first.
+    @Test(arguments: [("2-1", 0.4), ("2-2", 0.5), ("2-3", 0.6), ("2-6", 0.6)])
+    func planetTwoBubblesRise(_ levelID: String, speed: Double) throws {
+        let level = try LevelLoader.load(levelID)
+
+        #expect(level.gravity.direction == .up)
+        #expect(level.gravity.multiplier == speed)
+    }
+
+    /// The pot comes first; the grill joins on 2-3 for the clam.
+    @Test func planetTwoStartsWithOnlyThePot() throws {
+        #expect(try LevelLoader.load("2-1").tools == [.pot])
+        #expect(try LevelLoader.load("2-3").tools == [.pot, .grill])
+    }
+
+    /// The noodles go mushy at half speed while players get used to the gravity.
+    @Test func theFirstPlanetTwoDayCooksForgivingly() throws {
+        #expect(try LevelLoader.load("2-1").burnTimeMultiplier == 2)
+    }
+
+    /// The cookie plate and its dessert arrive together on 2-4.
+    @Test func dayFourOnPlanetTwoOpensOnTheStarCookie() throws {
+        let level = try LevelLoader.load("2-4")
+
+        #expect(level.refill?.firstOrder == KitchenMenu.starCookie)
+        #expect(level.cups)
+    }
+
+    /// On 2-5 the angry alien comes fourth and orders the Star Cookie.
+    @Test func theAngryAlienOnPlanetTwoOrdersTheStarCookie() throws {
+        let level = try LevelLoader.load("2-5")
+
+        #expect(level.refill?.angryAt == [4])
+        #expect(PlanetCatalog.planet(level.planet).kitchen.angryOrder == KitchenMenu.starCookie)
     }
 
     @Test func aMissingLevelSaysWhichOne() {

@@ -1,0 +1,77 @@
+{
+  "id": "2-1",
+  "name": "Upside Down",
+  "planet": "k2-332b",
+  "durationSec": 90,
+  "refill": {
+    "counterSpots": 1,
+    "refillDelaySec": 2,
+    "firstOrder": "coralNoodles",
+    "orderPool": {
+      "coralNoodles": 1
+    },
+    "angryAt": [],
+    "angryEvery": null,
+    "patienceSec": 45,
+    "angryPatienceSec": 25
+  },
+  "gravity": {
+    "direction": "up",
+    "multiplier": 0.4
+  },
+  "bubbleLifeSec": 6,
+  "bubbleEverySec": 3,
+  "usefulBubbleShare": 0.8,
+  "cups": false,
+  "tools": [
+    "pot"
+  ],
+  "burnTimeMultiplier": 2,
+  "starTargets": [
+    20,
+    40,
+    60
+  ],
+  "energyCost": 3,
+  "pool": [
+    "tideNoodles",
+    "coralLeaf"
+  ],
+  "bubbles": [
+    {
+      "at": 0,
+      "ingredient": "tideNoodles",
+      "lane": 2
+    },
+    {
+      "at": 3,
+      "ingredient": "coralLeaf",
+      "lane": 3
+    },
+    {
+      "at": 6,
+      "ingredient": "tideNoodles",
+      "lane": 1
+    },
+    {
+      "at": 9,
+      "ingredient": "coralLeaf",
+      "lane": 2
+    },
+    {
+      "at": 12,
+      "ingredient": "coralLeaf",
+      "lane": 4
+    },
+    {
+      "at": 15,
+      "ingredient": "tideNoodles",
+      "lane": 2
+    },
+    {
+      "at": 18,
+      "ingredient": "coralLeaf",
+      "lane": 3
+    }
+  ]
+}

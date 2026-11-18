@@ -14,8 +14,12 @@ import Testing
 @MainActor
 struct MarathonSessionTests {
 
-    private func makeSession() -> MarathonSession {
-        MarathonSession(positionTypes: KitchenLayout.positionTypes, random: SeededGenerator(state: 3))
+    private func makeSession(on planet: Planet = .kepler186f) -> MarathonSession {
+        MarathonSession(planet: planet, positionTypes: KitchenLayout.positionTypes, random: SeededGenerator(state: 3))
+    }
+
+    private func makeFlow(on planet: Planet = .kepler186f) -> MarathonFlow {
+        MarathonFlow(plan: planet.buffet, random: SeededGenerator(state: 1))
     }
 
     /// Plays from `start` to `end` in small steps, as the scene would.
@@ -44,7 +48,7 @@ struct MarathonSessionTests {
     }
 
     @Test func everyServedDishShortensPatienceAndTheGap() {
-        var flow = MarathonFlow(random: SeededGenerator(state: 1))
+        var flow = makeFlow()
 
         flow.dishServed(totalServed: 1)
 
@@ -53,7 +57,7 @@ struct MarathonSessionTests {
     }
 
     @Test func patienceAndTheGapNeverDropBelowTheirFloors() {
-        var flow = MarathonFlow(random: SeededGenerator(state: 1))
+        var flow = makeFlow()
 
         for served in 1...200 { flow.dishServed(totalServed: served) }
 
@@ -63,7 +67,7 @@ struct MarathonSessionTests {
 
     /// From 8 dishes the dessert and the angry alien join, and three wait at once.
     @Test func stageTwoStartsAtEightDishes() {
-        var flow = MarathonFlow(random: SeededGenerator(state: 1))
+        var flow = makeFlow()
         #expect(flow.counterSpots == 2)
 
         for served in 1...8 { flow.dishServed(totalServed: served) }
@@ -128,19 +132,20 @@ struct MarathonSessionTests {
     // MARK: - Cards
 
     @Test func theFirstBreakOffersItsSetHand() {
-        #expect(MarathonCard.offer(forBreak: 1, owning: []) == [.fasterGrill1, .blazingPepper, .cozySeats])
+        #expect(Planet.kepler186f.buffet.cards.offer(forBreak: 1, owning: [])
+            == [.fasterGrill1, .blazingPepper, .cozySeats])
     }
 
     /// Faster Grill II needs Faster Grill I; without it the next fallback card stands in.
     @Test func aCardThatCantBeBoughtIsSwappedForAFallback() {
-        let offer = MarathonCard.offer(forBreak: 2, owning: [])
+        let offer = Planet.kepler186f.buffet.cards.offer(forBreak: 2, owning: [])
 
         #expect(!offer.contains(.fasterGrill2))
         #expect(offer == [.secondGrillSpot, .royalMushroom, .slimierSlime])
     }
 
     @Test func fromTheFourthBreakTheFallbackDeals() {
-        #expect(MarathonCard.offer(forBreak: 4, owning: [.slimierSlime])
+        #expect(Planet.kepler186f.buffet.cards.offer(forBreak: 4, owning: [.slimierSlime])
             == [.goldenFlatbread, .doubleTentacle, .royalMushroom])
     }
 
@@ -168,5 +173,53 @@ struct MarathonSessionTests {
         let session = makeSession()
 
         #expect(session.tools == KitchenTools(plates: 1, glasses: 0))
+    }
+
+    // MARK: - Planet 2 (K2-332 b)
+
+    @Test func thePlanetTwoRunOpensOnCoralNoodlesWithBubblesRising() {
+        let session = makeSession(on: .k2332b)
+
+        #expect(session.day.presentCustomers.map(\.dish) == [KitchenMenu.coralNoodles])
+        #expect(session.day.level.gravity.direction == .up)
+    }
+
+    /// Every stage-two group of 5 has one angry alien, ordering the Star Cookie.
+    @Test func planetTwoStageTwoHasOneAngryStarCookiePerGroup() {
+        let angry = Planet.k2332b.buffet.stageTwo.group.filter { $0.type == .angry }
+
+        #expect(angry == [CustomerOrder(type: .angry, dish: KitchenMenu.starCookie)])
+        #expect(Planet.k2332b.buffet.stageTwo.group.count == 5)
+    }
+
+    @Test func planetTwoStageTwoBringsTheClam() {
+        var flow = makeFlow(on: .k2332b)
+
+        for served in 1...8 { flow.dishServed(totalServed: served) }
+
+        #expect(flow.bubblePool.contains(KitchenMenu.rawClam))
+        #expect(flow.counterSpots == 3)
+    }
+
+    /// The pot gets its own Faster card, offered from the first break.
+    @Test func fasterPotSpeedsUpOnlyThePot() {
+        #expect(MarathonCard.fasterPot.effect == .cookSec(.pot, 4.5))
+        #expect(Planet.k2332b.buffet.cards.offer(forBreak: 1, owning: []).contains(.fasterPot))
+    }
+
+    /// Every card a planet's Buffet deals does something in its kitchen.
+    @Test(arguments: PlanetCatalog.all.map(\.id))
+    func everyDealtCardFitsItsPlanet(planet: Planet.ID) {
+        let planet = PlanetCatalog.planet(planet)
+        let deck = planet.buffet.cards
+        let ingredients = Set(planet.buffet.stageTwo.bubblePool)
+
+        for card in Set(deck.setOffers.flatMap { $0 } + deck.fallback) {
+            switch card.effect {
+            case .cookSec(let tool, _): #expect(planet.kitchen.tools[tool] != nil, "\(card)")
+            case .ingredientValue(let item, _): #expect(ingredients.contains(item), "\(card)")
+            case .grillSlots, .patienceScale: break
+            }
+        }
     }
 }

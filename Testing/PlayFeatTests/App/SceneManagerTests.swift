@@ -59,6 +59,29 @@ struct SceneManagerTests {
         #expect(manager.screen == .planetSelect)
     }
 
+    /// Landing on a planet from the galaxy opens that planet's board.
+    @Test func landingOnAPlanetOpensItsBoard() {
+        let manager = SceneManager()
+
+        manager.goToPlanet(.k2332b)
+
+        #expect(manager.planet == .k2332b)
+        #expect(manager.screen == .planetSelect)
+    }
+
+    /// A day's kitchen is on its own planet, so leaving it goes back to that
+    /// planet's board.
+    @Test func aPlanetTwoDayReturnsToPlanetTwosBoard() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("2-1")
+
+        manager.goToKitchen(level)
+        manager.goToPlanetSelect()
+
+        #expect(manager.planet == .k2332b)
+        #expect(manager.screen == .planetSelect)
+    }
+
     /// The planet board opens first; a level there starts the run.
     @Test func thePlanetBoardSitsBetweenTheMenuAndARun() {
         let manager = SceneManager()
@@ -102,6 +125,79 @@ struct SceneManagerTests {
         manager.goToKitchen(level)
 
         #expect(manager.kitchenVisit == 2)
+    }
+
+    @Test func aStoryReportKeepsTheFinishedKitchenOnScreen() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        let report = makeReport(for: level)
+        manager.goToKitchen(level)
+
+        manager.showReport(report)
+
+        #expect(manager.screen == .kitchen(level))
+        #expect(manager.kitchenVisit == 1)
+        #expect(manager.levelReport == report)
+    }
+
+    @Test func leavingTheReportReturnsToTheBoardAndClearsIt() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        manager.goToKitchen(level)
+        manager.showReport(makeReport(for: level))
+
+        manager.goToPlanetSelect()
+
+        #expect(manager.screen == .planetSelect)
+        #expect(manager.levelReport == nil)
+    }
+
+    @Test func nextFromTheReportOpensAFreshKitchenForTheFollowingLevel() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        let nextLevel = try LevelLoader.load("1-2")
+        manager.goToKitchen(level)
+        manager.showReport(makeReport(for: level))
+
+        manager.goToNextLevel(after: level)
+
+        #expect(manager.screen == .kitchen(nextLevel))
+        #expect(manager.kitchenVisit == 2)
+        #expect(manager.levelReport == nil)
+    }
+
+    @Test func retryFromTheReportRebuildsTheKitchenAndClearsTheReport() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        manager.goToKitchen(level)
+        manager.showReport(makeReport(for: level))
+
+        manager.goToKitchen(level)
+
+        #expect(manager.screen == .kitchen(level))
+        #expect(manager.kitchenVisit == 2)
+        #expect(manager.levelReport == nil)
+    }
+
+    @Test func nextAfterTheFinalLevelReturnsToTheBoard() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-6")
+        manager.goToKitchen(level)
+        manager.showReport(makeReport(for: level))
+
+        manager.goToNextLevel(after: level)
+
+        #expect(manager.screen == .planetSelect)
+        #expect(manager.levelReport == nil)
+    }
+
+    private func makeReport(for level: LevelData) -> LevelReport {
+        let day = KitchenDay(
+            storyLevel: level,
+            positionTypes: KitchenLayout.positionTypes,
+            tools: KitchenTools(for: level, ownedPlates: 1, ownedGlasses: 1)
+        )
+        return LevelReport(day: day, previousBestStars: 0)
     }
 
     @Test func theShopIsReachableAndItsBackButtonReturnsToTheMenu() {

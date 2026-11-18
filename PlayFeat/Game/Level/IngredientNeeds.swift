@@ -9,13 +9,10 @@
 
 nonisolated enum IngredientNeeds {
     /// What a kitchen item counts as towards an order: a dish as itself, a
-    /// raw or baked flatbread as a flatbread to come, a burnt one as nothing.
+    /// raw or cooked item as that item to come, a ruined one as nothing.
     static func countedItem(_ item: String) -> String? {
-        switch item {
-        case KitchenMenu.burntFlatbread: nil
-        case KitchenMenu.bakedFlatbread: KitchenMenu.rawFlatbread
-        default: item
-        }
+        guard let recipe = CookingRecipe.recipe(of: item) else { return item }
+        return item == recipe.ruined ? nil : recipe.raw
     }
 
     /// The ingredients `orders` (oldest first) still lack once `inventory`

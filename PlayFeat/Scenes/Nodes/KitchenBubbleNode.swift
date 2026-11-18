@@ -16,16 +16,21 @@ import SpriteKit
 final class KitchenBubbleNode: SKNode {
     /// Where an item has been put down.
     enum Placement: Hashable {
-        /// The grill can hold more than one flatbread; the index counts its slots.
-        case grill(Int)
+        /// A cooking tool (grill, pot); one can hold more than one item, and
+        /// `slot` counts them.
+        case cooker(CookingTool.Kind, slot: Int)
         /// The counter can hold more than one plate or glass; the index
-        /// counts them from the left.
+        /// counts them from the left. On Planet 2 the plate is the noodle
+        /// bowl and the glass the cookie plate: same roles, other rules
+        /// (`PlanetKitchen`).
         case plate(Int)
         case glass(Int)
     }
 
     private(set) var ingredient: String
     let radius: CGFloat
+    /// Ingredients upgraded in the shop or by a marathon card, drawn premium.
+    private let upgraded: Set<String>
 
     /// `HandData.id` of the hand carrying this, if any.
     var heldBy: Int?
@@ -62,9 +67,10 @@ final class KitchenBubbleNode: SKNode {
     private static let warningColor = UIColor(named: "SolarOrange") ?? .orange
     private static let warningPulse: TimeInterval = 0.35
 
-    init(ingredient: String, radius: CGFloat) {
+    init(ingredient: String, radius: CGFloat, upgraded: Set<String> = []) {
         self.ingredient = ingredient
         self.radius = radius
+        self.upgraded = upgraded
         super.init()
 
         addChild(food)
@@ -102,7 +108,9 @@ final class KitchenBubbleNode: SKNode {
 
     private func drawFood() {
         food.removeAllChildren()
-        let name = placement == nil ? KitchenArt.image(of: ingredient) : KitchenArt.placedImage(of: ingredient)
+        let name = placement == nil
+            ? KitchenArt.image(of: ingredient, upgraded: upgraded)
+            : KitchenArt.placedImage(of: ingredient, upgraded: upgraded)
         if KitchenArt.glassStateImages.contains(name) {
             food.addChild(glassSprite(name))
         } else if let texture = TrimmedArt.texture(named: name) {

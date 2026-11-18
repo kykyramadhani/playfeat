@@ -39,6 +39,8 @@ final class KitchenDay {
     /// The most recent customer's tip, shown beside the marathon's coins.
     private(set) var lastTip = 0
     private(set) var counter: Counter
+    /// Customers just served, still drawn while their dish goes into them.
+    private(set) var departures: [Departure] = []
 
     @ObservationIgnored private var flow: any CustomerFlow
     @ObservationIgnored private var clock: PlayClock?
@@ -87,11 +89,31 @@ final class KitchenDay {
     /// What the HUD clock shows: the day's time left, or the marathon round's.
     var timeLeft: TimeInterval { max((roundEndsAt ?? level.durationSec) - elapsed, 0) }
     var isOver: Bool {
-        flow.isFinished(at: elapsed, lostCustomers: ordersMissed, counterIsEmpty: counter.isEmpty)
+        // The day waits for the last served customer to leave, so their
+        // dish's hand-over plays out before the day's end is shown.
+        flow.isFinished(at: elapsed, lostCustomers: ordersMissed, counterIsEmpty: counter.isEmpty && departures.isEmpty)
     }
     var isRoundOver: Bool { roundEndsAt.map { elapsed >= $0 } ?? false }
 
     var presentCustomers: [SeatedCustomer] { counter.present }
+
+    /// The aliens to draw: everyone at the counter, plus whoever was just
+    /// served until the dish is in and a beat has passed.
+    var aliensOnScreen: [SeatedCustomer] {
+        presentCustomers + departing(for: KitchenRules.handOverSec + KitchenRules.pauseBeforeLeavingSec)
+    }
+
+    /// The order sheets to draw: a served customer's goes once the dish is in.
+    var orderSheetsOnScreen: [SeatedCustomer] {
+        presentCustomers + departing(for: KitchenRules.handOverSec)
+    }
+
+    /// How patient `customer` looks; a served customer's face stays as it was.
+    func patienceShown(for customer: SeatedCustomer) -> Double {
+        let servedAt = departures.first { $0.customer == customer }?.servedAt
+        return customer.patienceLeft(at: min(elapsed, servedAt ?? elapsed))
+    }
+
     /// What the bubbles can bring now.
     var bubblePool: [String] { flow.bubblePool }
     /// Seconds between marathon customers; nil on a story day.
@@ -128,6 +150,7 @@ final class KitchenDay {
         tips += lastTip
         flow.spotFreed(at: elapsed)
         flow.dishServed(totalServed: ordersDelivered)
+        departures.append(Departure(customer: customer, servedAt: elapsed))
         return true
     }
 
@@ -153,6 +176,15 @@ final class KitchenDay {
         counter.seatWaiting(at: time, spots: flow.counterSpots)
         for _ in counter.removeGiveUps(at: time) { loseCustomer(at: time) }
         counter.seatWaiting(at: time, spots: flow.counterSpots)
+        departures.removeAll { time >= $0.servedAt + KitchenRules.handOverSec + KitchenRules.pauseBeforeLeavingSec }
+    }
+
+    /// Served customers still drawn `seconds` after being served, unless
+    /// someone new already stands at their position.
+    private func departing(for seconds: TimeInterval) -> [SeatedCustomer] {
+        departures
+            .filter { elapsed < $0.servedAt + seconds && !isOccupied($0.customer.seat) }
+            .map(\.customer)
     }
 
     private func loseCustomer(at time: TimeInterval) {
@@ -160,4 +192,10 @@ final class KitchenDay {
         pointsLost += min(KitchenRules.lostCustomerPenalty, points)
         flow.spotFreed(at: time)
     }
+}
+
+/// A served customer on their way out.
+nonisolated struct Departure: Equatable {
+    let customer: SeatedCustomer
+    let servedAt: TimeInterval
 }

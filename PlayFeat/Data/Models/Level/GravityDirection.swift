@@ -27,12 +27,19 @@ nonisolated enum GravityDirection: String, Codable {
         }
     }
 
+    /// Whether a loose item falls towards the table at the bottom of the
+    /// window. Only then can it slip behind the table and be lost there;
+    /// with gravity flipped (Planet 2) it floats away from it instead.
+    var pullsTowardTable: Bool { unitVector.dy < 0 }
+
     /// Where a bubble in `lane` (1...4) enters `bounds`: the centre of that
-    /// lane on the edge gravity pulls away from.
+    /// lane on the edge gravity pulls away from. A bubble entering along the
+    /// bottom edge starts `tableClearance` above it, so it rises from just
+    /// above the counter rather than from behind the table drawn there.
     ///
     /// ponytail: up-right enters along the bottom edge and left/right gravity
     /// counts lanes from the top; ask the designers if a planet needs otherwise.
-    func entryPoint(lane: Int, in bounds: CGRect) -> CGPoint {
+    func entryPoint(lane: Int, in bounds: CGRect, tableClearance: CGFloat = 0) -> CGPoint {
         let laneCount = CGFloat(LevelData.BubbleEntry.laneCount)
         let fraction = (CGFloat(lane) - 0.5) / laneCount
         let acrossX = bounds.minX + bounds.width * fraction
@@ -40,7 +47,7 @@ nonisolated enum GravityDirection: String, Codable {
 
         switch self {
         case .down: return CGPoint(x: acrossX, y: bounds.maxY)
-        case .up, .upRight: return CGPoint(x: acrossX, y: bounds.minY)
+        case .up, .upRight: return CGPoint(x: acrossX, y: bounds.minY + tableClearance)
         case .left: return CGPoint(x: bounds.maxX, y: downFromTop)
         case .right: return CGPoint(x: bounds.minX, y: downFromTop)
         }

@@ -95,7 +95,7 @@ extension KitchenScene {
 
     private static func image(of station: KitchenBubbleNode.Placement) -> String {
         switch station {
-        case .grill: "KitchenGrill"
+        case .cooker(let kind, _): KitchenArt.image(of: kind)
         case .plate: "KitchenPlate"
         case .glass: "KitchenGlass"
         }

@@ -19,6 +19,5 @@ func makeKitchenScene(
     let scene = KitchenScene(size: KitchenLayout.artSize)
     let day = makeDay(level, plates: ownedPlates, glasses: ownedGlasses)
     scene.prepare(for: day, bubbleSupply: StoryBubbleSupply(level: level))
-    scene.grill = Grill(burnMultiplier: level.burnTimeMultiplier)
     return (scene, day)
 }

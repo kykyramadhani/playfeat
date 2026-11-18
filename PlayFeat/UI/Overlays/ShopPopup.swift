@@ -3,8 +3,8 @@
 //  PlayFeat
 //  Created by kyky on 16/11/26.
 //
-//  The kitchen shop over the level board: an INGREDIENTS and a TOOLS tab,
-//  each a scrolling grid of upgrade cards. Buying spends coins at once and
+//  The kitchen shop over the level board: an INGREDIENTS | TOOLS switch over
+//  a scrolling grid of that section's upgrade cards. Buying spends coins at once and
 //  is saved; the next kitchen day uses the upgrade.
 //
 
@@ -25,7 +25,7 @@ struct ShopPopup: View {
     var body: some View {
         SunrisePopupOverlay(title: Text("Shop"), onClose: onClose) {
             VStack(spacing: 24) {
-                tabs
+                ShopSectionSwitch(selection: $tab)
                 ScrollView(.vertical) {
                     LazyVGrid(
                         columns: Array(repeating: GridItem(.fixed(Self.cardSize.width), spacing: 24), count: 3),
@@ -43,17 +43,6 @@ struct ShopPopup: View {
             .frame(width: 807)
             .padding(.top, 26)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        }
-    }
-
-    // MARK: - Tabs
-
-    private var tabs: some View {
-        HStack(spacing: 13) {
-            ShopTab(title: Text("Ingredients"), isSelected: tab == .ingredients) { tab = .ingredients }
-                .frame(width: 390)
-            ShopTab(title: Text("Tools"), isSelected: tab == .tools) { tab = .tools }
-                .frame(width: 404)
         }
     }
 
@@ -83,40 +72,62 @@ struct ShopPopup: View {
     }
 }
 
-/// One tab: a cream, white-rimmed box around a magenta pill when selected,
-/// a faded pink one when not.
-private struct ShopTab: View {
-    let title: Text
-    let isSelected: Bool
-    let action: () -> Void
+/// The joined INGREDIENTS | TOOLS switch: one cream, white-rimmed box with
+/// a magenta pill that slides under whichever section is chosen.
+private struct ShopSectionSwitch: View {
+    @Binding var selection: KitchenUpgrade.Tab
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private static let size = CGSize(width: 807, height: 78)
+    private static let pillSize = CGSize(width: 374, height: 65)
+    /// The pill's top-left corner over each section, from the Figma frame.
+    private static let pillTop: CGFloat = 4.26
+    private static let ingredientsPillX: CGFloat = 4.26
+    private static let toolsPillX: CGFloat = 422.26
+    private static let slide: Animation = .spring(duration: 0.3, bounce: 0.15)
     private static let rim = RoundedRectangle(cornerRadius: 28.76)
 
     var body: some View {
-        ClickButton(action: action) {
+        ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 22.85)
-                .fill(isSelected ? Color.levelPanel : Color.shopTabIdle)
-                .padding(.leading, 6.26)
-                .padding(.trailing, 9.74)
-                .padding(.top, 4.26)
-                .padding(.bottom, 8.74)
-                .overlay {
-                    title
-                        .font(.atkinson(size: 32, weight: .bold))
-                        .tracking(0.64)
-                        .textCase(.uppercase)
-                        .foregroundStyle(.white)
-                }
-                .frame(height: 78)
-                .background {
-                    Self.rim.fill(Color.neutralElevated).paperTexture(clippedTo: Self.rim)
-                }
-                .overlay(Self.rim.strokeBorder(.white.opacity(0.5), lineWidth: 1.7))
-                .compositingGroup()
-                .shadow(color: .black.opacity(0.2), radius: 0, y: 1.9)
+                .fill(Color.levelPanel)
+                .frame(width: Self.pillSize.width, height: Self.pillSize.height)
+                .offset(x: Self.pillX(under: selection), y: Self.pillTop)
+            sectionButton(.ingredients, title: Text("Ingredients"))
+            sectionButton(.tools, title: Text("Tools"))
+        }
+        .frame(width: Self.size.width, height: Self.size.height, alignment: .topLeading)
+        .background {
+            Self.rim.fill(Color.neutralElevated).paperTexture(clippedTo: Self.rim)
+        }
+        .overlay(Self.rim.strokeBorder(.white.opacity(0.5), lineWidth: 1.7))
+        .compositingGroup()
+        .shadow(color: .black.opacity(0.2), radius: 0, y: 1.9)
+        .animation(reduceMotion ? nil : Self.slide, value: selection)
+    }
+
+    private func sectionButton(_ section: KitchenUpgrade.Tab, title: Text) -> some View {
+        let isSelected = selection == section
+        return ClickButton(action: { selection = section }) {
+            title
+                .font(.atkinson(size: 32, weight: .bold))
+                .tracking(0.64)
+                .textCase(.uppercase)
+                .foregroundStyle(isSelected ? Color.white : Color.shopTabIdleText)
+                .frame(width: Self.pillSize.width, height: Self.pillSize.height)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .offset(x: Self.pillX(under: section), y: Self.pillTop)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private static func pillX(under section: KitchenUpgrade.Tab) -> CGFloat {
+        switch section {
+        case .ingredients: ingredientsPillX
+        case .tools: toolsPillX
+        }
     }
 }
 

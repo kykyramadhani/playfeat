@@ -3,11 +3,12 @@
 //  PlayFeat
 //  Created by kyky on 12/11/26.
 //
-//  The kitchen art is one 1366×1024 picture that fills the screen, cropped
-//  evenly when the screen is a different shape. Everything placed on it —
-//  props and customers — is measured in that picture's points (origin
-//  top-left) and mapped onto the screen here, so the SwiftUI art and the
-//  SpriteKit hit areas always line up.
+//  The kitchen art is one 1366×1024 picture fitted whole to the screen and
+//  centred, never cropped, so the counter's stations stay within reach on
+//  a wide MacBook screen too. Everything placed on it — props and
+//  customers — is measured in that picture's points (origin top-left) and
+//  mapped onto the screen here, so the SwiftUI art and the SpriteKit hit
+//  areas always line up.
 //
 
 import CoreGraphics
@@ -17,10 +18,16 @@ nonisolated struct KitchenLayout {
 
     let screenSize: CGSize
 
-    /// Aspect-fill: the art covers the screen and the overflow is cut off
-    /// equally on both sides.
+    /// Aspect-fit: the whole art shows. On a screen wider than the art (every
+    /// Mac and most iPads) it fills the height and leaves a margin each side,
+    /// which `KitchenBackdrop` fills by stretching the truck's walls.
     var scale: CGFloat {
-        max(screenSize.width / Self.artSize.width, screenSize.height / Self.artSize.height)
+        min(screenSize.width / Self.artSize.width, screenSize.height / Self.artSize.height)
+    }
+
+    /// The screen width left over on each side of the art.
+    var sideMargin: CGFloat {
+        max(0, (screenSize.width - Self.artSize.width * scale) / 2)
     }
 
     /// Screen point (y-down, SwiftUI) of a point on the art.
@@ -60,6 +67,27 @@ nonisolated extension KitchenLayout {
     /// How far apart two flatbreads sit when the grill holds two.
     static let grillSlotGap: CGFloat = 110
 
+    /// ponytail: a stand-in spot for Planet 2's pot, at the far right of the
+    /// counter, until the positions in the team's design file are drawn in.
+    /// It covers the second glass spot.
+    static let pot = CGRect(x: 1110, y: 745, width: 200, height: 180)
+
+    /// Where `tool` stands on the counter.
+    static func area(of tool: CookingTool.Kind) -> CGRect {
+        switch tool {
+        case .grill: grill
+        case .pot: pot
+        }
+    }
+
+    /// Where each of `count` items cooks on `tool`, left to right.
+    static func cookingSpots(on tool: CookingTool.Kind, count: Int) -> [CGPoint] {
+        switch tool {
+        case .grill: grillSlots(count)
+        case .pot: [CGPoint(x: pot.midX, y: pot.midY)]
+        }
+    }
+
     /// Where each of `count` flatbreads cooks, left to right.
     static func grillSlots(_ count: Int) -> [CGPoint] {
         guard count > 1 else { return [grillRing] }
@@ -97,32 +125,84 @@ nonisolated extension KitchenLayout {
         Array(glassSpots.prefix(min(max(count, 0), maxGlasses)))
     }
 
-    /// One seat per alien drawing. The two green aliens serve regular
-    /// customers; the red one at the top left is the angry customer's.
+    /// The three places a customer stands. The two regular seats are the
+    /// one leaning in from the left wall and the one hanging from the top
+    /// right; the angry customer hangs from the top left.
     static let seats: [Seat] = [
-        Seat(alienImage: "KitchenAlienLeft", customerType: .regular,
+        Seat(customerType: .regular, entersFrom: .left,
              alien: CGRect(x: 47, y: 248, width: 260, height: 297),
+             alienPose: AlienPose(center: CGPoint(x: 166, y: 420), isMirrored: true, turnDegrees: 0),
              orderSheet: CGRect(x: 262, y: 290, width: 226, height: 190)),
-        Seat(alienImage: "KitchenAlienTop", customerType: .regular,
-             alien: CGRect(x: 756, y: 0, width: 255, height: 255),
+        Seat(customerType: .regular, entersFrom: .top,
+             alien: CGRect(x: 756, y: 0, width: 259, height: 255),
+             alienPose: AlienPose(center: CGPoint(x: 936, y: 93), isMirrored: false, turnDegrees: -95),
              orderSheet: CGRect(x: 1000, y: 120, width: 226, height: 190)),
-        Seat(alienImage: "KitchenAlienRed", customerType: .angry,
-             alien: CGRect(x: 287, y: 0, width: 218, height: 221),
+        Seat(customerType: .angry, entersFrom: .top,
+             alien: CGRect(x: 287, y: 0, width: 224, height: 280),
+             alienPose: AlienPose(center: CGPoint(x: 392, y: 65), isMirrored: true, turnDegrees: 105),
              orderSheet: CGRect(x: 490, y: 90, width: 226, height: 190)),
     ]
 
     struct Seat {
-        let alienImage: String
-        /// Who sits here: an angry customer only ever takes the red alien's seat.
+        enum Side { case left, top }
+
+        /// Who sits here: an angry customer only ever takes the top-left seat.
         let customerType: CustomerType
+        /// The screen edge the alien slides in from, and back out to.
+        let entersFrom: Side
+        /// Where the alien's head and shoulders show: half of where a dish
+        /// can be handed over.
         let alien: CGRect
+        let alienPose: AlienPose
         let orderSheet: CGRect
+
+        /// How far the alien moves to be just off screen on its side, in art
+        /// points: past the far edge of the whole drawn picture.
+        var offstageOffset: CGSize {
+            let drawn = alienPose.drawnBounds
+            return switch entersFrom {
+            case .left: CGSize(width: -drawn.maxX, height: 0)
+            case .top: CGSize(width: 0, height: -drawn.maxY)
+            }
+        }
 
         /// Where a dish is handed over: one invisible box around the alien
         /// and its order sheet, so the player only has to get the dish near
         /// the customer, not onto the drawing itself.
         var serveArea: CGRect { alien.union(orderSheet) }
     }
+
+    /// How a seat's alien is drawn. Every alien picture is in one pose,
+    /// head at the top left and body trailing down to the right, on the
+    /// same canvas with its three moods lined up, so only the face changes
+    /// with the mood. The picture is mirrored, then turned about its centre
+    /// so the body reaches back to the wall or the ceiling, and centred on
+    /// `center`.
+    struct AlienPose {
+        let center: CGPoint
+        let isMirrored: Bool
+        /// Clockwise.
+        let turnDegrees: Double
+
+        /// The box around the whole picture once turned, in art points.
+        var drawnBounds: CGRect {
+            let half = CGSize(width: KitchenLayout.alienCanvas.width / 2, height: KitchenLayout.alienCanvas.height / 2)
+            let angle = turnDegrees * .pi / 180
+            let reach = CGSize(
+                width: abs(half.width * cos(angle)) + abs(half.height * sin(angle)),
+                height: abs(half.width * sin(angle)) + abs(half.height * cos(angle))
+            )
+            return CGRect(x: center.x - reach.width, y: center.y - reach.height,
+                          width: reach.width * 2, height: reach.height * 2)
+        }
+    }
+
+    /// The canvas every alien picture is drawn on, in art points.
+    static let alienCanvas = CGSize(width: 357, height: 455)
+
+    /// How far outside a customer's serve area a carried dish they ordered
+    /// is pulled in, as if by a magnet.
+    static let serveMagnetReach: CGFloat = 60
 
     /// Who each counter position takes: the regular aliens' first, then the
     /// angry alien's. How many stand there at once is the level's call.

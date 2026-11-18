@@ -72,6 +72,7 @@ struct ContentView: View {
                 sceneManager.finishTutorial()
                 sceneManager.play()
             }
+            openDebugKitchenIfRequested()
             #endif
         }
         .onChange(of: language) { _, newValue in
@@ -118,6 +119,25 @@ struct ContentView: View {
                 .transition(.opacity)
         }
     }
+
+    #if DEBUG
+    /// `-debugLevel` / `-debugBuffet`: straight into a planet kitchen, so a
+    /// day can be played before any screen leads to it.
+    private func openDebugKitchenIfRequested() {
+        if let levelID = DebugLaunch.levelID {
+            do {
+                let level = try LevelLoader.load(levelID)
+                showLaunchScreen = false
+                sceneManager.goToKitchen(level)
+            } catch {
+                print("[debug] -debugLevel \(levelID) failed to load: \(error)")
+            }
+        } else if let planet = DebugLaunch.buffetPlanet {
+            showLaunchScreen = false
+            sceneManager.startMarathon(on: planet)
+        }
+    }
+    #endif
 }
 
 #Preview {

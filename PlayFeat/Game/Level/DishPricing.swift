@@ -16,6 +16,12 @@ nonisolated struct DishPricing: Equatable {
         KitchenMenu.mushroom: 15,
         KitchenMenu.tentacle: 10,
         KitchenMenu.slime: 5,
+        KitchenMenu.rawNoodles: 10,
+        KitchenMenu.coral: 10,
+        KitchenMenu.urchin: 10,
+        KitchenMenu.rawClam: 15,
+        KitchenMenu.seaCookie: 10,
+        KitchenMenu.starfishSugar: 5,
     ]
 
     /// Upgraded values; an ingredient missing here keeps its base value.
@@ -29,6 +35,11 @@ nonisolated struct DishPricing: Equatable {
 
     func value(of ingredient: String) -> Int {
         ingredientValues[ingredient] ?? Self.baseValues[ingredient] ?? 0
+    }
+
+    /// The ingredients worth more than their base value: drawn premium.
+    var upgradedIngredients: Set<String> {
+        Set(ingredientValues.filter { $0.value > Self.baseValues[$0.key] ?? 0 }.keys)
     }
 
     /// These values on top of the current ones.

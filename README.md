@@ -4,6 +4,10 @@ A hand-tracking cooking game made with and for the community at **PUSPADI** (Pus
 
 The front camera fills the screen and Vision tracks the player's hands and upper body. Players **pinch** floating ingredient bubbles, drag them onto a plate to match the recipe, then carry the finished dish to the bell. No touch input is needed during play.
 
+## System documentation
+
+Start with the [system documentation index](docs/systems/README.md) for detailed guides to the current planet kitchens, hand tracking, levels, progression, shop, settings, audio, persistence, marathon, and retained classic mode. The play instructions below describe the classic camera-based mode.
+
 ## How to play
 
 1. A recipe card shows the dish and its ingredients; the dish clock starts.
@@ -47,5 +51,5 @@ PlayFeat/
   Audio/     music and sound effects
   UI/        screens and overlays
 Testing/     unit and UI tests
-docs/        design notes
+docs/        system guides and design notes
 ```

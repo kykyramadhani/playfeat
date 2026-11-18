@@ -18,15 +18,13 @@ struct PlanetScreen<Content: View>: View {
 
     /// What fills the screen behind the content.
     enum Backdrop {
-        /// Kepler-186f's desert, for the planet's own screens.
-        case kepler
-        /// The sand where the spaceship landed, for the planet's level board.
-        case landingSite
+        /// A planet's own landscape, for its board and Buffet.
+        case planet(PlanetBackdrop)
         /// Starry space, for the galaxy map.
         case space
     }
 
-    var backdrop: Backdrop = .kepler
+    let backdrop: Backdrop
     @ViewBuilder let content: Content
 
     @State private var coinCount = GameStorage.coins
@@ -62,22 +60,8 @@ struct PlanetScreen<Content: View>: View {
     @ViewBuilder
     private var landscape: some View {
         switch backdrop {
-        case .kepler:
-            // Drawn larger than the screen and nudged left, as the Figma frame crops it.
-            Image("KeplerBackground")
-                .resizable()
-                .frame(width: 1730, height: 1297)
-                .offset(x: -58)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .clipped()
-                .accessibilityHidden(true)
-        case .landingSite:
-            Image("KeplerLandingSite")
-                .resizable()
-                .frame(width: 1379, height: 1034)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .clipped()
-                .accessibilityHidden(true)
+        case .planet(let planetBackdrop):
+            LayeredPlanetBackdrop(backdrop: planetBackdrop)
         case .space:
             Image("LaunchBackground")
                 .resizable()
@@ -115,6 +99,6 @@ struct PlanetScreen<Content: View>: View {
 }
 
 #Preview {
-    PlanetScreen { Color.clear }
+    PlanetScreen(backdrop: .planet(Planet.k2332b.backdrop)) { Color.clear }
         .environment(AudioManager())
 }

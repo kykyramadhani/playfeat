@@ -7,8 +7,9 @@
 //  planets still to come, dark and padlocked. Tapping Kepler-186f opens its
 //  level board. Tapping the next planet says what's still needed to fly
 //  there — gas, or the unplayed levels — or, once both are done,
-//  congratulates the player on opening it. Reached from START and the
-//  board's galaxy button.
+//  congratulates the player on opening it and flies there. From then on
+//  K2-332 b shows lit, and tapping it opens its board. Reached from START
+//  and the board's galaxy button.
 //
 //  Pieces are placed at their Figma positions (art points on the
 //  1376×1034 frame), measured from the screen's top-left corner.
@@ -22,23 +23,36 @@ struct GalaxyMapView: View {
     @State private var notice: PlanetNotice?
     @State private var showNewPlanet = false
 
-    /// Centres of the planets not yet open, in design points.
-    private static let lockedPlanets: [CGPoint] = [
+    /// Centres of the planets after Kepler-186f, in design points.
+    private static let laterPlanets: [CGPoint] = [
         CGPoint(x: 750.5, y: 548.5),
         CGPoint(x: 1273.5, y: 548.5),
     ]
 
+    /// Every open planet is drawn this size. Their pictures share one canvas
+    /// with the planet the same size on it, so they look the same size too.
+    private static let openPlanetSize = CGSize(width: 296, height: 277)
+    /// How far below a planet's centre its name tag's centre sits, as under Kepler.
+    private static let nameTagDrop: CGFloat = 184.5
+
+    /// Remembered with the other one-off popups: once the player has
+    /// proceeded to K2-332 b, it stays open on the map.
+    private static let planetTwoArrivalID = "newPlanet_\(Planet.ID.k2332b.rawValue)"
+
+    private var hasReachedPlanetTwo: Bool {
+        GameStorage.seenIntroductions.contains(Self.planetTwoArrivalID)
+    }
+
     var body: some View {
         PlanetScreen(backdrop: .space) {
             ZStack(alignment: .topLeading) {
-                ClickButton(action: sceneManager.goToPlanetSelect) { kepler }
+                ClickButton(action: { sceneManager.goToPlanet(.kepler186f) }) { kepler }
                     .buttonStyle(.plain)
                     .accessibilityLabel(Text(verbatim: Planet.kepler186f.name))
-                ClickButton(action: tryToLeaveKepler) { lockedPlanet }
-                    .buttonStyle(.plain)
-                    .position(Self.lockedPlanets[0])
-                ForEach(Self.lockedPlanets.indices.dropFirst(), id: \.self) { index in
-                    lockedPlanet.position(Self.lockedPlanets[index])
+                planetTwo
+                    .position(Self.laterPlanets[0])
+                ForEach(Self.laterPlanets.indices.dropFirst(), id: \.self) { index in
+                    lockedPlanet.position(Self.laterPlanets[index])
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -51,8 +65,7 @@ struct GalaxyMapView: View {
         }
         .overlay {
             if showNewPlanet {
-                // ponytail: the next planet has no board yet, so PROCEED just closes.
-                NewPlanetPopup(onProceed: { showNewPlanet = false })
+                NewPlanetPopup(onProceed: flyToPlanetTwo)
                     .transition(.opacity)
             }
         }
@@ -69,6 +82,38 @@ struct GalaxyMapView: View {
         }
     }
 
+    private func flyToPlanetTwo() {
+        GameStorage.markIntroductionSeen(Self.planetTwoArrivalID)
+        sceneManager.goToPlanet(.k2332b)
+    }
+
+    /// K2-332 b: lit once the player has flown there, padlocked before.
+    @ViewBuilder
+    private var planetTwo: some View {
+        if hasReachedPlanetTwo {
+            ClickButton(action: { sceneManager.goToPlanet(.k2332b) }) { openPlanet(.k2332b) }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(verbatim: Planet.k2332b.name))
+        } else {
+            ClickButton(action: tryToLeaveKepler) { lockedPlanet }
+                .buttonStyle(.plain)
+        }
+    }
+
+    /// A planet the player has reached: its glow, the planet and its name.
+    private func openPlanet(_ planet: Planet) -> some View {
+        ZStack {
+            Ellipse()
+                .fill(Color.planetGlow)
+                .frame(width: 276, height: 256)
+                .blur(radius: 9.5)
+            Image(planet.backdrop.galaxyImageName)
+                .resizable()
+                .frame(width: Self.openPlanetSize.width, height: Self.openPlanetSize.height)
+        }
+        .overlay { nameTag(planet.name).offset(y: Self.nameTagDrop) }
+    }
+
     /// The open planet: a soft glow, the planet, its flag on a rock, and its name.
     private var kepler: some View {
         ZStack(alignment: .topLeading) {
@@ -77,9 +122,9 @@ struct GalaxyMapView: View {
                 .frame(width: 276, height: 256)
                 .blur(radius: 9.5)
                 .position(x: 258, y: 549)
-            Image("KeplerPlanet")
+            Image(Planet.kepler186f.backdrop.galaxyImageName)
                 .resizable()
-                .frame(width: 296, height: 277)
+                .frame(width: Self.openPlanetSize.width, height: Self.openPlanetSize.height)
                 .position(x: 261, y: 548.5)
             Image("PlanetFlag")
                 .resizable()
@@ -90,15 +135,15 @@ struct GalaxyMapView: View {
                 .frame(width: 133.7, height: 70.7)
                 .rotationEffect(.degrees(-2.81))
                 .position(x: 260.5, y: 444.4)
-            nameTag
+            nameTag(Planet.kepler186f.name)
                 .position(x: 257.5, y: 733)
         }
         .frame(width: 520, height: 800, alignment: .topLeading)
         .contentShape(Rectangle())
     }
 
-    private var nameTag: some View {
-        Text(verbatim: Planet.kepler186f.name)
+    private func nameTag(_ name: String) -> some View {
+        Text(verbatim: name)
             .font(.atkinson(size: 32, weight: .bold))
             .tracking(0.64)
             .textCase(.uppercase)

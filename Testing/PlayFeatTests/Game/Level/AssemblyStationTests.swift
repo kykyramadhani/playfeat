@@ -3,8 +3,9 @@
 //  PlayFeatTests
 //  Created by Owen Limantoro on 12/11/26.
 //
-//  The plate and the glass, by the prototype's placement table: what each
-//  takes, in either order, and the dish a base and a topping become.
+//  The plate and the glass, by the prototype's placement table, and Planet
+//  2's bowl and cookie plate, by its level design: what each takes, in
+//  either order, and the dish a base and a topping become.
 //
 
 import Testing
@@ -135,5 +136,63 @@ struct AssemblyStationTests {
     @Test(arguments: [Menu.pepper, Menu.mushroom, Menu.bakedFlatbread, Menu.rawFlatbread])
     func theGlassTakesDrinkIngredientsOnly(item: String) {
         #expect(!AssemblyStation.glass.accepts(item))
+    }
+
+    // MARK: - Bowl (Planet 2)
+
+    /// Noodles must be boiled and the clam grilled before they go in a bowl.
+    @Test(arguments: [Menu.rawNoodles, Menu.mushyNoodles, Menu.rawClam, Menu.burntClam, Menu.seaCookie])
+    func theBowlRefusesUncookedRuinedAndDessertItems(item: String) {
+        #expect(!AssemblyStation.bowl.accepts(item))
+    }
+
+    @Test(arguments: [
+        (Menu.coral, Menu.coralNoodles), (Menu.urchin, Menu.urchinNoodles), (Menu.grilledClam, Menu.clamNoodles)
+    ])
+    func boiledNoodlesAndAToppingMakeTheirDish(topping: String, dish: String) throws {
+        var bowl = AssemblyStation.bowl
+        try bowl.add(Menu.boiledNoodles)
+        try bowl.add(topping)
+
+        #expect(bowl.completedDish == dish)
+    }
+
+    @Test func theToppingCanGoInTheBowlBeforeTheNoodles() throws {
+        var bowl = AssemblyStation.bowl
+        try bowl.add(Menu.coral)
+        try bowl.add(Menu.boiledNoodles)
+
+        #expect(bowl.completedDish == Menu.coralNoodles)
+    }
+
+    @Test func aBowlTakesOnlyOneTopping() throws {
+        var bowl = AssemblyStation.bowl
+        try bowl.add(Menu.boiledNoodles)
+        try bowl.add(Menu.coral)
+
+        #expect(!bowl.accepts(Menu.urchin))
+    }
+
+    // MARK: - Cookie plate (Planet 2)
+
+    @Test func aSeaCookieThenSugarMakeTheStarCookie() throws {
+        var cookiePlate = AssemblyStation.cookiePlate
+        try cookiePlate.add(Menu.seaCookie)
+        try cookiePlate.add(Menu.starfishSugar)
+
+        #expect(cookiePlate.completedDish == Menu.starCookie)
+    }
+
+    @Test func sugarThenASeaCookieMakeTheStarCookieToo() throws {
+        var cookiePlate = AssemblyStation.cookiePlate
+        try cookiePlate.add(Menu.starfishSugar)
+        try cookiePlate.add(Menu.seaCookie)
+
+        #expect(cookiePlate.completedDish == Menu.starCookie)
+    }
+
+    @Test(arguments: [Menu.boiledNoodles, Menu.coral, Menu.grilledClam])
+    func theCookiePlateRefusesNoodleItems(item: String) {
+        #expect(!AssemblyStation.cookiePlate.accepts(item))
     }
 }

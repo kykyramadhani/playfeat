@@ -13,15 +13,14 @@ nonisolated enum KitchenRules {
     /// Taken off the score, never below zero, for every customer who leaves.
     static let lostCustomerPenalty = 10
 
-    /// Seconds a raw flatbread takes to bake.
-    static let bakeSec: TimeInterval = 6
-    /// After baking: when the flatbread starts glowing as a warning, and
-    /// when it burns. Both are stretched by a level's burn multiplier.
-    static let glowAfterBakedSec: TimeInterval = 8
-    static let burnAfterBakedSec: TimeInterval = 12
-
     /// A refused item hangs where it was let go this long, then falls.
     static let refuseHoldSec: TimeInterval = 0.3
+
+    /// How long a served dish takes to be drawn into the alien and vanish.
+    /// The customer stays until it is gone; then their order sheet vanishes,
+    /// and a beat later they leave.
+    static let handOverSec: TimeInterval = 1.1
+    static let pauseBeforeLeavingSec: TimeInterval = 0.2
 
     /// A bubble something still needs comes at least this often.
     static let maxUsefulWaitSec: TimeInterval = 6

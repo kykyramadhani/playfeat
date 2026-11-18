@@ -27,22 +27,40 @@ final class SceneManager {
         screen = .galaxy
     }
 
+    /// The planet the player is on. Its board, Buffet and kitchen are the
+    /// ones `planetSelect`, `marathon` and `kitchen` show.
+    private(set) var planet: Planet.ID = .kepler186f
+
+    /// Lands on `planet` from the galaxy and opens its level board.
+    func goToPlanet(_ planet: Planet.ID) {
+        self.planet = planet
+        goToPlanetSelect()
+    }
+
+    /// Back to the board of the planet the player is on.
     func goToPlanetSelect() {
+        levelReport = nil
         screen = .planetSelect
     }
 
-    /// The report of the story day just played, shown over the level board
+    /// The report of the story day just played, shown over its frozen kitchen
     /// until the player moves on.
     private(set) var levelReport: LevelReport?
 
-    /// Back to the board with `report` on top of it.
+    /// Keeps the kitchen mounted behind the finished day's report.
     func showReport(_ report: LevelReport) {
         levelReport = report
-        screen = .planetSelect
     }
 
-    func dismissReport() {
-        levelReport = nil
+    /// NEXT opens the following level on the same planet; the planet's
+    /// final level returns to the board.
+    func goToNextLevel(after level: LevelData) {
+        guard let nextID = PlanetCatalog.nextLevelID(after: level.id),
+              let nextLevel = try? LevelLoader.load(nextID) else {
+            goToPlanetSelect()
+            return
+        }
+        goToKitchen(nextLevel)
     }
 
     func goToMarathon() {
@@ -63,14 +81,16 @@ final class SceneManager {
         enterKitchen(level)
     }
 
-    /// Starts a fresh marathon run, one continuous day of rounds and breaks.
-    func startMarathon() {
-        let marathon = MarathonSession(positionTypes: KitchenLayout.positionTypes)
+    /// Starts a fresh marathon run on `planet`, one continuous day of rounds
+    /// and breaks.
+    func startMarathon(on planet: Planet.ID) {
+        let marathon = MarathonSession(planet: PlanetCatalog.planet(planet), positionTypes: KitchenLayout.positionTypes)
         self.marathon = marathon
         enterKitchen(marathon.day.level)
     }
 
     private func enterKitchen(_ level: LevelData) {
+        planet = level.planet
         kitchenVisit += 1
         screen = .kitchen(level)
     }
