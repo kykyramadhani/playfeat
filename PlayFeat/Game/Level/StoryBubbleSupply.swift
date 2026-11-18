@@ -5,10 +5,10 @@
 //
 //  A story day's bubbles, as in the prototype. The level's starter bubbles
 //  come first; then one every `bubbleEverySec`, for as long as the day
-//  lasts (overtime included). About `usefulBubbleShare` of them bring
-//  something the orders still lack, counting the bubbles already on screen;
-//  if none has for a while, the next one does. The rest are decoys from the
-//  level's pool.
+//  lasts (overtime included). Exactly `usefulBubbleShare` of them bring
+//  something the orders still lack, counting the bubbles already on screen,
+//  in a fixed pattern (UsefulBubblePattern); if none has for a while, the
+//  next one does. The rest are decoys from the level's pool.
 //
 
 import Foundation
@@ -20,11 +20,15 @@ nonisolated struct StoryBubbleSupply: BubbleSupply {
     private var nextSpawnAt: TimeInterval
     private var lastUsefulAt: TimeInterval = 0
     private var lastLane: Int?
+    private let usefulPattern: UsefulBubblePattern
+    /// Bubbles sent after the starters, which the useful pattern counts.
+    private var timedBubblesSent = 0
 
     init(level: LevelData) {
         self.level = level
         starters = level.bubbles.sorted { $0.at < $1.at }
         nextSpawnAt = (starters.last?.at ?? 0) + level.bubbleEverySec
+        usefulPattern = UsefulBubblePattern(usefulShare: level.usefulBubbleShare)
     }
 
     mutating func bubbles(
@@ -44,13 +48,14 @@ nonisolated struct StoryBubbleSupply: BubbleSupply {
             noteSpawn(ingredient, lane: lane, at: time, in: context)
             due.append(LevelData.BubbleEntry(at: time, ingredient: ingredient, lane: lane))
             nextSpawnAt += level.bubbleEverySec
+            timedBubblesSent += 1
         }
         return due
     }
 
     /// What the next bubble brings: something still lacking (or, if nothing
-    /// is, anything the orders use) with the level's share, always when none
-    /// has come for `maxUsefulWaitSec`; otherwise a decoy.
+    /// is, anything the orders use) when the useful pattern says so, and
+    /// always when none has come for `maxUsefulWaitSec`; otherwise a decoy.
     private func pick(
         at time: TimeInterval, in context: BubbleContext, using generator: inout some RandomNumberGenerator
     ) -> String {
@@ -59,7 +64,7 @@ nonisolated struct StoryBubbleSupply: BubbleSupply {
         guard !useful.isEmpty else { return pool.randomElement(using: &generator) ?? KitchenMenu.rawFlatbread }
 
         let overdue = time + level.bubbleEverySec - lastUsefulAt > KitchenRules.maxUsefulWaitSec
-        if overdue || Double.random(in: 0..<1, using: &generator) < level.usefulBubbleShare {
+        if overdue || usefulPattern.isUseful(bubble: timedBubblesSent) {
             return useful.randomElement(using: &generator) ?? pool[0]
         }
         let decoys = pool.filter { !useful.contains($0) }

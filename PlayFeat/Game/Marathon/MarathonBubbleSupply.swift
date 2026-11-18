@@ -4,8 +4,9 @@
 //  Created by kyky on 17/11/26.
 //
 //  The marathon's bubbles, as in the prototype: supply follows demand. The
-//  gap between bubbles shrinks as the counter needs more, faster; most
-//  bubbles bring the first thing still lacking; anything lacking that no
+//  gap between bubbles shrinks as the counter needs more, faster; exactly
+//  `usefulShare` of the bubbles, in a fixed pattern (UsefulBubblePattern),
+//  bring the first thing still lacking; anything lacking that no
 //  bubble has brought for a few seconds comes next. Never more than a
 //  handful on screen at once.
 //
@@ -33,6 +34,9 @@ nonisolated struct MarathonBubbleSupply: BubbleSupply {
     private var nextSpawnAt = (starters.last?.at ?? 0) + firstGapSec
     private var interval = intervalRange.upperBound
     private var lastLane: Int?
+    private let usefulPattern = UsefulBubblePattern(usefulShare: usefulShare)
+    /// Bubbles sent after the starters, which the useful pattern counts.
+    private var timedBubblesSent = 0
     /// When each ingredient last came in a bubble.
     private var lastSeen: [String: TimeInterval] = [:]
     /// Since when each ingredient has been lacking.
@@ -61,6 +65,7 @@ nonisolated struct MarathonBubbleSupply: BubbleSupply {
         lastSeen[ingredient] = time
         interval = Self.interval(needs: needs.count, in: context)
         nextSpawnAt = time + interval
+        timedBubblesSent += 1
         return due + [LevelData.BubbleEntry(at: time, ingredient: ingredient, lane: lane)]
     }
 
@@ -74,7 +79,7 @@ nonisolated struct MarathonBubbleSupply: BubbleSupply {
                 && time - max(needSince[need] ?? time, lastSeen[need] ?? -.infinity) >= Self.guaranteeSec
         }
         if let overdue { return overdue }
-        if !needs.isEmpty, Double.random(in: 0..<1, using: &generator) < Self.usefulShare {
+        if !needs.isEmpty, usefulPattern.isUseful(bubble: timedBubblesSent) {
             return needs.first { !onScreen.contains($0) } ?? needs[0]
         }
         return context.pool.randomElement(using: &generator) ?? KitchenMenu.rawFlatbread
