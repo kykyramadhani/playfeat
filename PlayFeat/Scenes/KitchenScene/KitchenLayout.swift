@@ -124,6 +124,10 @@ nonisolated extension KitchenLayout {
         var serveArea: CGRect { alien.union(orderSheet) }
     }
 
+    /// How far outside a customer's serve area a carried dish they ordered
+    /// is pulled in, as if by a magnet.
+    static let serveMagnetReach: CGFloat = 60
+
     /// Who each counter position takes: the regular aliens' first, then the
     /// angry alien's. How many stand there at once is the level's call.
     static let positionTypes: [CustomerType] = seats.map(\.customerType)

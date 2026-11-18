@@ -109,7 +109,7 @@ struct LocalizationTests {
             // Planet kitchen
             "Time Left", "Tips",
             // Settings, level report, recipe book, introductions, shop
-            "Hand-mode", "Recap", "Order Delivered", "Order Missed", "Total Income",
+            "One Hand Mode", "Recap", "Order Delivered", "Order Missed", "Total Income",
             "Next", "Back", "Retry", "Recipe", "Description", "How to Cook", "Locked",
             "Baked Flatbread", "Pepper Flatbread", "Mushroom Flatbread", "Slimy Tentacles",
             "New Tools", "New Menu", "Sun Grill", "Glass", "Max",

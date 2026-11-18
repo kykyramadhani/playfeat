@@ -609,17 +609,6 @@
         }
       }
     },
-    "Hand-mode" : {
-      "comment" : "Settings row: whether the game is played with one hand.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mode Tangan"
-          }
-        }
-      }
-    },
     "Help" : {
       "comment" : "VoiceOver label for the help button on the planet screen.",
       "extractionState" : "stale",
@@ -1051,6 +1040,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AKTIF"
+          }
+        }
+      }
+    },
+    "One Hand Mode" : {
+      "comment" : "Settings row: whether the game is played with one hand.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode Satu Tangan"
           }
         }
       }
@@ -1826,6 +1826,16 @@
         }
       }
     },
+    "Your order ingredients will appear here! Watch the border! It turns red as time runs out!" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bahan-bahan pesananmu akan muncul di sini! Perhatikan garis tepinya! Garis akan berubah merah saat waktu hampir habis!"
+          }
+        }
+      }
+    },
     "You’ve unlocked a new planet" : {
       "comment" : "New-planet popup: the player opened the next planet.",
       "localizations" : {
@@ -1833,16 +1843,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kamu telah membuka planet baru"
-          }
-        }
-      }
-    },
-    "Your order ingredients will appear here! Watch the border! It turns red as time runs out!" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bahan-bahan pesananmu akan muncul di sini! Perhatikan garis tepinya! Garis akan berubah merah saat waktu hampir habis!"
           }
         }
       }
