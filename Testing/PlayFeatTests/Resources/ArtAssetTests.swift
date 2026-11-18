@@ -106,6 +106,16 @@ struct ArtAssetTests {
         #expect(UIImage(named: backdrop.galaxyImageName) != nil)
     }
 
+    /// The galaxy map draws every planet at one size, so their pictures must
+    /// share one canvas; a planet cropped tighter would look bigger.
+    @Test func everyGalaxyPlanetSharesOneCanvas() {
+        let sizes = Set(PlanetCatalog.all.compactMap { planet in
+            UIImage(named: planet.backdrop.galaxyImageName).map { "\($0.size)" }
+        })
+
+        #expect(sizes.count == 1, "galaxy planet canvases differ: \(sizes)")
+    }
+
     /// The source art sits on 1920×1080 canvases with the subject filling as
     /// little as 28% of the width. If trimming regresses, every bubble silently
     /// renders a fraction of its intended size.
