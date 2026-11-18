@@ -11,7 +11,7 @@
 //  Layers, back to front: the kitchen art (KitchenBackdrop), the SpriteKit
 //  bubbles and hands (KitchenScene), then the HUD and overlays. When a
 //  story day ends its stars and income are banked and the report shows over
-//  the level board. A marathon is one continuous day: each round's end
+//  the frozen kitchen. A marathon is one continuous day: each round's end
 //  freezes it for the card break, and losing three customers ends it with
 //  the marathon report. STOP pauses either.
 //
@@ -95,6 +95,7 @@ struct KitchenView: View {
                     .zIndex(200)
             }
 
+            storyReportOverlay
         }
         .onAppear(perform: setUp)
         .onDisappear(perform: tearDown)
@@ -118,7 +119,7 @@ struct KitchenView: View {
             SpriteView(
                 scene: scene,
                 // No GPU work outside the foreground — iOS rejects it.
-                isPaused: scenePhase != .active,
+                isPaused: scenePhase != .active || day.isOver,
                 options: [.allowsTransparency, .ignoresSiblingOrder]
             )
             .onAppear { scene.size = proxy.size }
@@ -222,18 +223,36 @@ struct KitchenView: View {
         return true
     }
 
-    /// Play is over: a story day banks its stars and income and shows its
-    /// report over the level board; a marathon shows its report here.
+    /// Both reports keep the finished kitchen visible. Income is banked only once.
     private func endDay() {
-        guard marathonStep != .report else { return }
+        guard sceneManager.levelReport == nil, marathonStep != .report else { return }
         day.pause()
         audio.stopMusic()
+        handPoseManager.stop()
+        UIApplication.shared.isIdleTimerDisabled = false
         if marathon != nil {
             withAnimation(.easeOut(duration: 0.3)) { marathonStep = .report }
         } else {
             let previousBest = GameStorage.bestStars(forLevel: day.level.id)
             GameStorage.recordDay(onLevel: day.level.id, stars: day.stars, income: day.total)
-            sceneManager.showReport(LevelReport(day: day, previousBestStars: previousBest))
+            withAnimation(.easeOut(duration: 0.3)) {
+                sceneManager.showReport(LevelReport(day: day, previousBestStars: previousBest))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var storyReportOverlay: some View {
+        if let report = sceneManager.levelReport {
+            LevelReportView(
+                report: report,
+                levelNumber: (Planet.kepler186f.levelIDs.firstIndex(of: report.level.id) ?? 0) + 1,
+                onNext: { sceneManager.goToNextLevel(after: report.level) },
+                onBack: sceneManager.goToPlanetSelect,
+                onRetry: { sceneManager.goToKitchen(report.level) }
+            )
+            .transition(.opacity)
+            .zIndex(200)
         }
     }
 

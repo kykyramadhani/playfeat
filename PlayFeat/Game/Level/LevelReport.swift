@@ -3,9 +3,9 @@
 //  PlayFeat
 //  Created by kyky on 17/11/26.
 //
-//  What a finished story day earned, kept after its kitchen closes so the
-//  report can show over the level board: the recap, the stars, and how many
-//  of them are new, since only those add fuel to the spaceship.
+//  A snapshot of what a finished story day earned, shown over its frozen
+//  kitchen: the recap, the stars, and how many of them are new, since only
+//  those add fuel to the spaceship.
 //
 
 nonisolated struct LevelReport: Equatable {
@@ -36,6 +36,6 @@ nonisolated struct LevelReport: Equatable {
         self.previousBestStars = previousBestStars
     }
 
-    /// Stars beyond the level's previous best: the ones that fly to the fuel gauge.
+    /// Stars beyond the level's previous best: the ones that add fuel to the gauge.
     var newStars: Int { max(stars - previousBestStars, 0) }
 }
