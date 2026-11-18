@@ -4,7 +4,8 @@
 //  Created by kyky on 12/11/26.
 //
 //  The kitchen's hand handling: a cartoon hand follows every hand, a fist grabs
-//  the nearest bubble (or item put down) it touches, a dish carried near the
+//  the nearest bubble (or item put down) it touches and it grows a little
+//  while held, a dish carried near the
 //  customer who ordered it is pulled in, and a hand that stays open lets go.
 //  Same feel as the classic board — same easing, release debounce and
 //  dropout grace — so a player moving between modes notices no change.
@@ -62,9 +63,12 @@ extension KitchenScene {
         guard state == .fist, hand.previousState != .fist, hand.held == nil,
               let node = grabCandidate(touchedBy: joints) else { return }
         unpark(node)
+        node.move(toParent: self)
         node.heldBy = handID
         node.fallingSince = nil
         node.zPosition = Self.heldZ
+        node.removeAllActions()
+        node.run(.scale(to: Self.heldScale, duration: Self.heldScaleDuration))
         hand.held = node
         audio?.play(.bubbleGrab)
     }
@@ -111,7 +115,7 @@ extension KitchenScene {
     private func grabCandidate(touchedBy joints: [CGPoint]) -> KitchenBubbleNode? {
         var best: (node: KitchenBubbleNode, distance: CGFloat)?
         let now = day?.elapsed ?? 0
-        for node in bubbles where node.heldBy == nil && !node.isRefused(at: now) {
+        for node in bubbles where node.heldBy == nil && !node.isRefused(at: now) && !isSinkingBehindTable(node) {
             guard let nearest = joints.map({ $0.distance(to: node.position) }).min(),
                   nearest <= node.radius + grabSlack,
                   nearest < best?.distance ?? .infinity else { continue }

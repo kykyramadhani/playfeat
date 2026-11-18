@@ -51,7 +51,8 @@ struct ArtAssetTests {
     }
 
     /// The planet kitchen draws every item by name, in a bubble and once put
-    /// down; a missing picture is an empty bubble, sheet or station.
+    /// down, plain and upgraded; a missing picture is an empty bubble, sheet
+    /// or station.
     @Test(arguments: [
         KitchenMenu.rawFlatbread, KitchenMenu.bakedFlatbread, KitchenMenu.burntFlatbread,
         KitchenMenu.pepper, KitchenMenu.mushroom, KitchenMenu.slime, KitchenMenu.tentacle,
@@ -62,19 +63,15 @@ struct ArtAssetTests {
         KitchenMenu.coralNoodles, KitchenMenu.urchinNoodles, KitchenMenu.clamNoodles, KitchenMenu.starCookie,
     ])
     func everyKitchenItemHasArt(item: String) {
-        for name in [KitchenArt.image(of: item), KitchenArt.placedImage(of: item)] {
+        let everythingUpgraded = Set(DishPricing.baseValues.keys)
+        let names = [
+            KitchenArt.image(of: item), KitchenArt.placedImage(of: item),
+            KitchenArt.image(of: item, upgraded: everythingUpgraded),
+            KitchenArt.placedImage(of: item, upgraded: everythingUpgraded),
+        ]
+        for name in names {
             #expect(UIImage(named: name) != nil, "missing kitchen art '\(name)' for '\(item)'")
         }
-    }
-
-    /// The premium (glowing) versions from the assets page, ready for when
-    /// premium bubbles are added to the game.
-    @Test(arguments: [
-        "PremiumFlatbreadRaw", "PremiumFlatbreadBaked", "PremiumGlowyMushroom", "PremiumMushroomTopping",
-        "PremiumTentacle", "PremiumSlime", "PremiumTentacleGlass", "PremiumSlimyTentaclesGlass",
-    ])
-    func premiumArtExists(name: String) {
-        #expect(UIImage(named: name) != nil)
     }
 
     /// Every alien in every mood is drawn by name as patience runs out; a

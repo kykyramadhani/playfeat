@@ -204,7 +204,7 @@ extension KitchenScene {
             remove(ingredient)
         }
 
-        let dishNode = KitchenBubbleNode(ingredient: dish, radius: bubbleRadius)
+        let dishNode = KitchenBubbleNode(ingredient: dish, radius: bubbleRadius, upgraded: upgradedIngredients)
         dishNode.position = centre(of: station)
         dishNode.placement = station
         dishNode.setScale(Self.placedScale(on: station))

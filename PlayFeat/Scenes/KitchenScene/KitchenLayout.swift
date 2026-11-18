@@ -129,28 +129,42 @@ nonisolated extension KitchenLayout {
     /// one leaning in from the left wall and the one hanging from the top
     /// right; the angry customer hangs from the top left.
     static let seats: [Seat] = [
-        Seat(customerType: .regular,
+        Seat(customerType: .regular, entersFrom: .left,
              alien: CGRect(x: 47, y: 248, width: 260, height: 297),
              alienPose: AlienPose(center: CGPoint(x: 166, y: 420), isMirrored: true, turnDegrees: 0),
              orderSheet: CGRect(x: 262, y: 290, width: 226, height: 190)),
-        Seat(customerType: .regular,
-             alien: CGRect(x: 756, y: 0, width: 255, height: 255),
+        Seat(customerType: .regular, entersFrom: .top,
+             alien: CGRect(x: 756, y: 0, width: 259, height: 255),
              alienPose: AlienPose(center: CGPoint(x: 936, y: 93), isMirrored: false, turnDegrees: -95),
              orderSheet: CGRect(x: 1000, y: 120, width: 226, height: 190)),
-        Seat(customerType: .angry,
-             alien: CGRect(x: 287, y: 0, width: 218, height: 221),
+        Seat(customerType: .angry, entersFrom: .top,
+             alien: CGRect(x: 287, y: 0, width: 224, height: 280),
              alienPose: AlienPose(center: CGPoint(x: 392, y: 65), isMirrored: true, turnDegrees: 105),
              orderSheet: CGRect(x: 490, y: 90, width: 226, height: 190)),
     ]
 
     struct Seat {
+        enum Side { case left, top }
+
         /// Who sits here: an angry customer only ever takes the top-left seat.
         let customerType: CustomerType
+        /// The screen edge the alien slides in from, and back out to.
+        let entersFrom: Side
         /// Where the alien's head and shoulders show: half of where a dish
         /// can be handed over.
         let alien: CGRect
         let alienPose: AlienPose
         let orderSheet: CGRect
+
+        /// How far the alien moves to be just off screen on its side, in art
+        /// points: past the far edge of the whole drawn picture.
+        var offstageOffset: CGSize {
+            let drawn = alienPose.drawnBounds
+            return switch entersFrom {
+            case .left: CGSize(width: -drawn.maxX, height: 0)
+            case .top: CGSize(width: 0, height: -drawn.maxY)
+            }
+        }
 
         /// Where a dish is handed over: one invisible box around the alien
         /// and its order sheet, so the player only has to get the dish near
@@ -169,7 +183,22 @@ nonisolated extension KitchenLayout {
         let isMirrored: Bool
         /// Clockwise.
         let turnDegrees: Double
+
+        /// The box around the whole picture once turned, in art points.
+        var drawnBounds: CGRect {
+            let half = CGSize(width: KitchenLayout.alienCanvas.width / 2, height: KitchenLayout.alienCanvas.height / 2)
+            let angle = turnDegrees * .pi / 180
+            let reach = CGSize(
+                width: abs(half.width * cos(angle)) + abs(half.height * sin(angle)),
+                height: abs(half.width * sin(angle)) + abs(half.height * cos(angle))
+            )
+            return CGRect(x: center.x - reach.width, y: center.y - reach.height,
+                          width: reach.width * 2, height: reach.height * 2)
+        }
     }
+
+    /// The canvas every alien picture is drawn on, in art points.
+    static let alienCanvas = CGSize(width: 357, height: 455)
 
     /// How far outside a customer's serve area a carried dish they ordered
     /// is pulled in, as if by a magnet.

@@ -37,6 +37,11 @@ nonisolated struct DishPricing: Equatable {
         ingredientValues[ingredient] ?? Self.baseValues[ingredient] ?? 0
     }
 
+    /// The ingredients worth more than their base value: drawn premium.
+    var upgradedIngredients: Set<String> {
+        Set(ingredientValues.filter { $0.value > Self.baseValues[$0.key] ?? 0 }.keys)
+    }
+
     /// These values on top of the current ones.
     func upgrading(_ values: [String: Int]) -> DishPricing {
         DishPricing(ingredientValues: ingredientValues.merging(values) { _, new in new })
