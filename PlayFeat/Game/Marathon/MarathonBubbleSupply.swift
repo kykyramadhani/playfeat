@@ -16,10 +16,6 @@ import Foundation
 nonisolated struct MarathonBubbleSupply: BubbleSupply {
     // MARK: - Dials
 
-    static let starters: [LevelData.BubbleEntry] = [
-        .init(at: 0, ingredient: KitchenMenu.rawFlatbread, lane: 2),
-        .init(at: 2, ingredient: KitchenMenu.pepper, lane: 3),
-    ]
     static let firstGapSec: TimeInterval = 2
     static let usefulShare = 0.7
     static let intervalRange: ClosedRange<TimeInterval> = 0.8...2
@@ -30,8 +26,9 @@ nonisolated struct MarathonBubbleSupply: BubbleSupply {
 
     // MARK: - State
 
-    private var starters = Self.starters
-    private var nextSpawnAt = (starters.last?.at ?? 0) + firstGapSec
+    /// The planet's opening bubbles still to send.
+    private var starters: [LevelData.BubbleEntry]
+    private var nextSpawnAt: TimeInterval
     private var interval = intervalRange.upperBound
     private var lastLane: Int?
     private let usefulPattern = UsefulBubblePattern(usefulShare: usefulShare)
@@ -41,6 +38,11 @@ nonisolated struct MarathonBubbleSupply: BubbleSupply {
     private var lastSeen: [String: TimeInterval] = [:]
     /// Since when each ingredient has been lacking.
     private var needSince: [String: TimeInterval] = [:]
+
+    init(starters: [LevelData.BubbleEntry]) {
+        self.starters = starters
+        nextSpawnAt = (starters.last?.at ?? 0) + Self.firstGapSec
+    }
 
     mutating func bubbles(
         at time: TimeInterval,
@@ -57,9 +59,9 @@ nonisolated struct MarathonBubbleSupply: BubbleSupply {
             lastSeen[starter.ingredient] = time
             due.append(starter)
         }
-        guard time >= nextSpawnAt, context.bubblesOnScreen.count < Self.maxOnScreen else { return due }
+        guard time >= nextSpawnAt, context.bubblesOnScreen.count < Self.maxOnScreen,
+              let ingredient = pick(needs: needs, at: time, in: context, using: &generator) else { return due }
 
-        let ingredient = pick(needs: needs, at: time, in: context, using: &generator)
         let lane = BubbleLanes.freeLane(busy: context.busyLanes, last: lastLane, using: &generator)
         lastLane = lane
         lastSeen[ingredient] = time
@@ -69,10 +71,11 @@ nonisolated struct MarathonBubbleSupply: BubbleSupply {
         return due + [LevelData.BubbleEntry(at: time, ingredient: ingredient, lane: lane)]
     }
 
+    /// The next bubble's ingredient, or nil when the pool is empty.
     private func pick(
         needs: [String], at time: TimeInterval, in context: BubbleContext,
         using generator: inout some RandomNumberGenerator
-    ) -> String {
+    ) -> String? {
         let onScreen = Set(context.bubblesOnScreen)
         let overdue = needs.first { need in
             !onScreen.contains(need)
@@ -82,7 +85,7 @@ nonisolated struct MarathonBubbleSupply: BubbleSupply {
         if !needs.isEmpty, usefulPattern.isUseful(bubble: timedBubblesSent) {
             return needs.first { !onScreen.contains($0) } ?? needs[0]
         }
-        return context.pool.randomElement(using: &generator) ?? KitchenMenu.rawFlatbread
+        return context.pool.randomElement(using: &generator)
     }
 
     /// Seconds to the next bubble: enough to cover what the counter needs

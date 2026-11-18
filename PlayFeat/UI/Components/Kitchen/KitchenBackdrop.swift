@@ -43,7 +43,9 @@ struct KitchenBackdrop: View {
             ForEach(KitchenLayout.plates(day.tools.plates), id: \.minX) { spot in
                 Image("KitchenPlate").resizable().placed(in: spot)
             }
-            Image("KitchenGrill").resizable().placed(in: KitchenLayout.grill)
+            ForEach(PlanetCatalog.planet(day.level.planet).kitchen.toolKinds(on: day.level), id: \.self) { tool in
+                Image(KitchenArt.image(of: tool)).resizable().placed(in: KitchenLayout.area(of: tool))
+            }
             ForEach(KitchenLayout.glasses(day.tools.glasses), id: \.minX) { spot in
                 Image("KitchenGlass").resizable().placed(in: spot)
             }

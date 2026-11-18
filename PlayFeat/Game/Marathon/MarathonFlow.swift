@@ -4,7 +4,7 @@
 //  Created by kyky on 17/11/26.
 //
 //  The marathon's customers, as in the prototype: one steps up every few
-//  seconds, dealt from shuffled groups of the current stage. Every dish
+//  seconds, dealt from shuffled groups of the planet's current stage. Every dish
 //  served shortens both the patience of later customers and the gap between
 //  them, down to a floor. Tips pay one coin per 3 seconds of patience left;
 //  three customers lost end the run.
@@ -16,7 +16,6 @@ nonisolated struct MarathonFlow: CustomerFlow {
     // MARK: - Dials
 
     static let lostCustomersToEnd = 3
-    static let firstOrder = KitchenMenu.pepperFlatbread
     static let secondsPerTip: TimeInterval = 3
 
     static let regularStartPatience: TimeInterval = 45
@@ -39,14 +38,16 @@ nonisolated struct MarathonFlow: CustomerFlow {
     private var deck: [CustomerOrder] = []
     private var groupsDealt = 0
     private var random: AnyRandomNumberGenerator
+    private let plan: BuffetPlan
 
-    init(random: any RandomNumberGenerator) {
+    init(plan: BuffetPlan, random: any RandomNumberGenerator) {
+        self.plan = plan
         self.random = AnyRandomNumberGenerator(random)
     }
 
-    var stage: MarathonStage { .stage(afterServing: dishesServed) }
-    var counterSpots: Int { stage.maxWaiting }
-    var bubblePool: [String] { stage.bubblePool }
+    var stage: MarathonStage { plan.stage(afterServing: dishesServed) }
+    var counterSpots: Int { plan.mix(of: stage).maxWaiting }
+    var bubblePool: [String] { plan.mix(of: stage).bubblePool }
     var customerSpacing: TimeInterval? { spacing }
 
     mutating func arrivals(at time: TimeInterval, atCounter: Int) -> [Arrival] {
@@ -87,9 +88,9 @@ nonisolated struct MarathonFlow: CustomerFlow {
 
     /// The first group opens with the first order, so a run starts easy.
     private mutating func dealGroup() {
-        var group = stage.dealGroup(using: &random)
+        var group = plan.mix(of: stage).dealGroup(using: &random)
         if groupsDealt == 0,
-           let first = group.firstIndex(where: { $0.dish == Self.firstOrder && $0.type == .regular }) {
+           let first = group.firstIndex(where: { $0.dish == plan.firstOrder && $0.type == .regular }) {
             group.swapAt(0, first)
         }
         groupsDealt += 1

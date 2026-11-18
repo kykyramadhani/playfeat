@@ -16,6 +16,12 @@ nonisolated struct DishPricing: Equatable {
         KitchenMenu.mushroom: 15,
         KitchenMenu.tentacle: 10,
         KitchenMenu.slime: 5,
+        KitchenMenu.rawNoodles: 10,
+        KitchenMenu.coral: 10,
+        KitchenMenu.urchin: 10,
+        KitchenMenu.rawClam: 15,
+        KitchenMenu.seaCookie: 10,
+        KitchenMenu.starfishSugar: 5,
     ]
 
     /// Upgraded values; an ingredient missing here keeps its base value.

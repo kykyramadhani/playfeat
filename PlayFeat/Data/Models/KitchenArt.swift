@@ -17,6 +17,15 @@ nonisolated enum KitchenArt {
         images[item] ?? item
     }
 
+    /// A cooking tool's picture on the counter.
+    static func image(of tool: CookingTool.Kind) -> String {
+        switch tool {
+        case .grill: "KitchenGrill"
+        // ponytail: the shop's pot stands in until the kitchen pot is drawn.
+        case .pot: "CookingPot"
+        }
+    }
+
     /// The item's picture once put down on a station.
     static func placedImage(of item: String) -> String {
         placedImages[item] ?? image(of: item)
@@ -41,10 +50,27 @@ nonisolated enum KitchenArt {
         KitchenMenu.pepperFlatbread: "PepperFlatbread",
         KitchenMenu.mushroomFlatbread: "MushroomFlatbread",
         KitchenMenu.slimyTentacles: "SlimyTentaclesGlass",
+        // ponytail: Planet 2 has no art yet; Planet 1 and shop pictures stand
+        // in, one per item so playtesters can still tell them apart.
+        KitchenMenu.rawNoodles: "FlatbreadRaw",
+        KitchenMenu.boiledNoodles: "FlatbreadBaked",
+        KitchenMenu.mushyNoodles: "FlatbreadBurnt",
+        KitchenMenu.coral: "CoralLettuce",
+        KitchenMenu.urchin: "GlowyMushroom",
+        KitchenMenu.rawClam: "KitchenTentacle",
+        KitchenMenu.grilledClam: "PremiumTentacle",
+        KitchenMenu.burntClam: "FlatbreadBurnt",
+        KitchenMenu.seaCookie: "Coin",
+        KitchenMenu.starfishSugar: "FuelGaugeStar",
+        KitchenMenu.coralNoodles: "PepperFlatbread",
+        KitchenMenu.urchinNoodles: "MushroomFlatbread",
+        KitchenMenu.clamNoodles: "PremiumFlatbreadBaked",
+        KitchenMenu.starCookie: "LevelStar",
     ]
 
     private static let placedImages: [String: String] = [
         KitchenMenu.mushroom: "MushroomTopping",
         KitchenMenu.tentacle: "TentacleGlass",
+        KitchenMenu.urchin: "MushroomTopping",
     ]
 }

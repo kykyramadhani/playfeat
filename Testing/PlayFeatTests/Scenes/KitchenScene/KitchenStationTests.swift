@@ -6,7 +6,7 @@
 //  Letting items go over the grill, plate and glass, by the prototype's
 //  rules: what each takes, what a refused item does, the grill cooking and
 //  swapping flatbreads, and a finished recipe turning into one dish.
-//  Driven through `settle` and `updateGrill`, so no camera or hands are needed.
+//  Driven through `settle` and `updateCookers`, so no camera or hands are needed.
 //
 
 import CoreGraphics
@@ -44,7 +44,7 @@ struct KitchenStationTests {
 
         let flatbread = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
 
-        #expect(flatbread.placement == .grill(0))
+        #expect(flatbread.placement == .cooker(.grill, slot: 0))
         #expect(flatbread.fallingSince == nil)
     }
 
@@ -53,13 +53,13 @@ struct KitchenStationTests {
         let (scene, _) = try makeScene()
         let flatbread = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
 
-        scene.updateGrill(now: 6)
+        scene.updateCookers(now: 6)
         #expect(flatbread.ingredient == Menu.bakedFlatbread)
 
-        scene.updateGrill(now: 14)
-        #expect(scene.grill.doneness(onSlot: 0, at: 14) == .overcooking)
+        scene.updateCookers(now: 14)
+        #expect(scene.cookers[.grill]?.doneness(onSlot: 0, at: 14) == .overcooking)
 
-        scene.updateGrill(now: 18)
+        scene.updateCookers(now: 18)
         #expect(flatbread.ingredient == Menu.burntFlatbread)
     }
 
@@ -69,7 +69,7 @@ struct KitchenStationTests {
 
         let second = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
 
-        #expect(second.placement == .grill(0))
+        #expect(second.placement == .cooker(.grill, slot: 0))
         #expect(first.placement == nil)
         #expect(first.fallingSince != nil)
     }
@@ -91,7 +91,7 @@ struct KitchenStationTests {
 
         scene.unpark(flatbread)
 
-        #expect(!scene.grill.isTaken(0))
+        #expect(scene.cookers[.grill]?.isTaken(0) == false)
         #expect(flatbread.placement == nil)
     }
 
@@ -188,11 +188,11 @@ extension KitchenStationTests {
     /// Food on the grill and plate is drawn big enough to fill the grill's
     /// hot ring; what's in a glass is drawn as the whole glass, already at its size.
     @Test func foodOnTheGrillAndPlateIsDrawnToFillTheCookware() {
-        let onCookware = KitchenScene.placedScale(on: .grill(0)) * KitchenScene.bubbleArtRadius * 2
+        let onCookware = KitchenScene.placedScale(on: .cooker(.grill, slot: 0)) * KitchenScene.bubbleArtRadius * 2
             * KitchenBubbleNode.foodFill
 
         #expect(abs(onCookware - KitchenScene.cookwareFoodWidth) < 0.001)
-        #expect(KitchenScene.placedScale(on: .plate(0)) == KitchenScene.placedScale(on: .grill(0)))
+        #expect(KitchenScene.placedScale(on: .plate(0)) == KitchenScene.placedScale(on: .cooker(.grill, slot: 0)))
         #expect(KitchenScene.placedScale(on: .glass(0)) == 1)
     }
 }

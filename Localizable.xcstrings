@@ -178,6 +178,17 @@
         }
       }
     },
+    "Boil time 6 s → 4.5 s" : {
+      "comment" : "Marathon card effect.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waktu rebus 6 d → 4,5 d"
+          }
+        }
+      }
+    },
     "Baked Flatbread" : {
       "comment" : "Name of the baked flatbread in the recipe book.",
       "localizations" : {
@@ -486,6 +497,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panggangan Cepat II"
+          }
+        }
+      }
+    },
+    "Faster Pot" : {
+      "comment" : "Marathon card: the pot boils faster.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panci Cepat"
           }
         }
       }

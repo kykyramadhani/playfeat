@@ -60,6 +60,27 @@ nonisolated extension KitchenLayout {
     /// How far apart two flatbreads sit when the grill holds two.
     static let grillSlotGap: CGFloat = 110
 
+    /// ponytail: a stand-in spot for Planet 2's pot, at the far right of the
+    /// counter, until the positions in the team's design file are drawn in.
+    /// It covers the second glass spot.
+    static let pot = CGRect(x: 1110, y: 745, width: 200, height: 180)
+
+    /// Where `tool` stands on the counter.
+    static func area(of tool: CookingTool.Kind) -> CGRect {
+        switch tool {
+        case .grill: grill
+        case .pot: pot
+        }
+    }
+
+    /// Where each of `count` items cooks on `tool`, left to right.
+    static func cookingSpots(on tool: CookingTool.Kind, count: Int) -> [CGPoint] {
+        switch tool {
+        case .grill: grillSlots(count)
+        case .pot: [CGPoint(x: pot.midX, y: pot.midY)]
+        }
+    }
+
     /// Where each of `count` flatbreads cooks, left to right.
     static func grillSlots(_ count: Int) -> [CGPoint] {
         guard count > 1 else { return [grillRing] }

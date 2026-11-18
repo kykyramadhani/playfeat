@@ -31,7 +31,7 @@ final class GrillGaugeNode: SKNode {
     private let radii: CGSize
     private let arc = SKShapeNode()
     private let sign: SKNode
-    private var shownGauge: Grill.Gauge?
+    private var shownGauge: CookingTool.Gauge?
 
     /// - Parameter scale: scene points per art point.
     init(scale: CGFloat) {
@@ -60,7 +60,7 @@ final class GrillGaugeNode: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func show(_ gauge: Grill.Gauge) {
+    func show(_ gauge: CookingTool.Gauge) {
         guard gauge != shownGauge else { return }
         shownGauge = gauge
         arc.path = Self.arcPath(radii: radii, fraction: gauge.fraction)

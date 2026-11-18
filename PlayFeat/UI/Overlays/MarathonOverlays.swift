@@ -221,6 +221,7 @@ extension MarathonCard {
         case .doubleTentacle: "Double Tentacle"
         case .slimierSlime: "Extra Slimy Slime"
         case .goldenFlatbread: "Golden Flatbread"
+        case .fasterPot: "Faster Pot"
         }
     }
 
@@ -235,6 +236,7 @@ extension MarathonCard {
         case .royalMushroom: "Mushroom Flatbread 25 → 34 points"
         case .doubleTentacle, .slimierSlime: "Slimy Tentacles 15 → 22 points"
         case .goldenFlatbread: "Both flatbreads +6 points"
+        case .fasterPot: "Boil time 6 s → 4.5 s"
         }
     }
 }

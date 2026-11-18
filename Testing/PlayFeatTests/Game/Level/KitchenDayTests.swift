@@ -88,7 +88,7 @@ struct KitchenDayTests {
         let day = makeDay(makeLevel(counterSpots: 2, angryAt: [2], refillDelaySec: 0))
 
         let angry = day.presentCustomers.first { $0.type == .angry }
-        #expect(angry?.dish == KitchenMenu.angryOrder)
+        #expect(angry?.dish == Planet.kepler186f.kitchen.angryOrder)
         #expect(angry?.patienceSec == 25)
     }
 

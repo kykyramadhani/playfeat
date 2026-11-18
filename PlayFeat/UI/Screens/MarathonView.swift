@@ -59,7 +59,7 @@ struct MarathonView: View {
             trophy
             TabbedValueBox(tab: Text("Highest Score"), value: Text(highestScore, format: .number), metrics: .highScore)
                 .padding(.top, 12)
-            RaisedTextButton(title: "Play", palette: .start, action: sceneManager.startMarathon)
+            RaisedTextButton(title: "Play", palette: .start, action: { sceneManager.startMarathon() })
                 .frame(width: 208)
                 .padding(.top, 25)
         }

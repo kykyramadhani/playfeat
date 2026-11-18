@@ -87,7 +87,7 @@ struct KitchenServingTests {
 
         _ = letGo(KitchenMenu.mushroomFlatbread, atArtPoint: overlap.center, in: scene)
 
-        #expect(day.presentCustomers.map(\.dish) == [KitchenMenu.angryOrder])
+        #expect(day.presentCustomers.map(\.dish) == [Planet.kepler186f.kitchen.angryOrder])
     }
 
     // MARK: - Magnet

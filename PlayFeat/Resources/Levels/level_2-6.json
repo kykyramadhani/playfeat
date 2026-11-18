@@ -1,0 +1,60 @@
+{
+  "id": "2-6",
+  "name": "Full Tide",
+  "planet": "k2-332b",
+  "durationSec": 90,
+  "refill": {
+    "counterSpots": 3,
+    "refillDelaySec": 2,
+    "firstOrder": "coralNoodles",
+    "orderPool": {
+      "coralNoodles": 1,
+      "urchinNoodles": 1,
+      "clamNoodles": 1,
+      "starCookie": 1
+    },
+    "angryAt": [],
+    "angryEvery": 3,
+    "patienceSec": 35,
+    "angryPatienceSec": 25
+  },
+  "gravity": {
+    "direction": "up",
+    "multiplier": 0.6
+  },
+  "bubbleLifeSec": 4,
+  "bubbleEverySec": 2,
+  "usefulBubbleShare": 0.6,
+  "cups": true,
+  "tools": [
+    "pot",
+    "grill"
+  ],
+  "burnTimeMultiplier": 1,
+  "starTargets": [
+    50,
+    85,
+    105
+  ],
+  "energyCost": 5,
+  "pool": [
+    "tideNoodles",
+    "coralLeaf",
+    "bubbleUrchin",
+    "lanternClam",
+    "seaCookie",
+    "starfishSugar"
+  ],
+  "bubbles": [
+    {
+      "at": 0,
+      "ingredient": "tideNoodles",
+      "lane": 2
+    },
+    {
+      "at": 2,
+      "ingredient": "coralLeaf",
+      "lane": 3
+    }
+  ]
+}

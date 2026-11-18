@@ -13,7 +13,7 @@ import Foundation
 nonisolated struct LevelData: Codable, Equatable {
     let id: String
     let name: String
-    let planet: String
+    let planet: Planet.ID
     /// No new customer steps up after this; those at the counter can still
     /// be served (overtime).
     let durationSec: TimeInterval
@@ -27,8 +27,11 @@ nonisolated struct LevelData: Codable, Equatable {
     let bubbleEverySec: TimeInterval
     /// Share (0...1) of bubbles that bring something an order still needs.
     let usefulBubbleShare: Double
-    /// Whether glasses stand on the counter: the dessert levels.
+    /// Whether the dessert station (glass, cookie plate) stands on the
+    /// counter: the dessert levels.
     let cups: Bool
+    /// The cooking tools on the counter; nil means all of the planet's.
+    let tools: [CookingTool.Kind]?
     /// Stretches how long a baked flatbread lasts before it glows and burns.
     let burnTimeMultiplier: Double
     /// Total income for 1, 2 and 3 stars, rising.

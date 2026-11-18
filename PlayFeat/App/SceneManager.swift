@@ -41,12 +41,11 @@ final class SceneManager {
         levelReport = report
     }
 
-    /// NEXT opens the following level; the final level returns to the board.
+    /// NEXT opens the following level on the same planet; the planet's
+    /// final level returns to the board.
     func goToNextLevel(after level: LevelData) {
-        let levelIDs = Planet.kepler186f.levelIDs
-        guard let index = levelIDs.firstIndex(of: level.id),
-              levelIDs.indices.contains(index + 1),
-              let nextLevel = try? LevelLoader.load(levelIDs[index + 1]) else {
+        guard let nextID = PlanetCatalog.nextLevelID(after: level.id),
+              let nextLevel = try? LevelLoader.load(nextID) else {
             goToPlanetSelect()
             return
         }
@@ -71,9 +70,10 @@ final class SceneManager {
         enterKitchen(level)
     }
 
-    /// Starts a fresh marathon run, one continuous day of rounds and breaks.
-    func startMarathon() {
-        let marathon = MarathonSession(positionTypes: KitchenLayout.positionTypes)
+    /// Starts a fresh marathon run on `planet`, one continuous day of rounds
+    /// and breaks. Planet 1's until the planet screens pass the planet in.
+    func startMarathon(on planet: Planet.ID = .kepler186f) {
+        let marathon = MarathonSession(planet: PlanetCatalog.planet(planet), positionTypes: KitchenLayout.positionTypes)
         self.marathon = marathon
         enterKitchen(marathon.day.level)
     }

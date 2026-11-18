@@ -23,10 +23,11 @@ struct RecipeBookTests {
         }
     }
 
-    @Test func everyKitchenDishHasAPageInTheBook() {
+    /// The book is Kepler-186f's; Planet 2's dishes get theirs with its screens.
+    @Test func everyKeplerDishHasAPageInTheBook() {
         let inBook = Set(RecipeBook.entries.map(\.item))
 
-        #expect(Set(KitchenMenu.recipes.keys).isSubset(of: inBook))
+        #expect(Planet.kepler186f.kitchen.dishes.isSubset(of: inBook))
         #expect(RecipeBook.entries.count <= RecipeBook.tileCount)
     }
 
@@ -35,7 +36,7 @@ struct RecipeBookTests {
         let baked = try #require(RecipeBook.entries.first { $0.item == KitchenMenu.bakedFlatbread })
 
         #expect(baked.madeFrom == [.item(KitchenMenu.rawFlatbread), .tool(image: "KitchenGrill")])
-        #expect(Grill.Doneness.cooked.item == KitchenMenu.bakedFlatbread)
+        #expect(CookingTool.Doneness.cooked.item(of: .flatbread) == KitchenMenu.bakedFlatbread)
     }
 
     @Test func theFirstLevelIntroducesTheGrillAndBothFlatbreads() {

@@ -118,7 +118,7 @@ struct LocalizationTests {
             "Bake a flatbread on the grill, put it on the plate, then add a mushroom.",
             "Put a tentacle in the glass, then pour green slime over it.",
             // Marathon rounds, pause and report
-            "Continue", "Faster Grill I", "Second Grill Spot", "Cozy Seats", "Golden Flatbread", "Round Pause",
+            "Continue", "Faster Grill I", "Faster Pot", "Boil time 6 s → 4.5 s", "Second Grill Spot", "Cozy Seats", "Golden Flatbread", "Round Pause",
             "Resume", "Restart Marathon", "Home", "Nothing left to buy. Take a breather.",
             "Grill holds 2 flatbreads at once", "Both flatbreads +6 points", "Marathon Complete", "Total Marathon Points", "Rounds Played",
             "Average Dishes / Round", "Customers Served", "Total Points",

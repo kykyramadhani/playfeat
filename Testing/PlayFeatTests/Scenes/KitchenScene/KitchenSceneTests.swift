@@ -20,6 +20,11 @@ struct KitchenSceneTests {
         makeKitchenScene(ownedPlates: ownedPlates).scene
     }
 
+    /// The scene holds its day weakly, so the test keeps the day alive too.
+    private func makeFlippedGravityKitchen() -> (scene: KitchenScene, day: KitchenDay) {
+        makeKitchenScene(level: makeLevel(gravity: .up))
+    }
+
     private func letGo(_ ingredient: String, atArtPoint point: CGPoint, in scene: KitchenScene) -> KitchenBubbleNode {
         let node = KitchenBubbleNode(ingredient: ingredient, radius: 80)
         node.position = scene.layout.scenePoint(point)
@@ -57,5 +62,45 @@ struct KitchenSceneTests {
 
         #expect(node.fallingSince != nil)
         #expect(scene.bubbles.contains { $0 === node })
+    }
+
+    /// Under flipped gravity an item let go over the table floats up and
+    /// away instead of going behind the table.
+    @Test func underFlippedGravityAnItemLetGoOverTheTableFloatsAway() {
+        let (scene, day) = makeFlippedGravityKitchen()
+        defer { withExtendedLifetime(day) {} }
+
+        let node = letGo("emberPepper", atArtPoint: CGPoint(x: 1200, y: 950), in: scene)
+
+        #expect(node.fallingSince != nil)
+        #expect(scene.bubbles.contains { $0 === node })
+    }
+
+    /// On 2-1 the first bubble comes in just above the counter and rises,
+    /// instead of being lost behind the table the moment it appears.
+    @Test func onTheFirstPlanetTwoDayBubblesRiseFromTheCounter() throws {
+        let (scene, day) = makeKitchenScene(level: try LevelLoader.load("2-1"))
+        let tableEdge = scene.layout.sceneRect(KitchenLayout.window).minY
+        scene.update(10)
+        day.start()
+        scene.update(10.1)
+        let bubble = try #require(scene.bubbles.first)
+        let startY = bubble.position.y
+
+        for frame in 1...60 { scene.update(10.1 + Double(frame) / 60) }
+
+        #expect(startY > tableEdge)
+        #expect(scene.bubbles.contains { $0 === bubble })
+        #expect(bubble.position.y > startY)
+    }
+
+    /// A bubble rising from the counter is in play, not lost behind the table.
+    @Test func underFlippedGravityABubbleAtTheTableEdgeIsNotBehindIt() {
+        let (scene, day) = makeFlippedGravityKitchen()
+        defer { withExtendedLifetime(day) {} }
+        let node = KitchenBubbleNode(ingredient: KitchenMenu.rawFlatbread, radius: 80)
+        node.position = CGPoint(x: 400, y: scene.layout.sceneRect(KitchenLayout.window).minY)
+
+        #expect(scene.isBehindTable(node) == false)
     }
 }

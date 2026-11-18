@@ -3,7 +3,7 @@
 //  PlayFeat
 //  Created by kyky on 16/11/26.
 //
-//  One marathon on Kepler-186f, run as in the prototype: a single endless
+//  One planet's marathon (its Buffet), run as in the prototype: a single endless
 //  kitchen day cut into 90-second rounds of play. When a round ends,
 //  everything freezes for a 15-second break where the player may buy one
 //  upgrade card with marathon coins, then play carries on where it stopped.
@@ -12,6 +12,7 @@
 //
 //  The run starts with one plate and no glass; the glass appears once the
 //  dessert does, a second plate after 6 dishes and a second glass after 14.
+//  (On Planet 2 the plate is the noodle bowl and the glass the cookie plate.)
 //
 
 import Foundation
@@ -29,17 +30,20 @@ final class MarathonSession {
     static let secondPlateAtDishes = 6
     static let secondGlassAtDishes = 14
 
-    /// The marathon's kitchen: the prototype's marathon physics. Customers
-    /// and bubbles come from MarathonFlow and MarathonBubbleSupply.
-    static let level = LevelData(
-        id: "marathon", name: "Marathon", planet: "kepler-186f",
-        durationSec: roundSec, refill: nil,
-        gravity: .init(direction: .down, multiplier: 0.6),
-        bubbleLifeSec: 4, bubbleEverySec: 2, usefulBubbleShare: MarathonBubbleSupply.usefulShare,
-        cups: true, burnTimeMultiplier: 1, starTargets: [], energyCost: 8,
-        pool: MarathonStage.two.bubblePool, bubbles: MarathonBubbleSupply.starters
-    )
+    /// The marathon's kitchen on `planet`: the prototype's marathon physics
+    /// with the planet's gravity and tools. Customers and bubbles come from
+    /// MarathonFlow and MarathonBubbleSupply.
+    static func level(on planet: Planet) -> LevelData {
+        LevelData(
+            id: "marathon", name: "Marathon", planet: planet.id,
+            durationSec: roundSec, refill: nil, gravity: planet.buffet.gravity,
+            bubbleLifeSec: 4, bubbleEverySec: 2, usefulBubbleShare: MarathonBubbleSupply.usefulShare,
+            cups: true, tools: nil, burnTimeMultiplier: 1, starTargets: [], energyCost: 8,
+            pool: planet.buffet.stageTwo.bubblePool, bubbles: planet.buffet.starters
+        )
+    }
 
+    let planet: Planet
     /// The whole run, round after round.
     let day: KitchenDay
 
@@ -50,13 +54,20 @@ final class MarathonSession {
     private(set) var offer: [MarathonCard] = []
     private(set) var boughtThisBreak: MarathonCard?
     private(set) var coinsSpent = 0
-    private(set) var bakeSec = KitchenRules.bakeSec
+    /// Cook times the cards have brought tools down to; a tool missing here
+    /// keeps its planet's.
+    private(set) var cookSec: [CookingTool.Kind: TimeInterval] = [:]
     private(set) var grillSlots = 1
 
-    init(positionTypes: [CustomerType], random: any RandomNumberGenerator = SystemRandomNumberGenerator()) {
+    init(
+        planet: Planet,
+        positionTypes: [CustomerType],
+        random: any RandomNumberGenerator = SystemRandomNumberGenerator()
+    ) {
+        self.planet = planet
         day = KitchenDay(
-            level: Self.level, flow: MarathonFlow(random: random), positionTypes: positionTypes,
-            tools: KitchenTools(plates: 1, glasses: 0)
+            level: Self.level(on: planet), flow: MarathonFlow(plan: planet.buffet, random: random),
+            positionTypes: positionTypes, tools: KitchenTools(plates: 1, glasses: 0)
         )
         day.roundEndsAt = Self.roundSec
     }
@@ -81,7 +92,7 @@ final class MarathonSession {
     func startBreak() {
         breaksTaken += 1
         boughtThisBreak = nil
-        offer = MarathonCard.offer(forBreak: breaksTaken, owning: owned)
+        offer = planet.buffet.cards.offer(forBreak: breaksTaken, owning: owned)
     }
 
     /// Back to play for the next round.
@@ -102,8 +113,8 @@ final class MarathonSession {
 
     private func apply(_ effect: MarathonCard.Effect) {
         switch effect {
-        case .bakeSec(let seconds):
-            bakeSec = max(MarathonCard.minBakeSec, seconds)
+        case .cookSec(let tool, let seconds):
+            cookSec[tool] = max(MarathonCard.minCookSec, seconds)
         case .grillSlots(let slots):
             grillSlots = max(grillSlots, slots)
         case .patienceScale(let scale):
@@ -118,8 +129,8 @@ final class MarathonSession {
     /// What should stand on the counter now.
     var tools: KitchenTools {
         let served = day.ordersDelivered
-        let dessertSeen = MarathonStage.stage(afterServing: served) >= .two
-            || day.presentCustomers.contains { $0.dish == KitchenMenu.slimyTentacles }
+        let dessertSeen = planet.buffet.stage(afterServing: served) >= .two
+            || day.presentCustomers.contains { $0.dish == planet.kitchen.dessert }
         let glasses = served >= Self.secondGlassAtDishes ? 2 : 1
         return KitchenTools(
             plates: served >= Self.secondPlateAtDishes ? 2 : 1,

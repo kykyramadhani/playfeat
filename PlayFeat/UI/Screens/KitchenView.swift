@@ -188,13 +188,10 @@ struct KitchenView: View {
     // MARK: - Lifecycle
 
     private func setUp() {
-        let supply: any BubbleSupply = marathon == nil ? StoryBubbleSupply(level: day.level) : MarathonBubbleSupply()
+        let supply: any BubbleSupply = marathon.map { MarathonBubbleSupply(starters: $0.planet.buffet.starters) }
+            ?? StoryBubbleSupply(level: day.level)
         scene.prepare(for: day, bubbleSupply: supply)
-        scene.grill = Grill(
-            bakeSec: marathon?.bakeSec ?? KitchenRules.bakeSec,
-            burnMultiplier: day.level.burnTimeMultiplier,
-            slotCount: marathon?.grillSlots ?? 1
-        )
+        if let marathon { applyUpgrades(of: marathon) }
         scene.handInput = handPoseManager
         scene.audio = audio
         handPoseManager.start()
@@ -246,7 +243,7 @@ struct KitchenView: View {
         if let report = sceneManager.levelReport {
             LevelReportView(
                 report: report,
-                levelNumber: (Planet.kepler186f.levelIDs.firstIndex(of: report.level.id) ?? 0) + 1,
+                levelNumber: PlanetCatalog.dayNumber(of: report.level.id) ?? 1,
                 onNext: { sceneManager.goToNextLevel(after: report.level) },
                 onBack: sceneManager.goToPlanetSelect,
                 onRetry: { sceneManager.goToKitchen(report.level) }
@@ -275,10 +272,15 @@ struct KitchenView: View {
             // The overlay only lets an affordable card from the offer be picked.
             try? marathon.buy(card)
         }
-        scene.grill.bakeSec = marathon.bakeSec
-        scene.grill.growSlots(to: marathon.grillSlots)
+        applyUpgrades(of: marathon)
         marathon.endBreak()
         withAnimation(.easeOut(duration: 0.3)) { marathonStep = nil }
+    }
+
+    /// The marathon's tool cards, on the scene's cooking tools.
+    private func applyUpgrades(of marathon: MarathonSession) {
+        for (tool, seconds) in marathon.cookSec { scene.cookers[tool]?.cookSec = seconds }
+        scene.cookers[.grill]?.growSlots(to: marathon.grillSlots)
     }
 
     @ViewBuilder
@@ -303,10 +305,10 @@ struct KitchenView: View {
 
     /// Starts this level, or the whole marathon, over from its beginning.
     private func restartDay() {
-        if marathon == nil {
-            sceneManager.goToKitchen(day.level)
+        if let marathon {
+            sceneManager.startMarathon(on: marathon.planet.id)
         } else {
-            sceneManager.startMarathon()
+            sceneManager.goToKitchen(day.level)
         }
     }
 

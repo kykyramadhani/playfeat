@@ -46,4 +46,20 @@ struct FallMotionTests {
         #expect(GravityDirection.down.entryPoint(lane: 4, in: bounds) == CGPoint(x: 700, y: 600))
         #expect(GravityDirection.up.entryPoint(lane: 2, in: bounds) == CGPoint(x: 300, y: 0))
     }
+
+    /// Rising bubbles start just above the counter, not on the table edge.
+    @Test func upGravityLanesStartTheTableClearanceAboveTheBottomEdge() {
+        let bounds = CGRect(x: 0, y: 0, width: 800, height: 600)
+
+        let entry = GravityDirection.up.entryPoint(lane: 2, in: bounds, tableClearance: 80)
+
+        #expect(entry == CGPoint(x: 300, y: 80))
+    }
+
+    @Test(arguments: [
+        (GravityDirection.down, true), (.up, false), (.upRight, false), (.left, false), (.right, false)
+    ])
+    func onlyDownwardGravityPullsTowardTheTable(direction: GravityDirection, pulls: Bool) {
+        #expect(direction.pullsTowardTable == pulls)
+    }
 }

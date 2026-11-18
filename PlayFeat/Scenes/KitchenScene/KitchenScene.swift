@@ -37,14 +37,14 @@ final class KitchenScene: SKScene {
     /// Parked food is drawn smaller, to sit inside its box.
     static let parkedScale: CGFloat = 0.8
 
-    /// How wide food sits on the grill and the plate, in art points: big
-    /// enough to fill the grill's hot ring and most of the plate.
+    /// How wide food sits on a cooking tool and the plate, in art points:
+    /// big enough to fill the grill's hot ring and most of the plate.
     static let cookwareFoodWidth: CGFloat = 118
 
     /// How big an item is drawn where it has been put down.
     static func placedScale(on placement: KitchenBubbleNode.Placement) -> CGFloat {
         switch placement {
-        case .grill, .plate: cookwareFoodWidth / (bubbleArtRadius * 2 * KitchenBubbleNode.foodFill)
+        case .cooker, .plate: cookwareFoodWidth / (bubbleArtRadius * 2 * KitchenBubbleNode.foodFill)
         // Whatever is in the glass is drawn as the whole glass, already sized
         // to it (KitchenBubbleNode).
         case .glass: 1
@@ -59,7 +59,9 @@ final class KitchenScene: SKScene {
     // MARK: - State
 
     var bubbles: [KitchenBubbleNode] = []
-    var grill = Grill()
+    /// The day's cooking tools: the grill on Planet 1; the pot, and from
+    /// 2-3 the grill, on Planet 2.
+    var cookers: [CookingTool.Kind: CookingTool] = [:]
     /// One per plate and glass on the counter, left to right, matching
     /// `plateSpots` and `glassSpots`.
     var plates: [AssemblyStation] = []
@@ -69,8 +71,8 @@ final class KitchenScene: SKScene {
     var glassSpots: [CGRect] = []
     var hands: [Int: KitchenHand] = [:]
     var handCursors: [Int: HandCursorNode] = [:]
-    /// The cooking ring around each grill slot's flatbread, by slot.
-    var grillGauges: [Int: GrillGaugeNode] = [:]
+    /// The cooking ring around the item on each cooking-tool slot.
+    var cookingGauges: [KitchenBubbleNode.Placement: GrillGaugeNode] = [:]
     /// Green outlines on the tools a carried item would land on.
     var dropGlows: [DropTarget: SKNode] = [:]
     var lastUpdateTime: TimeInterval = 0
@@ -93,12 +95,18 @@ final class KitchenScene: SKScene {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// Takes the day and its bubble rule, and sets out its plates and
-    /// glasses. Call once, before the scene runs.
+    /// Takes the day and its bubble rule, and sets out its planet's cooking
+    /// tools, plates and glasses. Call once, before the scene runs.
     func prepare(for day: KitchenDay, bubbleSupply: any BubbleSupply) {
         self.day = day
         self.bubbleSupply = bubbleSupply
+        cookers = kitchen?.cookingTools(on: day.level) ?? [:]
         syncTools()
+    }
+
+    /// The rules of the day's planet kitchen.
+    var kitchen: PlanetKitchen? {
+        day.map { PlanetCatalog.planet($0.level.planet).kitchen }
     }
 
     // MARK: - Per-frame update
@@ -115,7 +123,7 @@ final class KitchenScene: SKScene {
         syncTools()
         if day.isRunning, playDelta > 0 { spawnDueBubbles(at: day.elapsed) }
         moveLooseBubbles(by: playDelta, now: day.elapsed)
-        updateGrill(now: day.elapsed)
+        updateCookers(now: day.elapsed)
         updateHands(now: currentTime, frameDelta: frameDelta)
         updateDropGlows()
     }
@@ -152,17 +160,22 @@ final class KitchenScene: SKScene {
 
     /// Close enough to where bubbles come in that a new one would overlap it.
     private func isNearEntry(_ node: KitchenBubbleNode) -> Bool {
-        guard let day, let lane = node.lane else { return false }
-        let entry = day.level.gravity.direction.entryPoint(lane: lane, in: layout.sceneRect(KitchenLayout.window))
+        guard let lane = node.lane, let entry = bubbleEntry(lane: lane) else { return false }
         return node.position.distance(to: entry) < bubbleRadius * 2.4
     }
 
+    /// Where a bubble in `lane` comes into the window, given the day's gravity.
+    private func bubbleEntry(lane: Int) -> CGPoint? {
+        day?.level.gravity.direction.entryPoint(
+            lane: lane, in: layout.sceneRect(KitchenLayout.window), tableClearance: bubbleRadius
+        )
+    }
+
     private func spawnBubble(_ entry: LevelData.BubbleEntry) {
-        guard let day else { return }
+        guard let position = bubbleEntry(lane: entry.lane) else { return }
         let node = KitchenBubbleNode(ingredient: entry.ingredient, radius: bubbleRadius)
-        let window = layout.sceneRect(KitchenLayout.window)
         node.lane = entry.lane
-        node.position = day.level.gravity.direction.entryPoint(lane: entry.lane, in: window)
+        node.position = position
         node.setScale(0.6)
         node.run(.scale(to: 1, duration: 0.2))
         addChild(node)
@@ -195,10 +208,11 @@ final class KitchenScene: SKScene {
         }
     }
 
-    /// The table is drawn in front of the window, so a loose item that has
-    /// reached its back edge has gone behind it and is lost — it never shows
-    /// on top of the table.
+    /// The table is drawn in front of the window, so a loose item falling
+    /// onto its back edge has gone behind it and is lost — it never shows on
+    /// top of the table. Under flipped gravity items float up, away from it.
     func isBehindTable(_ node: KitchenBubbleNode) -> Bool {
+        guard day?.level.gravity.direction.pullsTowardTable ?? true else { return false }
         let tableEdge = layout.sceneRect(KitchenLayout.window).minY
         return node.position.y - node.radius <= tableEdge
     }
@@ -233,8 +247,8 @@ final class KitchenScene: SKScene {
         audio?.play(.wrongIngredient)
     }
 
-    /// Lets `node` fall from where it was let go; over the table it is
-    /// already behind it, so it goes at once.
+    /// Lets `node` fall (or, under flipped gravity, float) from where it was
+    /// let go; falling onto the table it is already behind it, so it goes at once.
     func drop(_ node: KitchenBubbleNode) {
         if isBehindTable(node) {
             remove(node)

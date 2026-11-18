@@ -4,10 +4,11 @@
 //  Created by Owen Limantoro on 12/11/26.
 //
 //  The kitchen's stations as the scene sees them: where each one takes a
-//  dropped item, putting items down and lifting them off, the grill cooking
-//  what sits on it, the plates and glasses turning their ingredients into a
-//  dish, and the counter growing a plate or glass mid-marathon. The rules
-//  themselves are in `Grill` and `AssemblyStation`.
+//  dropped item, putting items down and lifting them off, the cooking tools
+//  (grill, pot) cooking what sits on them, the plates and glasses turning
+//  their ingredients into a dish, and the counter growing a plate or glass
+//  mid-marathon. The rules themselves are in `CookingTool` and
+//  `AssemblyStation`.
 //
 
 import SpriteKit
@@ -25,11 +26,13 @@ extension KitchenScene {
     /// The station `node` is over, whether or not it would take it. A drop
     /// counts when the item's centre is within half a bubble of the station,
     /// since the stations are drawn smaller than the bubbles carried to them.
-    /// Over the grill, it is the free slot nearest the item, else the
-    /// nearest slot (whose flatbread the item would swap out).
+    /// Over a cooking tool, it is the free slot nearest the item, else the
+    /// nearest slot (whose item the new one would swap out).
     func station(under node: KitchenBubbleNode) -> KitchenBubbleNode.Placement? {
-        if dropArea(of: KitchenLayout.grill).contains(node.position) {
-            return .grill(grillSlot(nearest: node.position))
+        if let tool = cookers.keys.sorted().first(where: {
+            dropArea(of: KitchenLayout.area(of: $0)).contains(node.position)
+        }) {
+            return .cooker(tool, slot: cookingSlot(on: tool, nearest: node.position))
         }
         let vessels = plates.indices.map { KitchenBubbleNode.Placement.plate($0) }
             + glasses.indices.map { KitchenBubbleNode.Placement.glass($0) }
@@ -38,22 +41,34 @@ extension KitchenScene {
             .min { centre(of: $0).distance(to: node.position) < centre(of: $1).distance(to: node.position) }
     }
 
-    /// Every station on the counter: the grill's slots, then the plates and glasses.
+    /// Every station on the counter: the cooking tools' slots, then the
+    /// plates and glasses.
     var stations: [KitchenBubbleNode.Placement] {
-        grill.slots.indices.map { .grill($0) } + plates.indices.map { .plate($0) } + glasses.indices.map { .glass($0) }
+        cookingSlots + plates.indices.map { .plate($0) } + glasses.indices.map { .glass($0) }
     }
 
-    /// Where `station` is drawn, in art points. Every grill slot is the whole grill.
+    /// Every slot of every cooking tool, tool by tool.
+    var cookingSlots: [KitchenBubbleNode.Placement] {
+        cookers.sorted { $0.key < $1.key }.flatMap { tool, cooker in
+            cooker.slots.indices.map { KitchenBubbleNode.Placement.cooker(tool, slot: $0) }
+        }
+    }
+
+    /// Where `station` is drawn, in art points. Every slot of a cooking tool
+    /// is the whole tool.
     func artRect(of station: KitchenBubbleNode.Placement) -> CGRect {
         switch station {
-        case .grill: KitchenLayout.grill
+        case .cooker(let tool, _): KitchenLayout.area(of: tool)
         case .plate(let index): plateSpots[index]
         case .glass(let index): glassSpots[index]
         }
     }
 
     func accepts(_ item: String, on station: KitchenBubbleNode.Placement) -> Bool {
-        assembly(at: station)?.accepts(item) ?? grill.accepts(item)
+        switch station {
+        case .cooker(let tool, _): cookers[tool]?.accepts(item) ?? false
+        case .plate, .glass: assembly(at: station)?.accepts(item) ?? false
+        }
     }
 
     private func dropArea(of artRect: CGRect) -> CGRect {
@@ -61,20 +76,23 @@ extension KitchenScene {
         return layout.sceneRect(artRect).insetBy(dx: -slack, dy: -slack)
     }
 
-    private func grillSlot(nearest point: CGPoint) -> Int {
-        let slots = grill.slots.indices
-        let byDistance = slots.sorted { centre(of: .grill($0)).distance(to: point) < centre(of: .grill($1)).distance(to: point) }
-        return byDistance.first { !grill.isTaken($0) } ?? byDistance.first ?? 0
+    private func cookingSlot(on tool: CookingTool.Kind, nearest point: CGPoint) -> Int {
+        guard let cooker = cookers[tool] else { return 0 }
+        func distance(_ slot: Int) -> CGFloat { centre(of: .cooker(tool, slot: slot)).distance(to: point) }
+        let byDistance = cooker.slots.indices.sorted { distance($0) < distance($1) }
+        return byDistance.first { !cooker.isTaken($0) } ?? byDistance.first ?? 0
     }
 
     /// Puts `node` down on `station`. Call only with a station that accepts
-    /// it; anything it then refuses falls instead. A flatbread put on a
-    /// taken grill slot knocks the one there off, to fall.
+    /// it; anything it then refuses falls instead. An item put on a taken
+    /// cooking slot knocks the one there off, to fall.
     func put(_ node: KitchenBubbleNode, on station: KitchenBubbleNode.Placement) {
         let now = day?.elapsed ?? 0
-        if case .grill(let slot) = station {
+        if case .cooker(let tool, let slot) = station, var cooker = cookers[tool] {
             knockOff(from: station)
-            grill.place(onSlot: slot, at: now, cookedBefore: grill.cookedBefore(node.ingredient, remembered: node.cookedSeconds))
+            let cookedBefore = cooker.cookedBefore(node.ingredient, remembered: node.cookedSeconds)
+            cooker.place(node.ingredient, onSlot: slot, at: now, cookedBefore: cookedBefore)
+            cookers[tool] = cooker
         } else {
             do {
                 try changeAssembly(at: station) { try $0.add(node.ingredient) }
@@ -100,16 +118,16 @@ extension KitchenScene {
         }
     }
 
-    /// Over the flatbread on the grill, under anything carried.
-    static let grillGaugeZ: CGFloat = 3
+    /// Over the item on a cooking tool, under anything carried.
+    static let cookingGaugeZ: CGFloat = 3
 
     // MARK: - Lifting off
 
     /// Takes `node` off the station it sits on, as the hand picks it up.
     func liftOffStation(_ node: KitchenBubbleNode, at station: KitchenBubbleNode.Placement) {
-        if case .grill(let slot) = station {
-            node.cookedSeconds = grill.cookedSeconds(onSlot: slot, at: day?.elapsed ?? 0)
-            grill.clear(slot)
+        if case .cooker(let tool, let slot) = station {
+            node.cookedSeconds = cookers[tool]?.cookedSeconds(onSlot: slot, at: day?.elapsed ?? 0)
+            cookers[tool]?.clear(slot)
             node.setWarning(false)
         } else {
             // The node sits there, so it is in the contents; nothing to recover from.
@@ -117,36 +135,38 @@ extension KitchenScene {
         }
     }
 
-    // MARK: - Grill
+    // MARK: - Cooking tools
 
-    /// Bakes, warns about and burns the flatbreads on the grill as play
+    /// Cooks, warns about and ruins what sits on the cooking tools as play
     /// time passes, with the cooking ring around each.
-    func updateGrill(now: TimeInterval) {
-        for flatbread in bubbles {
-            guard case .grill(let slot) = flatbread.placement,
-                  let doneness = grill.doneness(onSlot: slot, at: now) else { continue }
-            flatbread.become(doneness.item)
-            flatbread.setWarning(doneness.needsWarning)
+    func updateCookers(now: TimeInterval) {
+        for food in bubbles {
+            guard case .cooker(let tool, let slot) = food.placement, let cooker = cookers[tool],
+                  let item = cooker.item(onSlot: slot, at: now),
+                  let doneness = cooker.doneness(onSlot: slot, at: now) else { continue }
+            food.become(item)
+            food.setWarning(doneness.needsWarning)
         }
-        updateGrillGauges(now: now)
+        updateCookingGauges(now: now)
     }
 
-    /// A ring around every slot with a flatbread on it; none around an empty one.
-    private func updateGrillGauges(now: TimeInterval) {
-        for slot in grill.slots.indices {
-            guard let gauge = grill.gauge(onSlot: slot, at: now) else {
-                grillGauges[slot]?.removeFromParent()
-                grillGauges[slot] = nil
+    /// A ring around every slot with something on it; none around an empty one.
+    private func updateCookingGauges(now: TimeInterval) {
+        for slot in cookingSlots {
+            guard case .cooker(let tool, let index) = slot,
+                  let gauge = cookers[tool]?.gauge(onSlot: index, at: now) else {
+                cookingGauges[slot]?.removeFromParent()
+                cookingGauges[slot] = nil
                 continue
             }
-            let ring = grillGauges[slot] ?? {
+            let ring = cookingGauges[slot] ?? {
                 let ring = GrillGaugeNode(scale: layout.scale)
-                ring.zPosition = Self.grillGaugeZ
+                ring.zPosition = Self.cookingGaugeZ
                 addChild(ring)
-                grillGauges[slot] = ring
+                cookingGauges[slot] = ring
                 return ring
             }()
-            ring.position = centre(of: .grill(slot))
+            ring.position = centre(of: slot)
             ring.show(gauge)
         }
     }
@@ -157,17 +177,17 @@ extension KitchenScene {
     /// A second plate goes in on the far left, so the plates already there
     /// count one further along.
     func syncTools() {
-        guard let tools = day?.tools else { return }
+        guard let tools = day?.tools, let kitchen else { return }
         let newPlates = tools.plates - plates.count
         if newPlates > 0 {
             for node in bubbles {
                 if case .plate(let index) = node.placement { node.placement = .plate(index + newPlates) }
             }
-            plates.insert(contentsOf: Array(repeating: .plate, count: newPlates), at: 0)
+            plates.insert(contentsOf: Array(repeating: kitchen.mainStation, count: newPlates), at: 0)
             plateSpots = KitchenLayout.plates(plates.count)
         }
         if tools.glasses > glasses.count {
-            glasses += Array(repeating: .glass, count: tools.glasses - glasses.count)
+            glasses += Array(repeating: kitchen.dessertStation, count: tools.glasses - glasses.count)
             glassSpots = KitchenLayout.glasses(glasses.count)
         }
     }
@@ -192,23 +212,23 @@ extension KitchenScene {
         bubbles.append(dishNode)
     }
 
-    /// The rules of the plate or glass at `station`; nil for the grill.
+    /// The rules of the plate or glass at `station`; nil for a cooking tool.
     func assembly(at station: KitchenBubbleNode.Placement) -> AssemblyStation? {
         switch station {
-        case .grill: nil
+        case .cooker: nil
         case .plate(let index): plates[index]
         case .glass(let index): glasses[index]
         }
     }
 
-    /// Applies `change` to the plate or glass at `station`; the grill has
-    /// no assembly, so nothing happens there.
+    /// Applies `change` to the plate or glass at `station`; a cooking tool
+    /// has no assembly, so nothing happens there.
     private func changeAssembly<Failure: Error>(
         at station: KitchenBubbleNode.Placement,
         _ change: (inout AssemblyStation) throws(Failure) -> Void
     ) throws(Failure) {
         switch station {
-        case .grill: return
+        case .cooker: return
         case .plate(let index): try change(&plates[index])
         case .glass(let index): try change(&glasses[index])
         }
@@ -216,9 +236,9 @@ extension KitchenScene {
 
     func centre(of station: KitchenBubbleNode.Placement) -> CGPoint {
         switch station {
-        case .grill(let slot):
-            let slots = KitchenLayout.grillSlots(grill.slots.count)
-            return layout.scenePoint(slots[min(slot, slots.count - 1)])
+        case .cooker(let tool, let slot):
+            let spots = KitchenLayout.cookingSpots(on: tool, count: cookers[tool]?.slots.count ?? 1)
+            return layout.scenePoint(spots[min(slot, spots.count - 1)])
         case .plate, .glass:
             return layout.sceneRect(artRect(of: station)).center
         }

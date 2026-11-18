@@ -17,6 +17,8 @@ nonisolated struct RefillFlow: CustomerFlow {
     let refill: LevelData.Refill
     let durationSec: TimeInterval
     let bubblePool: [String]
+    /// What the level's planet's angry aliens order.
+    let angryOrder: String
 
     /// When each spot's next customer steps up; nil while the spot is taken.
     private var stepUpTimes: [TimeInterval?]
@@ -31,6 +33,7 @@ nonisolated struct RefillFlow: CustomerFlow {
         self.refill = refill
         durationSec = level.durationSec
         bubblePool = level.pool
+        angryOrder = PlanetCatalog.planet(level.planet).kitchen.angryOrder
         self.random = AnyRandomNumberGenerator(random)
         stepUpTimes = (0..<refill.counterSpots).map { TimeInterval($0) * refill.refillDelaySec }
     }
@@ -78,7 +81,7 @@ nonisolated struct RefillFlow: CustomerFlow {
     /// regular drawn from the order pool's weights.
     private mutating func customer(number: Int) -> Arrival {
         if Self.isAngry(number, refill: refill) {
-            return Arrival(type: .angry, dish: KitchenMenu.angryOrder, patienceSec: refill.angryPatienceSec)
+            return Arrival(type: .angry, dish: angryOrder, patienceSec: refill.angryPatienceSec)
         }
         let dish = number == 1 ? refill.firstOrder : Self.draw(from: refill.orderPool, using: &random)
         return Arrival(type: .regular, dish: dish, patienceSec: refill.patienceSec)

@@ -56,6 +56,10 @@ struct ArtAssetTests {
         KitchenMenu.rawFlatbread, KitchenMenu.bakedFlatbread, KitchenMenu.burntFlatbread,
         KitchenMenu.pepper, KitchenMenu.mushroom, KitchenMenu.slime, KitchenMenu.tentacle,
         KitchenMenu.pepperFlatbread, KitchenMenu.mushroomFlatbread, KitchenMenu.slimyTentacles,
+        KitchenMenu.rawNoodles, KitchenMenu.boiledNoodles, KitchenMenu.mushyNoodles,
+        KitchenMenu.coral, KitchenMenu.urchin, KitchenMenu.rawClam, KitchenMenu.grilledClam, KitchenMenu.burntClam,
+        KitchenMenu.seaCookie, KitchenMenu.starfishSugar,
+        KitchenMenu.coralNoodles, KitchenMenu.urchinNoodles, KitchenMenu.clamNoodles, KitchenMenu.starCookie,
     ])
     func everyKitchenItemHasArt(item: String) {
         for name in [KitchenArt.image(of: item), KitchenArt.placedImage(of: item)] {

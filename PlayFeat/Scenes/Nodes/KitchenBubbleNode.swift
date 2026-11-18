@@ -16,10 +16,13 @@ import SpriteKit
 final class KitchenBubbleNode: SKNode {
     /// Where an item has been put down.
     enum Placement: Hashable {
-        /// The grill can hold more than one flatbread; the index counts its slots.
-        case grill(Int)
+        /// A cooking tool (grill, pot); one can hold more than one item, and
+        /// `slot` counts them.
+        case cooker(CookingTool.Kind, slot: Int)
         /// The counter can hold more than one plate or glass; the index
-        /// counts them from the left.
+        /// counts them from the left. On Planet 2 the plate is the noodle
+        /// bowl and the glass the cookie plate: same roles, other rules
+        /// (`PlanetKitchen`).
         case plate(Int)
         case glass(Int)
     }
