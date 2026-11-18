@@ -50,12 +50,32 @@ struct KitchenSceneTests {
         #expect(scene.plates[1].contents.isEmpty)
     }
 
-    @Test func anItemLetGoInMidAirFalls() {
+    /// It falls behind the table, which hides it bit by bit.
+    @Test func anItemLetGoInMidAirFallsBehindTheTable() {
         let scene = makeScene()
 
         let node = letGo("duskMushroom", atArtPoint: CGPoint(x: 683, y: 400), in: scene)
 
         #expect(node.fallingSince != nil)
+        #expect(node.parent === scene.behindTable)
         #expect(scene.bubbles.contains { $0 === node })
+    }
+
+    /// A falling item that has reached the table carries on down behind it,
+    /// and is only gone once it is out of sight.
+    @Test func aFallingItemIsGoneOnlyOnceHiddenBehindTheTable() {
+        let (scene, day) = makeKitchenScene()
+        let node = letGo("duskMushroom", atArtPoint: CGPoint(x: 683, y: 400), in: scene)
+        day.start()
+        scene.update(10)
+
+        node.position.y = scene.tableEdge
+        scene.update(10.02)
+        let halfHiddenIsStillThere = scene.bubbles.contains { $0 === node }
+        node.position.y = scene.tableEdge - node.radius * 1.5
+        scene.update(10.04)
+
+        #expect(halfHiddenIsStillThere)
+        #expect(!scene.bubbles.contains { $0 === node })
     }
 }

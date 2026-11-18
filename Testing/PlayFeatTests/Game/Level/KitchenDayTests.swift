@@ -107,6 +107,39 @@ struct KitchenDayTests {
         #expect(day.isOver)
     }
 
+    // MARK: - Leaving after a serve
+
+    /// The served alien stays while the dish goes in; its order sheet goes
+    /// first, then the alien.
+    @Test func aServedCustomerLeavesTheirSheetFirstThenTheScreen() {
+        let day = makeDay()
+        run(day, to: 1)
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+
+        #expect(day.presentCustomers.isEmpty)
+        #expect(day.aliensOnScreen.map(\.seat) == [0])
+        #expect(day.orderSheetsOnScreen.map(\.seat) == [0])
+
+        run(day, to: 2.2, from: 1.2)
+        #expect(day.orderSheetsOnScreen.isEmpty)
+        #expect(day.aliensOnScreen.map(\.seat) == [0])
+
+        run(day, to: 2.6, from: 2.4)
+        #expect(day.aliensOnScreen.isEmpty)
+    }
+
+    @Test func aServedCustomersFaceStaysAsItWasWhenServed() {
+        let day = makeDay()
+        run(day, to: 1)
+        let customer = day.presentCustomers[0]
+        let patienceWhenServed = customer.patienceLeft(at: day.elapsed)
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+
+        run(day, to: 2, from: 1.2)
+
+        #expect(day.patienceShown(for: customer) == patienceWhenServed)
+    }
+
     // MARK: - Scoring
 
     /// Pepper Flatbread is a flatbread (10) and a pepper (10).

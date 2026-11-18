@@ -61,17 +61,19 @@ extension KitchenScene {
         }
     }
 
-    /// The dish is drawn into the customer's order sheet, speeding up as it
-    /// goes, and is gone.
+    /// The dish is drawn slowly into the alien, shrinking as it goes, then
+    /// fades away; the customer leaves after it (KitchenBackdrop).
     private func handOver(_ node: KitchenBubbleNode, to seat: Int) {
         bubbles.removeAll { $0 === node }
         node.removeAllActions()
-        let sheet = layout.sceneRect(KitchenLayout.seats[seat].orderSheet).center
-        let pull = SKAction.move(to: sheet, duration: 0.25)
-        pull.timingMode = .easeIn
+        let alien = layout.sceneRect(KitchenLayout.seats[seat].alien).center
+        let pullTime = KitchenRules.handOverSec * 0.75
+        let vanishTime = KitchenRules.handOverSec - pullTime
+        let pull = SKAction.move(to: alien, duration: pullTime)
+        pull.timingMode = .easeInEaseOut
         node.run(.sequence([
-            .group([pull, .scale(to: Self.parkedScale, duration: 0.25)]),
-            .group([.scale(to: 0.1, duration: 0.15), .fadeOut(withDuration: 0.15)]),
+            .group([pull, .scale(to: Self.parkedScale, duration: pullTime)]),
+            .group([.scale(to: 0.1, duration: vanishTime), .fadeOut(withDuration: vanishTime)]),
             .removeFromParent(),
         ]))
     }

@@ -98,25 +98,49 @@ nonisolated extension KitchenLayout {
     }
 
     /// One seat per alien drawing. The two green aliens serve regular
-    /// customers; the red one at the top left is the angry customer's.
+    /// customers, leaning in from the left and hanging from the top; the red
+    /// one at the top left is the angry customer's.
     static let seats: [Seat] = [
-        Seat(alienImage: "KitchenAlienLeft", customerType: .regular,
+        Seat(alienArt: "KitchenAlienLeft", customerType: .regular, entersFrom: .left,
              alien: CGRect(x: 47, y: 248, width: 260, height: 297),
              orderSheet: CGRect(x: 262, y: 290, width: 226, height: 190)),
-        Seat(alienImage: "KitchenAlienTop", customerType: .regular,
-             alien: CGRect(x: 756, y: 0, width: 255, height: 255),
+        Seat(alienArt: "KitchenAlienTop", customerType: .regular, entersFrom: .top,
+             alien: CGRect(x: 756, y: 0, width: 259, height: 255),
              orderSheet: CGRect(x: 1000, y: 120, width: 226, height: 190)),
-        Seat(alienImage: "KitchenAlienRed", customerType: .angry,
-             alien: CGRect(x: 287, y: 0, width: 218, height: 221),
+        Seat(alienArt: "KitchenAlienRed", customerType: .angry, entersFrom: .top,
+             alien: CGRect(x: 287, y: 0, width: 224, height: 280),
              orderSheet: CGRect(x: 490, y: 90, width: 226, height: 190)),
     ]
 
     struct Seat {
-        let alienImage: String
+        enum Side { case left, top }
+
+        /// The alien's pictures, one per mood: `alienArt` + Happy, Meh or Angry.
+        let alienArt: String
         /// Who sits here: an angry customer only ever takes the red alien's seat.
         let customerType: CustomerType
+        /// The screen edge the alien slides in from, and back out to.
+        let entersFrom: Side
         let alien: CGRect
         let orderSheet: CGRect
+
+        /// The alien's face for how much patience its customer has left:
+        /// happy in the green zone, unimpressed in the yellow, angry in the red.
+        func alienImage(patienceLeft fraction: Double) -> String {
+            switch KitchenRules.PatienceZone(patienceLeft: fraction) {
+            case .green: alienArt + "Happy"
+            case .yellow: alienArt + "Meh"
+            case .red: alienArt + "Angry"
+            }
+        }
+
+        /// How far the alien moves to be just off screen on its side, in art points.
+        var offstageOffset: CGSize {
+            switch entersFrom {
+            case .left: CGSize(width: -alien.maxX, height: 0)
+            case .top: CGSize(width: 0, height: -alien.maxY)
+            }
+        }
 
         /// Where a dish is handed over: one invisible box around the alien
         /// and its order sheet, so the player only has to get the dish near
