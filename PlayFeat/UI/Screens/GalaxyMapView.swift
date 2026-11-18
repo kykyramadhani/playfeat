@@ -29,8 +29,9 @@ struct GalaxyMapView: View {
         CGPoint(x: 1273.5, y: 548.5),
     ]
 
-    /// K2-332 b drawn about the size of the locked planet it replaces.
-    private static let openPlanetSize = CGSize(width: 300, height: 305)
+    /// Every open planet is drawn this size. Their pictures share one canvas
+    /// with the planet the same size on it, so they look the same size too.
+    private static let openPlanetSize = CGSize(width: 296, height: 277)
     /// How far below a planet's centre its name tag's centre sits, as under Kepler.
     private static let nameTagDrop: CGFloat = 184.5
 
@@ -123,7 +124,7 @@ struct GalaxyMapView: View {
                 .position(x: 258, y: 549)
             Image(Planet.kepler186f.backdrop.galaxyImageName)
                 .resizable()
-                .frame(width: 296, height: 277)
+                .frame(width: Self.openPlanetSize.width, height: Self.openPlanetSize.height)
                 .position(x: 261, y: 548.5)
             Image("PlanetFlag")
                 .resizable()
