@@ -77,6 +77,27 @@ struct ArtAssetTests {
         #expect(UIImage(named: name) != nil)
     }
 
+    /// Every alien in every mood is drawn by name as patience runs out; a
+    /// missing one is an empty seat.
+    @Test(arguments: AlienSpecies.allCases)
+    func everyAlienMoodExists(species: AlienSpecies) {
+        for zone in [KitchenRules.PatienceZone.green, .yellow, .red] {
+            #expect(UIImage(named: species.imageName(in: zone)) != nil, "missing '\(species.imageName(in: zone))'")
+        }
+    }
+
+    /// Every alien picture is on one canvas with its moods lined up, so a
+    /// customer doesn't jump in their seat when their mood changes. A new
+    /// picture cropped differently would bring the jump back.
+    @Test func everyAlienPictureSharesOneCanvas() {
+        let names = AlienSpecies.allCases.flatMap { species in
+            [KitchenRules.PatienceZone.green, .yellow, .red].map(species.imageName(in:))
+        }
+        let sizes = Set(names.compactMap { UIImage(named: $0).map { "\($0.size)" } })
+
+        #expect(sizes.count == 1, "alien canvases differ: \(sizes)")
+    }
+
     /// Each planet's landscape layers and galaxy-map picture are named in its
     /// definition; a missing one leaves a hole in the landscape.
     @Test(arguments: PlanetCatalog.all.map(\.id))

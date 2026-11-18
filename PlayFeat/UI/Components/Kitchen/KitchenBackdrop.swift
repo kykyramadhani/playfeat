@@ -108,7 +108,7 @@ private struct KitchenCustomers: View {
                 let seat = KitchenLayout.seats[customer.seat]
                 switch part {
                 case .aliens:
-                    Image(seat.alienImage).resizable().placed(in: seat.alien)
+                    SeatedAlien(imageName: alienImage(of: customer), pose: seat.alienPose)
                 case .orderSheets:
                     OrderSheet(dish: customer.dish, patience: customer.patienceLeft(at: day.elapsed))
                         .placed(in: seat.orderSheet)
@@ -116,6 +116,12 @@ private struct KitchenCustomers: View {
             }
         }
         .frame(width: KitchenLayout.artSize.width, height: KitchenLayout.artSize.height, alignment: .topLeading)
+    }
+
+    /// The planet's alien for this customer, in the mood its patience is in.
+    private func alienImage(of customer: SeatedCustomer) -> String {
+        let species = PlanetCatalog.planet(day.level.planet).kitchen.alien(for: customer.type)
+        return species.imageName(in: KitchenRules.PatienceZone(patienceLeft: customer.patienceLeft(at: day.elapsed)))
     }
 }
 

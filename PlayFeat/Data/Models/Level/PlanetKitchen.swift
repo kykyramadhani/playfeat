@@ -5,7 +5,7 @@
 //
 //  What one planet's kitchen is made of: which cooking tools it has and
 //  what each cooks, how fast food cooks and is ruined, the rules of its
-//  main-dish and dessert stations, and what its customers order. The
+//  main-dish and dessert stations, its customers and what they order. The
 //  scene, the customer flows and the validation all read from here, so a
 //  planet's kitchen is data, not code.
 //
@@ -26,6 +26,18 @@ nonisolated struct PlanetKitchen {
     let dessert: String
     /// What an angry alien always orders.
     let angryOrder: String
+    /// Who sits in the regular seats.
+    let regularAlien: AlienSpecies
+    /// Who sits in the angry seat.
+    let angryAlien: AlienSpecies
+
+    /// The alien drawn for a customer of `type`.
+    func alien(for type: CustomerType) -> AlienSpecies {
+        switch type {
+        case .regular: regularAlien
+        case .angry: angryAlien
+        }
+    }
 
     /// The cooking tools on the counter on `level`: the ones it lists, or
     /// all of the planet's when it lists none.

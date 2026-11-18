@@ -23,7 +23,9 @@ nonisolated extension Planet {
             dessertStation: .glass,
             dishes: [KitchenMenu.pepperFlatbread, KitchenMenu.mushroomFlatbread, KitchenMenu.slimyTentacles],
             dessert: KitchenMenu.slimyTentacles,
-            angryOrder: KitchenMenu.slimyTentacles
+            angryOrder: KitchenMenu.slimyTentacles,
+            regularAlien: .regular,
+            angryAlien: .square
         ),
         buffet: keplerBuffet,
         backdrop: keplerBackdrop

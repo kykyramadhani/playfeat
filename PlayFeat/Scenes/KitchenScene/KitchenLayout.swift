@@ -125,31 +125,50 @@ nonisolated extension KitchenLayout {
         Array(glassSpots.prefix(min(max(count, 0), maxGlasses)))
     }
 
-    /// One seat per alien drawing. The two green aliens serve regular
-    /// customers; the red one at the top left is the angry customer's.
+    /// The three places a customer stands. The two regular seats are the
+    /// one leaning in from the left wall and the one hanging from the top
+    /// right; the angry customer hangs from the top left.
     static let seats: [Seat] = [
-        Seat(alienImage: "KitchenAlienLeft", customerType: .regular,
+        Seat(customerType: .regular,
              alien: CGRect(x: 47, y: 248, width: 260, height: 297),
+             alienPose: AlienPose(center: CGPoint(x: 166, y: 420), isMirrored: true, turnDegrees: 0),
              orderSheet: CGRect(x: 262, y: 290, width: 226, height: 190)),
-        Seat(alienImage: "KitchenAlienTop", customerType: .regular,
+        Seat(customerType: .regular,
              alien: CGRect(x: 756, y: 0, width: 255, height: 255),
+             alienPose: AlienPose(center: CGPoint(x: 936, y: 93), isMirrored: false, turnDegrees: -95),
              orderSheet: CGRect(x: 1000, y: 120, width: 226, height: 190)),
-        Seat(alienImage: "KitchenAlienRed", customerType: .angry,
+        Seat(customerType: .angry,
              alien: CGRect(x: 287, y: 0, width: 218, height: 221),
+             alienPose: AlienPose(center: CGPoint(x: 392, y: 65), isMirrored: true, turnDegrees: 105),
              orderSheet: CGRect(x: 490, y: 90, width: 226, height: 190)),
     ]
 
     struct Seat {
-        let alienImage: String
-        /// Who sits here: an angry customer only ever takes the red alien's seat.
+        /// Who sits here: an angry customer only ever takes the top-left seat.
         let customerType: CustomerType
+        /// Where the alien's head and shoulders show: half of where a dish
+        /// can be handed over.
         let alien: CGRect
+        let alienPose: AlienPose
         let orderSheet: CGRect
 
         /// Where a dish is handed over: one invisible box around the alien
         /// and its order sheet, so the player only has to get the dish near
         /// the customer, not onto the drawing itself.
         var serveArea: CGRect { alien.union(orderSheet) }
+    }
+
+    /// How a seat's alien is drawn. Every alien picture is in one pose,
+    /// head at the top left and body trailing down to the right, on the
+    /// same canvas with its three moods lined up, so only the face changes
+    /// with the mood. The picture is mirrored, then turned about its centre
+    /// so the body reaches back to the wall or the ceiling, and centred on
+    /// `center`.
+    struct AlienPose {
+        let center: CGPoint
+        let isMirrored: Bool
+        /// Clockwise.
+        let turnDegrees: Double
     }
 
     /// How far outside a customer's serve area a carried dish they ordered

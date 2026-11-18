@@ -29,7 +29,9 @@ nonisolated extension Planet {
                 KitchenMenu.coralNoodles, KitchenMenu.urchinNoodles, KitchenMenu.clamNoodles, KitchenMenu.starCookie,
             ],
             dessert: KitchenMenu.starCookie,
-            angryOrder: KitchenMenu.starCookie
+            angryOrder: KitchenMenu.starCookie,
+            regularAlien: .triangle,
+            angryAlien: .square
         ),
         buffet: k2332bBuffet,
         backdrop: k2332bBackdrop
