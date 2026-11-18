@@ -7,6 +7,8 @@
 //  flatbread dishes and a glass for the dessert, with gravity pulling down.
 //
 
+import CoreGraphics
+
 nonisolated extension Planet {
     /// Levels 1–3 teach the grill and the two flatbreads, level 4 brings the
     /// glass and its dessert, and from level 5 the angry red alien comes in.
@@ -23,7 +25,20 @@ nonisolated extension Planet {
             dessert: KitchenMenu.slimyTentacles,
             angryOrder: KitchenMenu.slimyTentacles
         ),
-        buffet: keplerBuffet
+        buffet: keplerBuffet,
+        backdrop: keplerBackdrop
+    )
+
+    /// A violet desert under a pale sky, with a tiny spaceship hovering far off.
+    private static let keplerBackdrop = PlanetBackdrop(
+        layers: [
+            .init(imageName: "KeplerSky", fit: .cover),
+            .init(imageName: "KeplerDunesFar", fit: .groundBand),
+            .init(imageName: "KeplerDunes", fit: .groundBand),
+            .init(imageName: "KeplerRivers", fit: .groundBand),
+            .init(imageName: "KeplerSpaceship", fit: .topTrailing, drift: .bob(height: 8, period: 4)),
+        ],
+        galaxyImageName: "KeplerPlanet"
     )
 
     /// The prototype's marathon: flatbreads first, then from 8 dishes the

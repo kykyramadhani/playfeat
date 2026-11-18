@@ -27,4 +27,5 @@ nonisolated struct Planet {
     let levelIDs: [String]
     let kitchen: PlanetKitchen
     let buffet: BuffetPlan
+    let backdrop: PlanetBackdrop
 }

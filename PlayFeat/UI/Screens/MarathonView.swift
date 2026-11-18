@@ -20,7 +20,7 @@ struct MarathonView: View {
     private static let leaderboardSize = 5
 
     var body: some View {
-        PlanetScreen {
+        PlanetScreen(backdrop: .planet(PlanetCatalog.planet(sceneManager.planet).backdrop)) {
             Color.clear
                 .overlay(alignment: .topLeading) { storyModeButton.padding(.leading, 36).padding(.top, 147) }
                 .overlay(alignment: .topLeading) { trophyColumn.padding(.leading, 142).padding(.top, 215) }
@@ -59,7 +59,7 @@ struct MarathonView: View {
             trophy
             TabbedValueBox(tab: Text("Highest Score"), value: Text(highestScore, format: .number), metrics: .highScore)
                 .padding(.top, 12)
-            RaisedTextButton(title: "Play", palette: .start, action: { sceneManager.startMarathon() })
+            RaisedTextButton(title: "Play", palette: .start, action: { sceneManager.startMarathon(on: sceneManager.planet) })
                 .frame(width: 208)
                 .padding(.top, 25)
         }

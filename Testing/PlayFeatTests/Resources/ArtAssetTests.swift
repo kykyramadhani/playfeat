@@ -77,6 +77,17 @@ struct ArtAssetTests {
         #expect(UIImage(named: name) != nil)
     }
 
+    /// Each planet's landscape layers and galaxy-map picture are named in its
+    /// definition; a missing one leaves a hole in the landscape.
+    @Test(arguments: PlanetCatalog.all.map(\.id))
+    func everyPlanetBackdropLayerExists(planet: Planet.ID) {
+        let backdrop = PlanetCatalog.planet(planet).backdrop
+        for layer in backdrop.layers {
+            #expect(UIImage(named: layer.imageName) != nil, "missing layer '\(layer.imageName)' on \(planet)")
+        }
+        #expect(UIImage(named: backdrop.galaxyImageName) != nil)
+    }
+
     /// The source art sits on 1920×1080 canvases with the subject filling as
     /// little as 28% of the width. If trimming regresses, every bubble silently
     /// renders a fraction of its intended size.

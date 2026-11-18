@@ -27,6 +27,17 @@ final class SceneManager {
         screen = .galaxy
     }
 
+    /// The planet the player is on. Its board, Buffet and kitchen are the
+    /// ones `planetSelect`, `marathon` and `kitchen` show.
+    private(set) var planet: Planet.ID = .kepler186f
+
+    /// Lands on `planet` from the galaxy and opens its level board.
+    func goToPlanet(_ planet: Planet.ID) {
+        self.planet = planet
+        goToPlanetSelect()
+    }
+
+    /// Back to the board of the planet the player is on.
     func goToPlanetSelect() {
         levelReport = nil
         screen = .planetSelect
@@ -71,14 +82,15 @@ final class SceneManager {
     }
 
     /// Starts a fresh marathon run on `planet`, one continuous day of rounds
-    /// and breaks. Planet 1's until the planet screens pass the planet in.
-    func startMarathon(on planet: Planet.ID = .kepler186f) {
+    /// and breaks.
+    func startMarathon(on planet: Planet.ID) {
         let marathon = MarathonSession(planet: PlanetCatalog.planet(planet), positionTypes: KitchenLayout.positionTypes)
         self.marathon = marathon
         enterKitchen(marathon.day.level)
     }
 
     private func enterKitchen(_ level: LevelData) {
+        planet = level.planet
         kitchenVisit += 1
         screen = .kitchen(level)
     }

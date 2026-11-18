@@ -7,8 +7,9 @@
 //  the window, the customers leaning in, the counter, the props on it, and
 //  the customers' order sheets.
 //
-//  Laid out on the 1366×1024 art in art points and scaled to fill the screen
-//  as one picture, the same mapping KitchenLayout gives the scene.
+//  Laid out on the 1366×1024 art in art points and fitted to the screen as
+//  one picture, the same mapping KitchenLayout gives the scene. On a screen
+//  wider than the art, the truck's walls are stretched out to the edges.
 //
 
 import SwiftUI
@@ -21,7 +22,7 @@ struct KitchenBackdrop: View {
             let layout = KitchenLayout(screenSize: proxy.size)
 
             ZStack(alignment: .topLeading) {
-                Image("KitchenWindowView").resizable()
+                LayeredPlanetBackdrop(backdrop: planet.backdrop)
                 KitchenCustomers(day: day, part: .aliens)
                 // Figma cuts the counter one point short at the bottom.
                 Image("KitchenCounter").resizable()
@@ -32,24 +33,64 @@ struct KitchenBackdrop: View {
             .frame(width: KitchenLayout.artSize.width, height: KitchenLayout.artSize.height)
             .scaleEffect(layout.scale)
             .frame(width: proxy.size.width, height: proxy.size.height)
+            .overlay { TruckWallExtension(layout: layout) }
             .clipped()
         }
         .ignoresSafeArea()
         .accessibilityHidden(true)
     }
 
+    private var planet: Planet { PlanetCatalog.planet(day.level.planet) }
+
     private var props: some View {
         ZStack(alignment: .topLeading) {
             ForEach(KitchenLayout.plates(day.tools.plates), id: \.minX) { spot in
                 Image("KitchenPlate").resizable().placed(in: spot)
             }
-            ForEach(PlanetCatalog.planet(day.level.planet).kitchen.toolKinds(on: day.level), id: \.self) { tool in
+            ForEach(planet.kitchen.toolKinds(on: day.level), id: \.self) { tool in
                 Image(KitchenArt.image(of: tool)).resizable().placed(in: KitchenLayout.area(of: tool))
             }
             ForEach(KitchenLayout.glasses(day.tools.glasses), id: \.minX) { spot in
                 Image("KitchenGlass").resizable().placed(in: spot)
             }
         }
+    }
+}
+
+/// Fills the margins beside the art on a wide screen by stretching the
+/// outermost strip of the counter art (truck wall above, counter below) out
+/// to the screen's edges.
+/// ponytail: stretched edges until the artists draw a wider truck.
+private struct TruckWallExtension: View {
+    /// How much of the art's outer edge is stretched, in art points: inside
+    /// the wall's plain paint, clear of its shaded inner edge.
+    private static let edgeStripWidth: CGFloat = 24
+    /// Screen points each wall reaches over the art's edge, hiding the
+    /// half-drawn edge pixels the planet would otherwise show through.
+    private static let seamOverlap: CGFloat = 2
+
+    let layout: KitchenLayout
+
+    var body: some View {
+        HStack(spacing: 0) {
+            wall(keeping: .topLeading)
+            Spacer(minLength: 0)
+            wall(keeping: .topTrailing)
+        }
+    }
+
+    /// The counter art widened until its edge strip spans the margin, cut to
+    /// the margin at the `edge` side.
+    private func wall(keeping edge: Alignment) -> some View {
+        let width = layout.sideMargin + Self.seamOverlap
+        let stretch = width / Self.edgeStripWidth
+        return Image("KitchenCounter")
+            .resizable()
+            .frame(width: KitchenLayout.artSize.width * stretch,
+                   height: (KitchenLayout.artSize.height - 1) * layout.scale)
+            .offset(y: layout.viewPoint(.zero).y)
+            .frame(width: width, height: layout.screenSize.height, alignment: edge)
+            .clipped()
     }
 }
 

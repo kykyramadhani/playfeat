@@ -10,6 +10,8 @@
 //  design (Adi, 18 Nov); all are placeholders until the first test.
 //
 
+import CoreGraphics
+
 nonisolated extension Planet {
     /// 2-1 brings the pot and the noodles, 2-2 a second topping, 2-3 the
     /// grill and the clam, 2-4 the cookie, 2-5 the angry alien, and 2-6 a
@@ -29,8 +31,27 @@ nonisolated extension Planet {
             dessert: KitchenMenu.starCookie,
             angryOrder: KitchenMenu.starCookie
         ),
-        buffet: k2332bBuffet
+        buffet: k2332bBuffet,
+        backdrop: k2332bBackdrop
     )
+
+    /// The sea floor: two sand banks, a tentacle at the right and coral at
+    /// the left. The bubble clusters are painted into the water, so the
+    /// whole water layer bobs until they come as their own layer.
+    private static let k2332bBackdrop = PlanetBackdrop(
+        layers: [
+            .init(imageName: "K2332bWater", fit: .cover, drift: .bob(height: 6, period: 7)),
+            .init(imageName: "K2332bSandFar", fit: .groundBand),
+            .init(imageName: "K2332bSand", fit: .groundBand),
+            .init(imageName: "K2332bTentacle", fit: .bottomTrailing, drift: .sway(degrees: 3, pivot: tentacleRoot, period: 5)),
+            .init(imageName: "K2332bCoral", fit: .bottomLeading, drift: .sway(degrees: 2, pivot: coralRoot, period: 6)),
+        ],
+        galaxyImageName: "K2332bPlanet"
+    )
+
+    /// Where the tentacle comes in from the right edge, and the coral's foot.
+    private static let tentacleRoot = CGPoint(x: 1, y: 0.53)
+    private static let coralRoot = CGPoint(x: 0.05, y: 1)
 
     /// Coral and Urchin Noodles first; from 8 dishes the clam joins, with one
     /// angry and one regular Star Cookie in every 5 customers (the regular

@@ -3,11 +3,12 @@
 //  PlayFeat
 //  Created by kyky on 12/11/26.
 //
-//  The kitchen art is one 1366×1024 picture that fills the screen, cropped
-//  evenly when the screen is a different shape. Everything placed on it —
-//  props and customers — is measured in that picture's points (origin
-//  top-left) and mapped onto the screen here, so the SwiftUI art and the
-//  SpriteKit hit areas always line up.
+//  The kitchen art is one 1366×1024 picture fitted whole to the screen and
+//  centred, never cropped, so the counter's stations stay within reach on
+//  a wide MacBook screen too. Everything placed on it — props and
+//  customers — is measured in that picture's points (origin top-left) and
+//  mapped onto the screen here, so the SwiftUI art and the SpriteKit hit
+//  areas always line up.
 //
 
 import CoreGraphics
@@ -17,10 +18,16 @@ nonisolated struct KitchenLayout {
 
     let screenSize: CGSize
 
-    /// Aspect-fill: the art covers the screen and the overflow is cut off
-    /// equally on both sides.
+    /// Aspect-fit: the whole art shows. On a screen wider than the art (every
+    /// Mac and most iPads) it fills the height and leaves a margin each side,
+    /// which `KitchenBackdrop` fills by stretching the truck's walls.
     var scale: CGFloat {
-        max(screenSize.width / Self.artSize.width, screenSize.height / Self.artSize.height)
+        min(screenSize.width / Self.artSize.width, screenSize.height / Self.artSize.height)
+    }
+
+    /// The screen width left over on each side of the art.
+    var sideMargin: CGFloat {
+        max(0, (screenSize.width - Self.artSize.width * scale) / 2)
     }
 
     /// Screen point (y-down, SwiftUI) of a point on the art.

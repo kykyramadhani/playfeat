@@ -22,9 +22,7 @@ import SwiftUI
 struct PlanetSelectView: View {
     @Bindable var sceneManager: SceneManager
 
-    private let planet = Planet.kepler186f
-
-    @State private var progress = GameStorage.progress(on: .kepler186f)
+    @State private var progress: PlanetProgress
     /// Index of the level whose popup is open.
     @State private var selectedLevel: Int?
     @State private var showRecipeBook = false
@@ -32,8 +30,16 @@ struct PlanetSelectView: View {
     @State private var showShop = false
     @State private var notice: PlanetNotice?
 
+    init(sceneManager: SceneManager) {
+        self.sceneManager = sceneManager
+        _progress = State(initialValue: GameStorage.progress(on: PlanetCatalog.planet(sceneManager.planet)))
+    }
+
+    /// The planet the player has landed on.
+    private var planet: Planet { PlanetCatalog.planet(sceneManager.planet) }
+
     var body: some View {
-        PlanetScreen(backdrop: .landingSite) {
+        PlanetScreen(backdrop: .planet(planet.backdrop)) {
             Color.clear
                 .overlay(alignment: .topLeading) { spaceship.padding(.leading, -6).padding(.top, 191) }
                 .overlay(alignment: .bottomLeading) { backToGalaxyButton.padding(.leading, 48).padding(.bottom, 44) }
