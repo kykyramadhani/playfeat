@@ -3,11 +3,10 @@
 //  PlayFeat
 //  Created by kyky on 15/11/26.
 //
-//  The card at the end of a story day, shown over the level board: the
+//  The card at the end of a story day, shown over its frozen kitchen: the
 //  stars against the level's targets, a recap of orders delivered and
 //  missed and tips, and the day's total income. The earned stars light up
-//  grey to yellow one by one; each star reports where it sits so the board
-//  can fly the new ones to the spaceship's fuel gauge. BACK closes it;
+//  grey to yellow one by one. BACK returns to the level board;
 //  a day with a star offers NEXT, one without offers RETRY.
 //
 
@@ -19,8 +18,6 @@ struct LevelReportView: View {
     let onNext: () -> Void
     let onBack: () -> Void
     let onRetry: () -> Void
-    /// Called once every earned star is lit.
-    var onStarsLit: () -> Void = {}
 
     static let firstStarDelay: Duration = .milliseconds(600)
     static let starInterval: Duration = .milliseconds(450)
@@ -55,7 +52,7 @@ struct LevelReportView: View {
                         .foregroundStyle(index < litStars ? Color.starYellow : Color.starEmpty)
                         .scaleEffect(index < litStars ? 1 : 0.85)
                         .animation(.spring(response: 0.3, dampingFraction: 0.5), value: litStars)
-                        .reportingFrame(ofStar: index)
+
                     Text(report.level.starTargets[index], format: .number)
                         .font(.atkinson(size: 64, weight: .bold))
                         .foregroundStyle(Color.purple900)
@@ -85,32 +82,6 @@ struct LevelReportView: View {
             }
         } catch {
             return
-        }
-        onStarsLit()
-    }
-}
-
-// MARK: - Where the stars are
-
-/// Each report star's frame in the level board's coordinate space.
-struct ReportStarFramesKey: PreferenceKey {
-    static let defaultValue: [Int: CGRect] = [:]
-
-    static func reduce(value: inout [Int: CGRect], nextValue: () -> [Int: CGRect]) {
-        value.merge(nextValue()) { _, new in new }
-    }
-}
-
-extension View {
-    /// Reports this star's frame on the level board, for the flight to the fuel gauge.
-    func reportingFrame(ofStar index: Int) -> some View {
-        background {
-            GeometryReader { proxy in
-                Color.clear.preference(
-                    key: ReportStarFramesKey.self,
-                    value: [index: proxy.frame(in: .named(PlanetSelectView.boardSpace))]
-                )
-            }
         }
     }
 }

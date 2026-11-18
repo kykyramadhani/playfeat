@@ -28,21 +28,29 @@ final class SceneManager {
     }
 
     func goToPlanetSelect() {
+        levelReport = nil
         screen = .planetSelect
     }
 
-    /// The report of the story day just played, shown over the level board
+    /// The report of the story day just played, shown over its frozen kitchen
     /// until the player moves on.
     private(set) var levelReport: LevelReport?
 
-    /// Back to the board with `report` on top of it.
+    /// Keeps the kitchen mounted behind the finished day's report.
     func showReport(_ report: LevelReport) {
         levelReport = report
-        screen = .planetSelect
     }
 
-    func dismissReport() {
-        levelReport = nil
+    /// NEXT opens the following level; the final level returns to the board.
+    func goToNextLevel(after level: LevelData) {
+        let levelIDs = Planet.kepler186f.levelIDs
+        guard let index = levelIDs.firstIndex(of: level.id),
+              levelIDs.indices.contains(index + 1),
+              let nextLevel = try? LevelLoader.load(levelIDs[index + 1]) else {
+            goToPlanetSelect()
+            return
+        }
+        goToKitchen(nextLevel)
     }
 
     func goToMarathon() {

@@ -11,9 +11,7 @@
 //  its details in a popup with the PLAY button; tapping a locked level, the
 //  locked marathon or the fuel gauge explains what's needed.
 //
-//  A finished story day's report shows here, over the board: its new stars
-//  fly from the report to the fuel gauge, which fills by the share of the
-//  planet's 15 stars earned.
+//  Returning from a finished story day refreshes the earned stars and fuel.
 //
 //  Each piece is pinned to the screen edge it hugs in the Figma frame, so a
 //  wider screen spreads the layout instead of stretching it.
@@ -22,10 +20,6 @@
 import SwiftUI
 
 struct PlanetSelectView: View {
-    /// The coordinate space the report's stars and the fuel gauge are
-    /// measured in, for the stars' flight between them.
-    static let boardSpace = "levelBoard"
-
     @Bindable var sceneManager: SceneManager
 
     private let planet = Planet.kepler186f
@@ -37,12 +31,6 @@ struct PlanetSelectView: View {
     @State private var showSpoilerWarning = false
     @State private var showShop = false
     @State private var notice: PlanetNotice?
-    /// Bars the gauge shows: behind the real fuel while new stars are on their way.
-    @State private var shownFuelBars = 0
-    @State private var reportStarFrames: [Int: CGRect] = [:]
-    @State private var fuelGaugeFrame: CGRect = .zero
-    /// Report stars flying to the gauge, by the star's index.
-    @State private var flyingStars: [Int] = []
 
     var body: some View {
         PlanetScreen(backdrop: .landingSite) {
@@ -76,11 +64,6 @@ struct PlanetSelectView: View {
                     .transition(.opacity)
             }
         }
-        .overlay { reportOverlay }
-        .overlay(alignment: .topLeading) { starFlights }
-        .coordinateSpace(name: Self.boardSpace)
-        .onPreferenceChange(ReportStarFramesKey.self) { reportStarFrames = $0 }
-        .onPreferenceChange(FuelGaugeFrameKey.self) { fuelGaugeFrame = $0 }
         .onAppear(perform: loadProgress)
         .animation(.easeOut(duration: 0.2), value: selectedLevel)
         .animation(.easeOut(duration: 0.2), value: showRecipeBook)
@@ -100,14 +83,7 @@ struct PlanetSelectView: View {
             .accessibilityHidden(true)
             .overlay(alignment: .topLeading) {
                 ClickButton(action: { notice = .gas }) {
-                    FuelGauge(filledBars: shownFuelBars)
-                        .background {
-                            GeometryReader { proxy in
-                                Color.clear.preference(
-                                    key: FuelGaugeFrameKey.self, value: proxy.frame(in: .named(Self.boardSpace))
-                                )
-                            }
-                        }
+                    FuelGauge(filledBars: progress.fuelBars(outOf: FuelGauge.barCount))
                 }
                 .buttonStyle(.plain)
                 .padding(.leading, 242.5)
@@ -256,127 +232,9 @@ struct PlanetSelectView: View {
         )
     }
 
-    // MARK: - Report and fuel
-
-    /// Re-read on every visit: a finished day may have earned stars. With
-    /// its report up, the gauge first shows the fuel from before it.
+    /// Re-read on every visit so completed days update the level stars and fuel.
     private func loadProgress() {
         progress = GameStorage.progress(on: planet)
-        shownFuelBars = fuelBars(before: sceneManager.levelReport)
-    }
-
-    private func fuelBars(before report: LevelReport?) -> Int {
-        var bestStars = progress.bestStars
-        if let report, let index = planet.levelIDs.firstIndex(of: report.level.id) {
-            bestStars[index] = report.previousBestStars
-        }
-        return PlanetProgress(bestStars: bestStars).fuelBars(outOf: FuelGauge.barCount)
-    }
-
-    @ViewBuilder
-    private var reportOverlay: some View {
-        if let report = sceneManager.levelReport {
-            LevelReportView(
-                report: report,
-                levelNumber: levelNumber(of: report.level),
-                onNext: { playLevel(after: report.level) },
-                onBack: closeReport,
-                onRetry: { sceneManager.goToKitchen(report.level) },
-                onStarsLit: { flyNewStars(of: report) }
-            )
-            .transition(.opacity)
-        }
-    }
-
-    /// The report's new stars set off for the fuel gauge, a beat apart.
-    private func flyNewStars(of report: LevelReport) {
-        flyingStars = Array(report.previousBestStars..<report.stars)
-        if flyingStars.isEmpty { closeFuelGap() }
-    }
-
-    private var starFlights: some View {
-        ZStack(alignment: .topLeading) {
-            ForEach(Array(flyingStars.enumerated()), id: \.element) { order, star in
-                if let start = reportStarFrames[star] {
-                    FlyingStar(
-                        from: start.center, to: fuelGaugeFrame.center,
-                        delay: .milliseconds(150 * order),
-                        onArrive: { starArrived(star) }
-                    )
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .allowsHitTesting(false)
-    }
-
-    private func starArrived(_ star: Int) {
-        flyingStars.removeAll { $0 == star }
-        if flyingStars.isEmpty { closeFuelGap() }
-    }
-
-    /// The gauge catches up with the fuel the day really earned.
-    private func closeFuelGap() {
-        withAnimation(.easeOut(duration: 0.6)) {
-            shownFuelBars = progress.fuelBars(outOf: FuelGauge.barCount)
-        }
-    }
-
-    private func closeReport() {
-        closeFuelGap()
-        flyingStars = []
-        sceneManager.dismissReport()
-    }
-
-    private func levelNumber(of level: LevelData) -> Int {
-        (planet.levelIDs.firstIndex(of: level.id) ?? 0) + 1
-    }
-
-    /// The planet's next level, or the board when this was the last one.
-    private func playLevel(after level: LevelData) {
-        let next = levelNumber(of: level)
-        guard planet.levelIDs.indices.contains(next),
-              let nextLevel = try? LevelLoader.load(planet.levelIDs[next]) else {
-            closeReport()
-            return
-        }
-        sceneManager.goToKitchen(nextLevel)
-    }
-}
-
-/// Where the fuel gauge sits on the board.
-private struct FuelGaugeFrameKey: PreferenceKey {
-    static let defaultValue: CGRect = .zero
-
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
-    }
-}
-
-/// A report star on its way to the fuel gauge, shrinking as it goes.
-private struct FlyingStar: View {
-    let from: CGPoint
-    let to: CGPoint
-    let delay: Duration
-    let onArrive: () -> Void
-
-    @State private var hasArrived = false
-
-    var body: some View {
-        Image("LevelStar")
-            .resizable()
-            .foregroundStyle(Color.starYellow)
-            .frame(width: hasArrived ? 34 : 115, height: hasArrived ? 34 : 115)
-            .position(hasArrived ? to : from)
-            .task {
-                try? await Task.sleep(for: delay)
-                withAnimation(.easeIn(duration: 0.8)) {
-                    hasArrived = true
-                } completion: {
-                    onArrive()
-                }
-            }
-            .accessibilityHidden(true)
     }
 }
 
