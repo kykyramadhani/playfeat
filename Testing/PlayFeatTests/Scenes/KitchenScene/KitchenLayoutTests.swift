@@ -45,6 +45,87 @@ struct KitchenLayoutTests {
         #expect(layout.sideMargin == 0)
     }
 
+    // MARK: - Truck
+
+    /// On a screen the art's shape nothing moves: the bands tile the art and
+    /// each draws its layer exactly over the art.
+    @Test func onTheArtsShapeTheTruckBandsTileTheArt() {
+        let bands = KitchenLayout(screenSize: KitchenLayout.artSize).truckBands
+
+        #expect(bands.map(\.screenRect.minX) == [0, 400, 966])
+        #expect(bands.map(\.screenRect.maxX) == [400, 966, 1366])
+        #expect(bands.allSatisfy { $0.layerRect == CGRect(origin: .zero, size: KitchenLayout.artSize) })
+    }
+
+    /// A wider screen keeps the walls' drawn shape at the screen's edges and
+    /// widens only the plain middle.
+    @Test func onAWiderScreenTheWallsStickToTheScreensEdges() {
+        let bands = KitchenLayout(screenSize: CGSize(width: 1366, height: 512)).truckBands
+
+        #expect(bands[0].screenRect == CGRect(x: 0, y: 0, width: 200, height: 512))
+        #expect(bands[2].screenRect == CGRect(x: 1166, y: 0, width: 200, height: 512))
+        #expect(bands[1].screenRect == CGRect(x: 200, y: 0, width: 966, height: 512))
+        #expect(bands[0].layerRect.width == 683)
+    }
+
+    /// A taller screen fits the art's width, so the bands tile it unwidened,
+    /// centred top to bottom like the art.
+    @Test func onATallerScreenTheTruckSitsWithTheArt() {
+        let bands = KitchenLayout(screenSize: CGSize(width: 683, height: 1024)).truckBands
+
+        #expect(bands.map(\.screenRect.minX) == [0, 200, 483])
+        #expect(bands.allSatisfy { $0.screenRect.minY == 256 && $0.screenRect.height == 512 })
+    }
+
+    // MARK: - Seats
+
+    /// On a screen the art's shape every customer stands where it's drawn.
+    @Test func onTheArtsShapeEverySeatStaysWhereItIsDrawn() {
+        let layout = KitchenLayout(screenSize: KitchenLayout.artSize)
+
+        for index in KitchenLayout.seats.indices {
+            #expect(layout.seat(at: index).serveArea == KitchenLayout.seats[index].serveArea)
+        }
+    }
+
+    /// On a wider screen the walls move out to the screen's edges, and each
+    /// customer moves with the wall on its side: the left-wall and top-left
+    /// seats to the left, the top-right seat to the right.
+    @Test func onAWiderScreenEachSeatFollowsTheWallOnItsSide() {
+        let wide = KitchenLayout(screenSize: CGSize(width: 1366, height: 512))
+        let shifts = KitchenLayout.seats.indices.map { index in
+            wide.seat(at: index).alien.minX - KitchenLayout.seats[index].alien.minX
+        }
+
+        #expect(shifts == [-683, 683, -683])
+    }
+
+    /// The alien, its order sheet and the serve area the hands are tested
+    /// against all move together, so serving lines up with the drawing.
+    @Test func aMovedSeatKeepsItsAlienAndOrderSheetTogether() {
+        let original = KitchenLayout.seats[0]
+        let moved = KitchenLayout(screenSize: CGSize(width: 1366, height: 512)).seat(at: 0)
+
+        #expect(moved.orderSheet == original.orderSheet.offsetBy(dx: -683, dy: 0))
+        #expect(moved.alienPose.center.x == original.alienPose.center.x - 683)
+        #expect(moved.serveArea == original.serveArea.offsetBy(dx: -683, dy: 0))
+    }
+
+    /// Each customer slides until its whole picture is past its wall: left
+    /// off the art from the left wall, up off it from the ceiling.
+    @Test func everyCustomerSlidesPastItsWallToLeave() {
+        for index in KitchenLayout.seats.indices {
+            let seat = KitchenLayout.seats[index]
+            let slide = KitchenLayout.offstageOffset(ofSeatAt: index)
+            let gone = seat.alienPose.drawnBounds.offsetBy(dx: slide.width, dy: slide.height)
+
+            switch seat.entersFrom {
+            case .left: #expect(gone.maxX <= 0)
+            case .top: #expect(gone.maxY <= 0)
+            }
+        }
+    }
+
     @Test func scenePointsFlipToSpriteKitsYUpSpace() {
         let layout = KitchenLayout(screenSize: CGSize(width: 683, height: 512))
 
