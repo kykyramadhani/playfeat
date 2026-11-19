@@ -115,16 +115,63 @@ struct SceneManagerTests {
         #expect(manager.screen == .kitchen(level))
     }
 
-    /// RETRY goes to the level already on screen; the visit count still
-    /// moves, so the kitchen is rebuilt and the day starts over.
-    @Test func retryingALevelCountsAsANewVisit() throws {
+    /// RETRY from a kitchen doesn't open the new one straight away: the
+    /// old kitchen closes first, so the day is rebuilt from nothing.
+    @Test func retryingALevelClosesTheOldKitchenFirst() throws {
         let manager = SceneManager()
         let level = try LevelLoader.load("1-1")
         manager.goToKitchen(level)
 
         manager.goToKitchen(level)
 
-        #expect(manager.kitchenVisit == 2)
+        #expect(manager.screen == .kitchenHandover(level))
+    }
+
+    @Test func theWaitingKitchenOpensOnceTheOldOneHasClosed() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        manager.goToKitchen(level)
+        manager.goToKitchen(level)
+
+        manager.kitchenDidClose()
+
+        #expect(manager.screen == .kitchen(level))
+    }
+
+    /// Pressing RETRY again while the old kitchen is still closing keeps
+    /// waiting for it, rather than opening a kitchen beside it.
+    @Test func aSecondRetryDuringTheHandoverKeepsWaiting() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        manager.goToKitchen(level)
+        manager.goToKitchen(level)
+
+        manager.goToKitchen(level)
+
+        #expect(manager.screen == .kitchenHandover(level))
+    }
+
+    @Test func restartingAMarathonClosesTheOldKitchenAndStartsAFreshRun() throws {
+        let manager = SceneManager()
+        manager.startMarathon(on: .kepler186f)
+        let firstRun = try #require(manager.marathon)
+
+        manager.startMarathon(on: .kepler186f)
+
+        #expect(manager.screen == .kitchenHandover(firstRun.day.level))
+        #expect(manager.marathon !== firstRun)
+    }
+
+    /// Leaving for the board: the kitchen closing afterwards opens nothing.
+    @Test func closingAKitchenOnTheWayToTheBoardStaysOnTheBoard() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        manager.goToKitchen(level)
+        manager.goToPlanetSelect()
+
+        manager.kitchenDidClose()
+
+        #expect(manager.screen == .planetSelect)
     }
 
     @Test func aStoryReportKeepsTheFinishedKitchenOnScreen() throws {
@@ -136,7 +183,6 @@ struct SceneManagerTests {
         manager.showReport(report)
 
         #expect(manager.screen == .kitchen(level))
-        #expect(manager.kitchenVisit == 1)
         #expect(manager.levelReport == report)
     }
 
@@ -161,8 +207,7 @@ struct SceneManagerTests {
 
         manager.goToNextLevel(after: level)
 
-        #expect(manager.screen == .kitchen(nextLevel))
-        #expect(manager.kitchenVisit == 2)
+        #expect(manager.screen == .kitchenHandover(nextLevel))
         #expect(manager.levelReport == nil)
     }
 
@@ -174,8 +219,7 @@ struct SceneManagerTests {
 
         manager.goToKitchen(level)
 
-        #expect(manager.screen == .kitchen(level))
-        #expect(manager.kitchenVisit == 2)
+        #expect(manager.screen == .kitchenHandover(level))
         #expect(manager.levelReport == nil)
     }
 

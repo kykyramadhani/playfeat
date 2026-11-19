@@ -67,11 +67,6 @@ final class SceneManager {
         screen = .marathon
     }
 
-    /// Counts trips into a kitchen. RETRY sends the player to the level
-    /// they are already on, which leaves `screen` unchanged; ContentView keys
-    /// the kitchen on this so the day starts over all the same.
-    private(set) var kitchenVisit = 0
-
     /// The marathon being played; nil on a level.
     private(set) var marathon: MarathonSession?
 
@@ -89,9 +84,23 @@ final class SceneManager {
         enterKitchen(marathon.day.level)
     }
 
+    /// From a kitchen (NEXT, RETRY, RESTART) the old one closes first: the
+    /// handover holds `level` until `kitchenDidClose()`, so the new kitchen
+    /// is built from nothing, as if it were opened from the board.
     private func enterKitchen(_ level: LevelData) {
         planet = level.planet
-        kitchenVisit += 1
+        switch screen {
+        case .kitchen, .kitchenHandover:
+            screen = .kitchenHandover(level)
+        default:
+            screen = .kitchen(level)
+        }
+    }
+
+    /// The closing kitchen has let go of its camera, player and music; the
+    /// level waiting in the handover, if any, opens now.
+    func kitchenDidClose() {
+        guard case .kitchenHandover(let level) = screen else { return }
         screen = .kitchen(level)
     }
 

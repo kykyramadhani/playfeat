@@ -21,6 +21,8 @@ enum AppScreen: Equatable {
     case gameplay
     /// One day of a planet level, in that planet's kitchen.
     case kitchen(LevelData)
+    /// Between two kitchens: the old one closes before `LevelData`'s opens.
+    case kitchenHandover(LevelData)
     /// The end-of-run paycheck, carrying the finished run's outcome.
     case postGame(GameResult)
 }
