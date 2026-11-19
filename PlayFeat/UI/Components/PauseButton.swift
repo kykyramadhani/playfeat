@@ -1,24 +1,29 @@
 //
-//  Button.swift
-//  GetCooking
+//  PauseButton.swift
+//  PlayFeat
+//  Created by Owen Limantoro on 19/11/26.
 //
-//  Created by Owen Limantoro on 12/08/26.
+//  The round pink pause button shown over a kitchen day. Same 76 pt raised
+//  button as the pause card's Settings and Home, so pausing and the card it
+//  opens read as one set.
 //
 
 import SwiftUI
 
 struct PauseButton: View {
-    let isPaused: Bool
     let action: () -> Void
 
+    private static let diameter: CGFloat = 76
+
     var body: some View {
-        ClickButton(action: action) {
-            Image(systemName: isPaused ? "play.fill" : "pause.fill")
-                .font(.subheadline)
-                .frame(width: 22, height: 22)
-                .padding(8)
-                .background(.ultraThinMaterial, in: Circle())
-        }
-        .buttonStyle(.plain)
+        RaisedIconButton(icon: "PauseIcon", label: "Pause", palette: .pink, action: action)
+            .foregroundStyle(Color.electricPink)
+            .frame(width: Self.diameter, height: Self.diameter)
     }
+}
+
+#Preview {
+    PauseButton {}
+        .padding()
+        .environment(AudioManager())
 }

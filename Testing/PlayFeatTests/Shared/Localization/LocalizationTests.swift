@@ -123,7 +123,7 @@ struct LocalizationTests {
             "Grill holds 2 flatbreads at once", "Both flatbreads +6 points", "Marathon Complete", "Total Marathon Points", "Rounds Played",
             "Average Dishes / Round", "Customers Served", "Total Points",
             "Choose 1 upgrade for the next round, or skip to save your coins.", "Marathon Coins",
-            "Game Pause", "Resume Level", "Retry Level",
+            "Game Pause", "Resume Level", "Retry Level", "Pause",
             // Notices and the new planet
             "Complete previous level to unlock this level", "Complete the first level to unlock marathon mode",
             "You have to finish all six levels to continue to the next planet", "Energy renews every 15 minutes",

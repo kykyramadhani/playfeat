@@ -155,8 +155,9 @@ struct KitchenView: View {
                 CameraPermissionDeniedOverlay()
             }
 
-            if countdown < 0, !day.isOver, marathonStep == nil {
-                StopButtonLayer(onStop: pauseDay)
+            // Gone while paused, so it comes back hidden after RESUME.
+            if countdown < 0, !day.isOver, marathonStep == nil, !isPaused {
+                pauseButtonLayer
             }
 
             if isPaused {
@@ -187,6 +188,17 @@ struct KitchenView: View {
             day.start()
         }
         .designScaled()
+    }
+
+    /// Figma "IN GAME if press screen": top right, clear of the HUD along
+    /// the bottom.
+    private var pauseButtonLayer: some View {
+        TapToRevealLayer {
+            PauseButton(action: pauseDay)
+                .padding(.top, 38)
+                .padding(.trailing, 35)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        }
     }
 
     // MARK: - Lifecycle
