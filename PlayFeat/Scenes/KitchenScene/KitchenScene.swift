@@ -297,12 +297,28 @@ final class KitchenScene: SKScene {
         node.placement = placement
         node.fallingSince = nil
         node.removeAllActions()
-        node.run(.group([
-            .move(to: position, duration: 0.15),
-            .scale(to: node.placedScale, duration: 0.15),
-        ]))
+        if node.isDrawnAsWholeStation {
+            snapOntoStation(node, at: position)
+        } else {
+            node.run(.group([
+                .move(to: position, duration: Self.setDownDuration),
+                .scale(to: node.placedScale, duration: Self.setDownDuration),
+            ]))
+        }
         audio?.play(.bubblePut)
     }
+
+    /// A picture of the whole pot or bowl lands exactly over the counter's
+    /// own station art. Sliding or shrinking in from the hand's size would
+    /// show a second, oversized station for a moment.
+    private func snapOntoStation(_ node: KitchenBubbleNode, at position: CGPoint) {
+        node.position = position
+        node.setScale(node.placedScale)
+    }
+
+    /// How long put-down food takes to slide into place and grow to fill
+    /// the cookware.
+    private static let setDownDuration: TimeInterval = 0.15
 
     /// Lifts an item back off wherever it was put down, ready to be carried.
     func unpark(_ node: KitchenBubbleNode) {

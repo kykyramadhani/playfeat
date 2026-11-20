@@ -282,6 +282,23 @@ extension KitchenStationTests {
         #expect(noodles.placedScale == 1)
     }
 
+    /// Let go from the hand, still drawn bigger, the whole-pot picture lands
+    /// at the pot's own size straight away instead of shrinking into it.
+    @Test func noodlesLetGoOverThePotLandAtThePotsSizeAtOnce() throws {
+        let (scene, _) = makeKitchenScene(level: try LevelLoader.load("2-1"))
+        let pot = scene.artRect(of: .cooker(.pot, slot: 0))
+        let noodles = KitchenBubbleNode(ingredient: Menu.rawNoodles, radius: scene.bubbleRadius)
+        noodles.setScale(KitchenScene.heldScale)
+        noodles.position = scene.layout.sceneRect(pot).center
+        scene.addChild(noodles)
+        scene.bubbles.append(noodles)
+
+        scene.settle(noodles)
+
+        #expect(noodles.xScale == 1)
+        #expect(!noodles.hasActions())
+    }
+
     @Test func aNoodleDishMadeInTheBowlIsDrawnAsTheWholeBowl() throws {
         let (scene, _) = makeKitchenScene(level: try LevelLoader.load("2-1"))
         let bowl = scene.artRect(of: .plate(0))
