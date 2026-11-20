@@ -111,6 +111,12 @@ struct KitchenView: View {
             if isRoundOver { startBreak() }
         }
         .onChange(of: day.ordersDelivered) { marathon?.refreshTools() }
+        .onChange(of: marathon?.lostCustomers) { previous, current in
+            if (current ?? 0) > (previous ?? 0) { audio.play(.loseHeart) }
+        }
+        .onChange(of: isClockTicking) { _, isTicking in
+            if isTicking { audio.startClockWarning() } else { audio.stopClockWarning() }
+        }
         .onChange(of: day.presentCustomers.count) { marathon?.refreshTools() }
         .onChange(of: scenePhase) { _, phase in
             handleScenePhase(phase)
@@ -135,9 +141,10 @@ struct KitchenView: View {
 
     private var dayOverlays: some View {
         ZStack {
-            KitchenHUD(day: day, marathonCoins: marathon?.coins)
+            KitchenHUD(day: day, marathon: marathon)
             if let marathon {
                 MarathonHUD(session: marathon)
+                RedEdgeFlash(losses: marathon.lostCustomers)
             }
 
             if countdown >= 0, introductions.isEmpty {
@@ -223,6 +230,7 @@ struct KitchenView: View {
     /// handover in SceneManager), so the next day starts from nothing.
     private func tearDown() {
         audio.stopMusic()
+        audio.stopClockWarning()
         handPoseManager.releasePlayer()
         handPoseManager.stop()
         UIApplication.shared.isIdleTimerDisabled = false
@@ -280,6 +288,12 @@ struct KitchenView: View {
     // MARK: - Marathon
 
     enum MarathonStep { case upgrades, report }
+
+    /// The clock ticks through a marathon round's last seconds, only while
+    /// play is running: never under the pause popup or once the round is up.
+    private var isClockTicking: Bool {
+        (marathon?.isRoundEnding ?? false) && day.isRunning
+    }
 
     /// A round's time is up: play freezes and the break's cards come up.
     private func startBreak() {

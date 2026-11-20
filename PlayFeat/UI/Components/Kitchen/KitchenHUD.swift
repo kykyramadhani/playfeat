@@ -6,15 +6,20 @@
 //  The kitchen's counters as two metal plaques side by side on the
 //  counter's front: time left (in the day, or the marathon round), and the
 //  points with the tips beside them. In a marathon the second plaque counts
-//  marathon coins under the marathon coin, with the last tip beside them.
+//  marathon coins under the marathon coin, with the last tip beside them,
+//  and in a round's last seconds the clock turns red and shakes each second.
 //
 
 import SwiftUI
 
 struct KitchenHUD: View {
     let day: KitchenDay
-    /// Marathon coins to spend, in a marathon; nil on a level.
-    var marathonCoins: Int?
+    /// The marathon being played; nil on a level.
+    var marathon: MarathonSession?
+
+    /// Marathon coins to spend, in a marathon.
+    private var marathonCoins: Int? { marathon?.coins }
+    private var isRoundEnding: Bool { marathon?.isRoundEnding ?? false }
 
     var body: some View {
         HStack(spacing: 0) { plaques }
@@ -31,7 +36,9 @@ struct KitchenHUD: View {
             } value: {
                 Text(verbatim: Self.clockText(day.timeLeft))
                     .font(.atkinson(size: 32, weight: .bold))
+                    .foregroundStyle(isRoundEnding ? Color.warningRed : Color.purple900)
             }
+            .warningShake(on: clockBeat)
             .accessibilityLabel(Text("Time Left"))
 
             HUDPlaque(iconDrop: 0, plaqueDrop: 14) {
@@ -56,6 +63,12 @@ struct KitchenHUD: View {
                 .frame(width: 64, height: 65)
                 .offset(x: 5, y: 5.5)
         }
+    }
+
+    /// Changes each second while the round is ending, so the clock shakes
+    /// on every one, and once more as it reaches zero.
+    private var clockBeat: Int {
+        isRoundEnding ? Int(day.timeLeft.rounded(.up)) : 0
     }
 
     /// "150 +12": the points (or marathon coins) with the tips (or the last

@@ -129,6 +129,20 @@ struct MarathonSessionTests {
         #expect(session.day.roundEndsAt == MarathonSession.roundSec * 2)
     }
 
+    /// The clock warns through a round's last ten seconds, and stops
+    /// warning once the round is up.
+    @Test func theClockWarnsOnlyInTheRoundsLastTenSeconds() {
+        let session = makeSession()
+        play(session.day, to: 79.8)
+        #expect(!session.isRoundEnding)
+
+        play(session.day, from: 80, to: 81)
+        #expect(session.isRoundEnding)
+
+        play(session.day, from: 81.2, to: 95)
+        #expect(!session.isRoundEnding)
+    }
+
     /// The next round doesn't carry on where the last stopped: whoever was
     /// waiting leaves without counting as lost, and one customer steps up.
     @Test func aNewRoundStartsFromAnEmptyCounter() {

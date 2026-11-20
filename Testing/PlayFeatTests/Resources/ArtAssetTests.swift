@@ -51,7 +51,7 @@ struct ArtAssetTests {
         #expect(UIImage(named: name) != nil, "missing marathon HUD art '\(name)'")
     }
 
-    @Test(arguments: ["LostCustomerMark", "LostCustomerMarkSpare", "BuffetProgressTrack"])
+    @Test(arguments: ["LostCustomerMark", "LostCustomerMarkSpare", "BuffetProgressTrack", "WarningRed"])
     func theMarathonHUDColoursExist(name: String) {
         #expect(UIColor(named: name) != nil, "missing marathon HUD colour '\(name)'")
     }

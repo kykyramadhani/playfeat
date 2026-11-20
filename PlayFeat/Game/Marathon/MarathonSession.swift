@@ -32,6 +32,9 @@ final class MarathonSession {
     static let breakSec = 15
     static let secondPlateAtDishes = 6
     static let secondGlassAtDishes = 14
+    /// How long before a round's end the clock warns: it shakes, turns red
+    /// and ticks.
+    static let roundEndingWarningSec: TimeInterval = 10
 
     /// The marathon's kitchen on `planet`: the prototype's marathon physics
     /// with the planet's gravity and tools. Customers and bubbles come from
@@ -92,6 +95,12 @@ final class MarathonSession {
     var lostCustomers: Int { day.ordersMissed }
 
     // MARK: - Breaks
+
+    /// The round's last seconds are running out.
+    var isRoundEnding: Bool {
+        day.timeLeft > 0 && day.timeLeft <= Self.roundEndingWarningSec
+    }
+
 
     /// The round's time is up: freeze and put up the break's cards.
     func startBreak() {
