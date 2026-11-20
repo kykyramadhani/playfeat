@@ -39,11 +39,12 @@ struct GameOpening: View {
                     .frame(width: w, height: h)
                     .clipped()
 
-                // "Play Feat!" logo, centred in the upper third.
-                Image("Title")
+                // AstroFeast logo, centred in the upper third.
+                Image("AstroFeastLogo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: lw * 0.52)
+                    .accessibilityLabel(Text(verbatim: "AstroFeast"))
                     .position(x: w * 0.5, y: h * 0.33)
 
                 // Mascot peeking in from the left edge.

@@ -1660,16 +1660,6 @@
         }
       }
     },
-    "PlayFeat!" : {
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PlayFeat!"
-          }
-        }
-      }
-    },
     "Pot" : {
       "comment" : "Planet 2 kitchen: the pot tool's name in its New Tools popup.",
       "localizations" : {

@@ -2,7 +2,7 @@
 //  SplashScreenView.swift
 //  GetCooking
 //
-//  Animated splash screen showing the lime-yellow 'PlayFeat!' mascot jumping
+//  Animated splash screen showing the lime-yellow AstroFeast mascot jumping
 //  and waving with energetic squash-and-stretch physics against a pale-yellow
 //  background, complete with dynamic ground shadow, energy sparks, and red-orange
 //  branding text.
@@ -144,7 +144,7 @@ struct SplashScreenView: View {
                 .opacity(isVisible ? 1.0 : 0.0)
 
                 // App Title / Brand Text
-                Text("PlayFeat!")
+                Text(verbatim: "AstroFeast")
                     .font(.atkinson(size: 42, weight: .heavy))
                     .foregroundStyle(brandRedOrange)
                     .scaleEffect(isVisible ? 1.0 : 0.9)

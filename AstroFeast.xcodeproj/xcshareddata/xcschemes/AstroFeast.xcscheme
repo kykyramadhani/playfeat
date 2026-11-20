@@ -27,7 +27,7 @@
                BlueprintIdentifier = "2DD7B443302B444200DC904E"
                BuildableName = "PlayFeatTests.xctest"
                BlueprintName = "PlayFeatTests"
-               ReferencedContainer = "container:PlayFeat.xcodeproj">
+               ReferencedContainer = "container:AstroFeast.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -38,13 +38,13 @@
                BlueprintIdentifier = "2DD7B44D302B444200DC904E"
                BuildableName = "PlayFeatUITests.xctest"
                BlueprintName = "PlayFeatUITests"
-               ReferencedContainer = "container:PlayFeat.xcodeproj">
+               ReferencedContainer = "container:AstroFeast.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       language = "id"
@@ -60,9 +60,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2DD7B436302B444200DC904E"
-            BuildableName = "PlayFeat.app"
+            BuildableName = "AstroFeast.app"
             BlueprintName = "PlayFeat"
-            ReferencedContainer = "container:PlayFeat.xcodeproj">
+            ReferencedContainer = "container:AstroFeast.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>

@@ -1,4 +1,4 @@
-# PlayFeat
+# AstroFeast
 
 A hand-tracking cooking game made with and for the community at **PUSPADI** (Pusat Pemberdayaan Penyandang Disabilitas), Bali — Apple Developer Academy Challenge 5 & Final Challenge.
 
@@ -35,7 +35,7 @@ No third-party dependencies.
 
 ## Run
 
-1. Open `PlayFeat.xcodeproj` in Xcode.
+1. Open `AstroFeast.xcodeproj` in Xcode.
 2. Select an iPad (a real device is recommended: the simulator has no camera).
 3. Build and run, and allow camera access.
 
