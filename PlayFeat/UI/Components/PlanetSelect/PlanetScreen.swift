@@ -25,7 +25,9 @@ struct PlanetScreen<Content: View>: View {
     let backdrop: Backdrop
     @ViewBuilder let content: Content
 
-    @State private var coinCount = GameStorage.coins
+    /// Watches the saved purse, so a purchase in a popup over this screen
+    /// (the shop) shows in the counter at once.
+    @AppStorage(GameStorage.coinKey) private var coinCount = 0
     @State private var showSettings = false
     @State private var showEnergyNotice = false
 
@@ -47,7 +49,6 @@ struct PlanetScreen<Content: View>: View {
                     .zIndex(1)
             }
         }
-        .onAppear { coinCount = GameStorage.coins }
         .animation(.easeInOut(duration: 0.2), value: showSettings)
         .animation(.easeInOut(duration: 0.2), value: showEnergyNotice)
     }
