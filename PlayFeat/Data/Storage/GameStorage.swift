@@ -110,6 +110,20 @@ struct GameStorage {
         Set(planet.levelIDs.filter { bestStars(forLevel: $0) > 0 })
     }
 
+    static func marathonBestKey(on planet: Planet.ID) -> String { "marathonBestPoints_\(planet.rawValue)" }
+
+    static func bestMarathonScore(on planet: Planet.ID, in defaults: UserDefaults = .standard) -> Int {
+        defaults.integer(forKey: marathonBestKey(on: planet))
+    }
+
+    /// Buffet records are points per planet; classic records are dishes served.
+    @discardableResult
+    static func recordMarathon(score: Int, on planet: Planet.ID, in defaults: UserDefaults = .standard) -> Bool {
+        guard score > bestMarathonScore(on: planet, in: defaults) else { return false }
+        defaults.set(score, forKey: marathonBestKey(on: planet))
+        return true
+    }
+
     // MARK: - Marathon spoiler warning
 
     static let marathonSpoilerSeenKey = "marathonSpoilerSeen"
