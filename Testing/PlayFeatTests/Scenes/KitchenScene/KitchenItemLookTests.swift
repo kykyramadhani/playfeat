@@ -82,4 +82,44 @@ struct KitchenItemLookTests {
 
         #expect(pricing.upgradedIngredients == [KitchenMenu.mushroom])
     }
+
+    // MARK: - Planet 2
+
+    /// Noodles boil in the pot: drawn as the whole pot with them in it,
+    /// first cooking, then cooked.
+    @Test func noodlesInThePotAreDrawnAsTheWholePot() {
+        let cooking = KitchenArt.image(of: KitchenMenu.rawNoodles, cookingOn: .pot)
+        let cooked = KitchenArt.image(of: KitchenMenu.boiledNoodles, cookingOn: .pot)
+
+        #expect(cooking == "PotNoodlesCooking")
+        #expect(cooked == "PotNoodlesCooked")
+        #expect(KitchenArt.wholeStationScale(of: cooking) != nil)
+    }
+
+    @Test func theClamLooksTheSameOnTheGrillAsAnywhere() {
+        let onTheGrill = KitchenArt.image(of: KitchenMenu.rawClam, cookingOn: .grill)
+
+        #expect(onTheGrill == KitchenArt.image(of: KitchenMenu.rawClam))
+    }
+
+    /// Each noodle dish is drawn as the whole bowl; a topping alone is just itself.
+    @Test(arguments: [KitchenMenu.coralNoodles, KitchenMenu.urchinNoodles, KitchenMenu.clamNoodles])
+    func aNoodleDishIsDrawnAsTheWholeBowl(dish: String) {
+        #expect(KitchenArt.wholeStationScale(of: KitchenArt.placedImage(of: dish)) != nil)
+    }
+
+    @Test func aToppingOnTheBowlIsJustItself() {
+        let urchin = KitchenArt.placedImage(of: KitchenMenu.urchin)
+
+        #expect(urchin == KitchenArt.image(of: KitchenMenu.urchin))
+        #expect(KitchenArt.wholeStationScale(of: urchin) == nil)
+    }
+
+    /// Premium noodles glow in the bowl, and so does every dish made with them.
+    @Test func premiumNoodlesGlowInTheBowlAndInTheirDishes() {
+        let upgraded: Set<String> = [KitchenMenu.rawNoodles]
+
+        #expect(KitchenArt.placedImage(of: KitchenMenu.boiledNoodles, upgraded: upgraded) == "PremiumNoodlesInBowl")
+        #expect(KitchenArt.image(of: KitchenMenu.clamNoodles, upgraded: upgraded) == "PremiumClamNoodles")
+    }
 }

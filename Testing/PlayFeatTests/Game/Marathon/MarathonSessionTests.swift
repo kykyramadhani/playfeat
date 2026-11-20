@@ -91,7 +91,7 @@ struct MarathonSessionTests {
 
         play(session.day, to: 100)
 
-        #expect(session.day.ordersMissed >= MarathonFlow.lostCustomersToEnd)
+        #expect(session.lostCustomers >= MarathonFlow.lostCustomersToEnd)
         #expect(session.isOver)
     }
 
@@ -127,6 +127,34 @@ struct MarathonSessionTests {
 
         #expect(session.round == 2)
         #expect(session.day.roundEndsAt == MarathonSession.roundSec * 2)
+    }
+
+    /// The clock warns through a round's last ten seconds, and stops
+    /// warning once the round is up.
+    @Test func theClockWarnsOnlyInTheRoundsLastTenSeconds() {
+        let session = makeSession()
+        play(session.day, to: 79.8)
+        #expect(!session.isRoundEnding)
+
+        play(session.day, from: 80, to: 81)
+        #expect(session.isRoundEnding)
+
+        play(session.day, from: 81.2, to: 95)
+        #expect(!session.isRoundEnding)
+    }
+
+    /// The next round carries on where the last stopped: the customers
+    /// waiting at the break are still there, with the same orders.
+    @Test func aNewRoundCarriesOnWithTheSameCustomers() {
+        let session = makeSession()
+        play(session.day, to: 20)
+        let waiting = session.day.presentCustomers.map { "\($0.seat) \($0.dish) \($0.seatedAt)" }
+        #expect(!waiting.isEmpty)
+
+        session.startBreak()
+        session.endBreak()
+
+        #expect(session.day.presentCustomers.map { "\($0.seat) \($0.dish) \($0.seatedAt)" } == waiting)
     }
 
     // MARK: - Cards
@@ -173,6 +201,13 @@ struct MarathonSessionTests {
         let session = makeSession()
 
         #expect(session.tools == KitchenTools(plates: 1, glasses: 0))
+    }
+
+    /// The side bar's tags: Planet 1's counter has room for a second plate
+    /// and a second glass; Planet 2's only for a second bowl.
+    @Test(arguments: [(Planet.ID.kepler186f, [6, 14]), (.k2332b, [6])])
+    func theBarShowsOnlyTheStationsTheCounterHasRoomFor(planet: Planet.ID, unlocks: [Int]) {
+        #expect(makeSession(on: PlanetCatalog.planet(planet)).stationUnlocks == unlocks)
     }
 
     // MARK: - Planet 2 (K2-332 b)

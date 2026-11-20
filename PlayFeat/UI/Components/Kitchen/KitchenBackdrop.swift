@@ -54,15 +54,16 @@ struct KitchenBackdrop: View {
     }
 
     private var props: some View {
-        ZStack(alignment: .topLeading) {
-            ForEach(KitchenLayout.plates(day.tools.plates), id: \.minX) { spot in
-                Image("KitchenPlate").resizable().placed(in: spot)
+        let counter = planet.kitchen.counter(on: day.level)
+        return ZStack(alignment: .topLeading) {
+            ForEach(counter.mainStationSpots(count: day.tools.plates), id: \.minX) { spot in
+                Image(counter.mainStationImage).resizable().placed(in: spot)
             }
             ForEach(planet.kitchen.toolKinds(on: day.level), id: \.self) { tool in
-                Image(KitchenArt.image(of: tool)).resizable().placed(in: KitchenLayout.area(of: tool))
+                Image(KitchenArt.image(of: tool)).resizable().placed(in: counter.area(of: tool))
             }
-            ForEach(KitchenLayout.glasses(day.tools.glasses), id: \.minX) { spot in
-                Image("KitchenGlass").resizable().placed(in: spot)
+            ForEach(counter.dessertStationSpots(count: day.tools.glasses), id: \.minX) { spot in
+                Image(counter.dessertStationImage).resizable().placed(in: spot)
             }
         }
     }
@@ -120,7 +121,7 @@ private struct KitchenCustomers: View {
                     SeatedAlien(imageName: alienImage(of: customer, patienceLeft: patience), pose: seat.alienPose)
                         .transition(.offset(KitchenLayout.offstageOffset(ofSeatAt: customer.seat)))
                 case .orderSheets:
-                    OrderSheet(dish: customer.dish, patience: patience)
+                    OrderSheet(dish: customer.dish, patience: patience, upgraded: day.pricing.upgradedIngredients)
                         .placed(in: seat.orderSheet)
                         .transition(.asymmetric(insertion: .opacity, removal: .identity))
                 }

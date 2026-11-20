@@ -7,7 +7,9 @@
 
 import AVFoundation
 
-/// Plays the game's sound effects, looping clock warning and background music.
+/// Plays independently pitched effects, keyed activity loops and music.
+/// EffectPlayer uses AVAudioUnitTimePitch for -1...+2 semitone variation;
+/// speed overrides do not change pitch or the duration of animation-fit cues.
 ///
 /// There is exactly one instance, created in `PlayFeatApp` and handed out by
 /// dependency injection — never reached for globally:
@@ -35,7 +37,9 @@ final class AudioManager: NSObject {
     // MARK: - Settings
 
     /// Master toggle. Set to false to mute all SFX (e.g. from a settings screen).
-    var isEnabled: Bool = true
+    var isEnabled: Bool = true {
+        didSet { if !isEnabled { stopAll() } }
+    }
 
     /// Master volume for one-shot effects, 0.0...1.0.
     ///
@@ -45,7 +49,10 @@ final class AudioManager: NSObject {
     /// reads them (SettingsView keeps its own @AppStorage copy), so nothing
     /// needs to observe them anyway.
     @ObservationIgnored var effectsVolume: Float = 1.0 {
-        didSet { effectsVolume = min(max(effectsVolume, 0), 1) }
+        didSet {
+            effectsVolume = min(max(effectsVolume, 0), 1)
+            effects.volume = effectsVolume
+        }
     }
 
     /// Background-music volume, 0.0...1.0. Kept under the effects so a chime or
@@ -58,23 +65,14 @@ final class AudioManager: NSObject {
         }
     }
 
-    /// Preloaded raw audio data for each effect. Loading the bytes once up front
-    /// means playback never touches the disk, so there is no first-play hitch.
-    @ObservationIgnored private var soundData: [SoundEffect: Data] = [:]
-
-    /// Currently-playing one-shot players. We hold strong references here so ARC
-    /// does not deallocate a player mid-sound; they are removed when they finish.
-    @ObservationIgnored private var activePlayers: [AVAudioPlayer] = []
-
-    /// Dedicated player for the looping low-time warning so it can be stopped later.
-    @ObservationIgnored private var clockWarningPlayer: AVAudioPlayer?
+    @ObservationIgnored private let effects = EffectPlayer()
 
     /// Dedicated player for the looping background music.
     @ObservationIgnored private var musicPlayer: AVAudioPlayer?
 
     /// The music track currently loaded, so a repeat `startMusic` for the same
     /// track is a no-op rather than a restart from the top.
-    @ObservationIgnored private var currentMusicName: String?
+    @ObservationIgnored private(set) var currentMusicName: String?
 
     /// The music was faded out by `fadeOutMusic()` and is waiting for
     /// `fadeInMusic()`. Cleared by a fade-in that lands before the fade-out
@@ -89,61 +87,40 @@ final class AudioManager: NSObject {
     override init() {
         super.init()
         configureAudioSession()
-        preloadAll()
+        effects.preload()
         loadSavedVolumes()
     }
 
     // MARK: - Public API: one-shot effects
 
-    /// Plays a sound once. Multiple calls overlap cleanly (each gets its own
-    /// player), so rapid repeats like `bubbleGrab` never cut each other off.
+    /// Every playback gets independent random pitch in -1...+2 semitones.
     func play(_ effect: SoundEffect) {
-        guard isEnabled, let data = soundData[effect] else { return }
-        
-        do {
-            let player = try AVAudioPlayer(
-                data: data,
-                fileTypeHint: AVFileType.wav.rawValue
-            )
-            player.delegate = self
-            player.volume = effectsVolume
-            player.prepareToPlay()
-            player.play()
-            activePlayers.append(player)  // retain until it finishes
-        } catch {
-            print("[AudioManager] Failed to play \(effect.rawValue): \(error)")
-        }
+        guard isEnabled else { return }
+        effects.play(effect)
     }
 
-    // MARK: - Public API: looping low-time warning
-
-    /// Starts the looping ticking warning for when time is running low.
-    /// Call `stopClockWarning()` when time is added back or the round ends.
-    func startClockWarning() {
-        guard isEnabled, clockWarningPlayer == nil,
-            let data = soundData[.clockRunningOut]
-        else { return }
-
-        do {
-            let player = try AVAudioPlayer(
-                data: data,
-                fileTypeHint: AVFileType.wav.rawValue
-            )
-            player.numberOfLoops = -1  // loop forever until stopped
-            player.volume = effectsVolume
-            player.prepareToPlay()
-            player.play()
-            clockWarningPlayer = player
-        } catch {
-            print("[AudioManager] Failed to start clock warning: \(error)")
-        }
+    /// Fit an effect to a UI animation without changing its randomized pitch.
+    func play(_ effect: SoundEffect, duration: TimeInterval) {
+        guard isEnabled else { return }
+        effects.play(effect, duration: duration)
     }
 
-    /// Stops the looping low-time warning if it is playing.
-    func stopClockWarning() {
-        clockWarningPlayer?.stop()
-        clockWarningPlayer = nil
+    func startLoop(_ effect: SoundEffect, key: String) {
+        guard isEnabled else { return }
+        effects.startLoop(effect, key: key)
     }
+
+    func stopLoop(key: String) { effects.stopLoop(key) }
+
+    func stopKitchenLoops() { effects.stopLoops(prefix: "kitchen.") }
+
+    func startClockWarning() { startLoop(.clockRunningOut, key: "clock") }
+
+    func stopClockWarning() { stopLoop(key: "clock") }
+
+    func suspendEffects() { effects.suspend() }
+
+    func resumeEffects() { effects.resume() }
 
     // MARK: - Public API: background music
 
@@ -153,18 +130,21 @@ final class AudioManager: NSObject {
     /// Calling this again for the track already playing does nothing, so it is
     /// safe to call on every round start without restarting the loop.
     func startMusic(
-        _ name: String = "gameplay_getcooking",
+        _ name: String = MusicTrack.classic,
         fadeIn: TimeInterval = 1.5
     ) {
         guard isEnabled else { return }
 
-        // Same track already going — leave it running rather than restart it.
-        if name == currentMusicName, musicPlayer?.isPlaying == true { return }
+        // Resume a paused track from its current position.
+        if name == currentMusicName {
+            if isMusicFadedOut { fadeInMusic(); return }
+            if musicPlayer?.isPlaying == true { return }
+        }
 
         // Different track: fade the old one out first.
         if currentMusicName != nil { stopMusic() }
         
-        guard let wavURL = wavURL(forResourceNamed: name) else { return }
+        guard let wavURL = resourceURL(forResourceNamed: name) else { return }
 
         do {
             let player = try AVAudioPlayer(contentsOf: wavURL)
@@ -181,12 +161,15 @@ final class AudioManager: NSObject {
         }
     }
 
-    /// Fades the background music out and stops it.
-    func stopMusic(fadeOut: TimeInterval = 0.6) {
+    /// Fades the selected track out. A screen can pass its own track name so
+    /// late teardown during an animated transition leaves the new track playing.
+    func stopMusic(ifPlaying name: String? = nil, fadeOut: TimeInterval = 0.6) {
+        if let name, name != currentMusicName { return }
+        stopClockWarning()
         guard let player = musicPlayer else { return }
         musicPlayer = nil
         currentMusicName = nil
-        stopClockWarning()
+        isMusicFadedOut = false
 
         guard fadeOut > 0 else {
             player.stop()
@@ -240,8 +223,7 @@ final class AudioManager: NSObject {
 
     /// Stops every sound immediately (e.g. on returning to the main menu).
     func stopAll() {
-        activePlayers.forEach { $0.stop() }
-        activePlayers.removeAll()
+        effects.stopAll()
         stopClockWarning()
         stopMusic(fadeOut: 0)
     }
@@ -281,38 +263,12 @@ extension AudioManager {
         }
     }
 
-    /// Loads the bytes for every sound once at startup.
-    private func preloadAll() {
-        for effect in SoundEffect.allCases {
-            guard let wavURL = wavURL(forResourceNamed: effect.rawValue) else {
-                continue
-            }
-            
-            soundData[effect] = try? Data(contentsOf: wavURL)
+    /// Music streams from disk; effects decode WAV/MP3 through AVAudioFile.
+    private func resourceURL(forResourceNamed name: String) -> URL? {
+        for ext in ["wav", "mp3", "m4a", "caf"] {
+            if let url = Bundle.main.url(forResource: name, withExtension: ext) { return url }
         }
-    }
-
-    /// Resolves a `.wav` in the bundle by base file name, regardless of which
-    /// folder it sits in. The background music track lives in `Sounds/` (not the
-    /// `Sound Effect/` subfolder), so it goes through the same resolver.
-    private func wavURL(forResourceNamed name: String) -> URL? {
-        guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
-            print("[AudioManager] ⚠️ Missing music file: \(name).wav")
-            return nil
-        }
-        
-        return url
-    }
-}
-
-// MARK: - AVAudioPlayerDelegate
-
-extension AudioManager: AVAudioPlayerDelegate {
-    /// Releases each one-shot player once it finishes so the array does not grow.
-    func audioPlayerDidFinishPlaying(
-        _ player: AVAudioPlayer,
-        successfully flag: Bool
-    ) {
-        activePlayers.removeAll { $0 === player }
+        print("[AudioManager] Missing music: \(name)")
+        return nil
     }
 }

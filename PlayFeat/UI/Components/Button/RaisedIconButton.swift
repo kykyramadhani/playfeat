@@ -15,6 +15,7 @@ struct RaisedIconButton: View {
     let label: LocalizedStringKey
     let palette: RaisedButtonPalette
     let action: () -> Void
+    var sound: SoundEffect? = .uiClick
 
     private static let iconShare: CGFloat = 0.69
     private static let lipShare: CGFloat = 0.095
@@ -23,7 +24,7 @@ struct RaisedIconButton: View {
         GeometryReader { proxy in
             let diameter = proxy.size.height
 
-            ClickButton(action: action) {
+            ClickButton(action: action, sound: sound) {
                 Image(icon)
                     .resizable()
                     .scaledToFit()

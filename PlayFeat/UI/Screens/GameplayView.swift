@@ -130,6 +130,7 @@ struct GameplayView: View {
                             // anyone else who walks into shot is ignored.
                             handPoseManager.lockOntoPlayer()
                             hasCalibrated = true
+                            audio.play(.handFound)
                         }
                         .designScaled()
                     } else {
@@ -169,7 +170,7 @@ struct GameplayView: View {
             handPoseManager.releasePlayer()
             handPoseManager.stop()
             UIApplication.shared.isIdleTimerDisabled = false
-            audio.stopMusic()
+            audio.stopMusic(ifPlaying: MusicTrack.classic)
         }
     }
 
@@ -224,9 +225,9 @@ struct GameplayView: View {
             // hasn't lost yet.
             // The camera is already live, handed over by the seat check.
             // startMusic is a no-op if it's somehow already going.
-            guard await playGetReadyCountdown() else { return }
+            guard await playGetReadyCountdown(), sceneManager.screen == .gameplay else { return }
             gameStateManager.start()
-            audio.startMusic()
+            audio.startMusic(MusicTrack.classic)
         }
         .task(id: resumeCountdownRequest) {
             // The app left mid-run and is back. Re-checked at the end: if it
@@ -235,6 +236,7 @@ struct GameplayView: View {
                   await playGetReadyCountdown(),
                   scenePhase == .active else { return }
             gameStateManager.resume()
+            audio.fadeInMusic()
         }
         .onChange(of: scenePhase) { _, phase in
             handleScenePhase(phase)
@@ -305,7 +307,7 @@ struct GameplayView: View {
 
     private func showGameOver() {
         isEndingRun = true
-        audio.stopMusic()
+        audio.stopMusic(ifPlaying: MusicTrack.classic)
         showGameOverCover = true
     }
 

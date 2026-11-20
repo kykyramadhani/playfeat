@@ -6,15 +6,20 @@
 //  The kitchen's counters as two metal plaques side by side on the
 //  counter's front: time left (in the day, or the marathon round), and the
 //  points with the tips beside them. In a marathon the second plaque counts
-//  marathon coins under the marathon coin, with the last tip beside them.
+//  marathon coins under the marathon coin, with the last tip beside them,
+//  and in a round's last seconds the clock turns red and shakes each second.
 //
 
 import SwiftUI
 
 struct KitchenHUD: View {
     let day: KitchenDay
-    /// Marathon coins to spend, in a marathon; nil on a level.
-    var marathonCoins: Int?
+    /// The marathon being played; nil on a level.
+    var marathon: MarathonSession?
+
+    /// Marathon coins to spend, in a marathon.
+    private var marathonCoins: Int? { marathon?.coins }
+    private var isRoundEnding: Bool { marathon?.isRoundEnding ?? false }
 
     var body: some View {
         HStack(spacing: 0) { plaques }
@@ -31,7 +36,9 @@ struct KitchenHUD: View {
             } value: {
                 Text(verbatim: Self.clockText(day.timeLeft))
                     .font(.atkinson(size: 32, weight: .bold))
+                    .foregroundStyle(isRoundEnding ? Color.warningRed : Color.purple900)
             }
+            .warningShake(on: clockBeat)
             .accessibilityLabel(Text("Time Left"))
 
             HUDPlaque(iconDrop: 0, plaqueDrop: 14) {
@@ -50,8 +57,18 @@ struct KitchenHUD: View {
         if marathonCoins == nil {
             Image("HUDCoinsIcon").resizable().frame(width: 73, height: 69)
         } else {
-            Image("CoinsIcon").resizable()
+            // Measured from the Figma screenshot: the coin's edge at (263, 930).
+            Image("MarathonCoinIcon")
+                .resizable()
+                .frame(width: 64, height: 65)
+                .offset(x: 5, y: 5.5)
         }
+    }
+
+    /// Changes each second while the round is ending, so the clock shakes
+    /// on every one, and once more as it reaches zero.
+    private var clockBeat: Int {
+        isRoundEnding ? Int(day.timeLeft.rounded(.up)) : 0
     }
 
     /// "150 +12": the points (or marathon coins) with the tips (or the last
@@ -92,17 +109,9 @@ private struct HUDPlaque<Icon: View, Value: View>: View {
     @ViewBuilder let icon: Icon
     @ViewBuilder let value: Value
 
-    // Computed: a generic type can't store statics.
-    private static var plateSize: CGSize { CGSize(width: 181, height: 73) }
-    private static var cornerRadius: CGFloat { 13.16 }
-    /// The screws' centres on the plate.
-    private static var screws: [CGPoint] {
-        [CGPoint(x: 10.2, y: 10.2), CGPoint(x: 10.4, y: 64.9), CGPoint(x: 169.4, y: 9.4), CGPoint(x: 169.9, y: 64.4)]
-    }
-
     var body: some View {
         ZStack(alignment: .topLeading) {
-            plate
+            MetalPlaque(frame: .counter) { value }
                 .offset(x: 46, y: plaqueDrop)
             icon
                 .frame(width: 92, height: 92)
@@ -110,38 +119,6 @@ private struct HUDPlaque<Icon: View, Value: View>: View {
         }
         .frame(width: 234, height: 92, alignment: .topLeading)
         .accessibilityElement(children: .combine)
-    }
-
-    private var plate: some View {
-        let shape = RoundedRectangle(cornerRadius: Self.cornerRadius)
-        return ZStack(alignment: .topLeading) {
-            ForEach(Self.screws.indices, id: \.self) { index in
-                Image("PopupScrew")
-                    .resizable()
-                    .frame(width: 6.83, height: 6.83)
-                    .position(Self.screws[index])
-            }
-            card
-                .offset(x: 15, y: 9)
-        }
-        .frame(width: Self.plateSize.width, height: Self.plateSize.height, alignment: .topLeading)
-        .background {
-            shape.fill(Color.metalPlaque).paperTexture(clippedTo: shape, opacity: 0.67)
-        }
-        .clipShape(shape)
-    }
-
-    private var card: some View {
-        value
-            .frame(width: 153.2, height: 56)
-            .background {
-                RoundedRectangle(cornerRadius: Self.cornerRadius)
-                    .fill(
-                        Color.neutralBackground
-                            .shadow(.inner(color: .black.opacity(0.37), radius: 1.1, y: -1.1))
-                            .shadow(.inner(color: .black.opacity(0.39), radius: 0.7, y: 1.1))
-                    )
-            }
     }
 }
 

@@ -10,6 +10,11 @@
 
 @MainActor
 final class SoundRecorder: SoundPlaying {
+    private(set) var loops: [String: SoundEffect] = [:]
+
+    func startLoop(_ effect: SoundEffect, key: String) { loops[key] = effect }
+    func stopLoop(key: String) { loops[key] = nil }
+
     private(set) var played: [SoundEffect] = []
     private(set) var isClockWarningOn = false
     private(set) var musicRate: Float = 1

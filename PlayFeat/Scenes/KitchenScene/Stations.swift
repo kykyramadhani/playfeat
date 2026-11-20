@@ -30,7 +30,7 @@ extension KitchenScene {
     /// nearest slot (whose item the new one would swap out).
     func station(under node: KitchenBubbleNode) -> KitchenBubbleNode.Placement? {
         if let tool = cookers.keys.sorted().first(where: {
-            dropArea(of: KitchenLayout.area(of: $0)).contains(node.position)
+            dropArea(of: area(of: $0)).contains(node.position)
         }) {
             return .cooker(tool, slot: cookingSlot(on: tool, nearest: node.position))
         }
@@ -58,9 +58,27 @@ extension KitchenScene {
     /// is the whole tool.
     func artRect(of station: KitchenBubbleNode.Placement) -> CGRect {
         switch station {
-        case .cooker(let tool, _): KitchenLayout.area(of: tool)
+        case .cooker(let tool, _): area(of: tool)
         case .plate(let index): plateSpots[index]
         case .glass(let index): glassSpots[index]
+        }
+    }
+
+    /// Where `tool` stands on the day's counter.
+    private func area(of tool: CookingTool.Kind) -> CGRect {
+        counter?.area(of: tool) ?? .null
+    }
+
+    /// Where the plates and glasses stand, in art points, in the order they came out.
+    var plateSpots: [CGRect] { counter?.mainStationSpots(count: plates.count) ?? [] }
+    var glassSpots: [CGRect] { counter?.dessertStationSpots(count: glasses.count) ?? [] }
+
+    /// The picture `station` is drawn with on the day's counter.
+    func stationImage(of station: KitchenBubbleNode.Placement) -> String {
+        switch station {
+        case .cooker(let kind, _): KitchenArt.image(of: kind)
+        case .plate: counter?.mainStationImage ?? ""
+        case .glass: counter?.dessertStationImage ?? ""
         }
     }
 
@@ -173,22 +191,21 @@ extension KitchenScene {
 
     // MARK: - Plates and glasses coming out
 
-    /// Sets out any plate or glass the day has gained since the last frame.
-    /// A second plate goes in on the far left, so the plates already there
-    /// count one further along.
+    /// Sets out any plate or glass the day has gained since the last frame,
+    /// as many as the counter has spots for.
     func syncTools() {
-        guard let tools = day?.tools, let kitchen else { return }
-        let newPlates = tools.plates - plates.count
+        guard let tools = day?.tools, let kitchen, let counter else { return }
+        let alreadySetUp = !plates.isEmpty
+        let newPlates = min(tools.plates, counter.maxMainStations) - plates.count
         if newPlates > 0 {
-            for node in bubbles {
-                if case .plate(let index) = node.placement { node.placement = .plate(index + newPlates) }
-            }
-            plates.insert(contentsOf: Array(repeating: kitchen.mainStation, count: newPlates), at: 0)
-            plateSpots = KitchenLayout.plates(plates.count)
+            plates += Array(repeating: kitchen.mainStation, count: newPlates)
         }
-        if tools.glasses > glasses.count {
-            glasses += Array(repeating: kitchen.dessertStation, count: tools.glasses - glasses.count)
-            glassSpots = KitchenLayout.glasses(glasses.count)
+        let newGlasses = min(tools.glasses, counter.maxDessertStations) - glasses.count
+        if newGlasses > 0 {
+            glasses += Array(repeating: kitchen.dessertStation, count: newGlasses)
+        }
+        if alreadySetUp, newPlates > 0 || newGlasses > 0, day?.isRunning == true {
+            audio?.play(.unlock)
         }
     }
 
@@ -207,7 +224,7 @@ extension KitchenScene {
         let dishNode = KitchenBubbleNode(ingredient: dish, radius: bubbleRadius, upgraded: upgradedIngredients)
         dishNode.position = centre(of: station)
         dishNode.placement = station
-        dishNode.setScale(Self.placedScale(on: station))
+        dishNode.setScale(dishNode.placedScale)
         addChild(dishNode)
         bubbles.append(dishNode)
     }
@@ -237,7 +254,9 @@ extension KitchenScene {
     func centre(of station: KitchenBubbleNode.Placement) -> CGPoint {
         switch station {
         case .cooker(let tool, let slot):
-            let spots = KitchenLayout.cookingSpots(on: tool, count: cookers[tool]?.slots.count ?? 1)
+            // Cooking tools only exist once the day, and so its counter, is set.
+            let slotCount = cookers[tool]?.slots.count ?? 1
+            guard let spots = counter?.cookingSpots(on: tool, count: slotCount) else { return .zero }
             return layout.scenePoint(spots[min(slot, spots.count - 1)])
         case .plate, .glass:
             return layout.sceneRect(artRect(of: station)).center

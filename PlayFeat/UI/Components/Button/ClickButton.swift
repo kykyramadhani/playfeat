@@ -13,11 +13,12 @@ struct ClickButton<Label: View>: View {
     @Environment(AudioManager.self) private var audio
 
     let action: () -> Void
+    var sound: SoundEffect? = .uiClick
     @ViewBuilder let label: () -> Label
 
     var body: some View {
         Button {
-            audio.play(.uiClick)
+            if let sound { audio.play(sound) }
             action()
         } label: {
             label()

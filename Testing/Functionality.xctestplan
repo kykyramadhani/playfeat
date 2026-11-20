@@ -15,7 +15,7 @@
   "testTargets" : [
     {
       "target" : {
-        "containerPath" : "container:PlayFeat.xcodeproj",
+        "containerPath" : "container:AstroFeast.xcodeproj",
         "identifier" : "2DD7B443302B444200DC904E",
         "name" : "PlayFeatTests"
       }

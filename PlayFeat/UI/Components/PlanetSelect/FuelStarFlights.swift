@@ -27,6 +27,7 @@ struct FuelStarFlights: ViewModifier {
     /// Lets the board settle in before the first star leaves.
     private static let firstTakeOffDelay: Duration = .seconds(0.7)
     private static let flightDuration = 0.8
+    private static let gaugeFillDuration = 0.25
     /// Time for the gauge to fill before the next star leaves.
     private static let pauseAfterLanding: Duration = .seconds(0.3)
     /// Gives a new star one frame at its card before it's sent flying.
@@ -76,8 +77,10 @@ struct FuelStarFlights: ViewModifier {
     }
 
     private func land(_ flight: FuelFlightPlan.Flight) {
-        audio.play(.addPoint)
-        withAnimation(.easeOut(duration: 0.25)) { fuel = flight.progressAfter }
+        // Compress the entire fuel gurgle to the gauge-fill animation, with
+        // pitch still randomized independently in -1...+2 semitones.
+        audio.play(.gasCollected, duration: Self.gaugeFillDuration)
+        withAnimation(.easeOut(duration: Self.gaugeFillDuration)) { fuel = flight.progressAfter }
     }
 
     // MARK: - Geometry

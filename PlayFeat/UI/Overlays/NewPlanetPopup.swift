@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct NewPlanetPopup: View {
+    @Environment(AudioManager.self) private var audio
     let onProceed: () -> Void
 
     var body: some View {
@@ -19,6 +20,7 @@ struct NewPlanetPopup: View {
         }
         .designScaled()
         .accessibilityAddTraits(.isModal)
+        .onAppear { audio.play(.unlock) }
     }
 
     private var content: some View {

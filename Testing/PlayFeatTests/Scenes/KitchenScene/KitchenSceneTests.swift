@@ -78,6 +78,66 @@ struct KitchenSceneTests {
         #expect(scene.bubbles.contains { $0 === node })
     }
 
+    // MARK: - Play stopping mid-carry
+
+    /// An item in hand 0 at `point` (art points).
+    private func held(_ ingredient: String, atArtPoint point: CGPoint, in scene: KitchenScene) -> KitchenBubbleNode {
+        let node = KitchenBubbleNode(ingredient: ingredient, radius: 80)
+        node.position = scene.layout.scenePoint(point)
+        node.heldBy = 0
+        scene.addChild(node)
+        scene.bubbles.append(node)
+        scene.hands[0] = KitchenHand(held: node)
+        return node
+    }
+
+    /// When a marathon round ends mid-carry, the item hangs where it was
+    /// while the player picks a card, ready to be grabbed again.
+    @Test func whatIsHeldWhenARoundEndsHangsWhereItIs() {
+        let (scene, day) = makeKitchenScene()
+        let point = CGPoint(x: 683, y: 400)
+        let pepper = held(KitchenMenu.pepper, atArtPoint: point, in: scene)
+        day.roundEndsAt = 0
+
+        scene.letGoOfEverythingHeld()
+
+        #expect(pepper.isFrozenInAir)
+        #expect(pepper.heldBy == nil)
+        #expect(pepper.fallingSince == nil)
+        #expect(pepper.position == scene.layout.scenePoint(point))
+        #expect(scene.bubbles.contains { $0 === pepper })
+        #expect(scene.hands.isEmpty)
+    }
+
+    /// Any other stop (a pause, the day ending) lets go of it as usual.
+    @Test func whatIsHeldWhenPlayStopsOtherwiseIsLetGo() {
+        let (scene, day) = makeKitchenScene()
+        defer { withExtendedLifetime(day) {} }
+        let pepper = held(KitchenMenu.pepper, atArtPoint: CGPoint(x: 683, y: 400), in: scene)
+
+        scene.letGoOfEverythingHeld()
+
+        #expect(!pepper.isFrozenInAir)
+        #expect(pepper.fallingSince != nil)
+    }
+
+    /// Next round, a frozen item stays put until a hand takes it.
+    @Test func aFrozenItemStaysPutOncePlayCarriesOn() {
+        let (scene, day) = makeKitchenScene()
+        let pepper = held(KitchenMenu.pepper, atArtPoint: CGPoint(x: 683, y: 400), in: scene)
+        day.roundEndsAt = 0
+        scene.letGoOfEverythingHeld()
+        let frozenAt = pepper.position
+        day.roundEndsAt = nil
+
+        day.start()
+        scene.update(10)
+        scene.update(11)
+
+        #expect(day.elapsed > 0)
+        #expect(pepper.position == frozenAt)
+    }
+
     /// On 2-1 the first bubble comes in just above the counter and rises,
     /// instead of being lost behind the table the moment it appears.
     @Test func onTheFirstPlanetTwoDayBubblesRiseFromTheCounter() throws {

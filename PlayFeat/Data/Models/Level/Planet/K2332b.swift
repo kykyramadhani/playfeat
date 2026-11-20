@@ -31,11 +31,46 @@ nonisolated extension Planet {
             dessert: KitchenMenu.starCookie,
             angryOrder: KitchenMenu.starCookie,
             regularAlien: .triangle,
-            angryAlien: .square
+            angryAlien: .square,
+            counter: k2332bCounter,
+            earlyCounters: [k2332bPotCounter]
         ),
         buffet: k2332bBuffet,
         backdrop: k2332bBackdrop
     )
+
+    /// 2-1 and 2-2: the pot on its stove beside the noodle bowl. A second
+    /// bowl stands to the right of the first, as far from it as the bowl is
+    /// from the pot (the design draws only one).
+    private static let k2332bPotCounter = CounterLayout(
+        toolAreas: [.pot: CGRect(origin: CGPoint(x: 525, y: 648), size: CounterLayout.potSize)],
+        mainSpots: [
+            CGRect(origin: CGPoint(x: 877, y: 783), size: CounterLayout.noodleBowlSize),
+            CGRect(origin: CGPoint(x: 1079, y: 783), size: CounterLayout.noodleBowlSize),
+        ],
+        dessertSpots: [],
+        stationImages: k2332bStationImages
+    )
+
+    /// From 2-3 the grill comes in on the left and the pot and bowl move
+    /// right, with room for a second bowl on the right as on 2-1. From 2-4
+    /// the cookie plate stands at the far left; there is only ever one. It
+    /// is Planet 1's plate, drawn where it shows inside the design's
+    /// 184 × 111 frame.
+    private static let k2332bCounter = CounterLayout(
+        toolAreas: [
+            .grill: CGRect(x: 335, y: 745, width: 305, height: 166),
+            .pot: CGRect(origin: CGPoint(x: 640, y: 641), size: CounterLayout.potSize),
+        ],
+        mainSpots: [
+            CGRect(origin: CGPoint(x: 979, y: 776), size: CounterLayout.noodleBowlSize),
+            CGRect(origin: CGPoint(x: 1168, y: 776), size: CounterLayout.noodleBowlSize),
+        ],
+        dessertSpots: [CGRect(x: 111, y: 780, width: 178, height: 101)],
+        stationImages: k2332bStationImages
+    )
+
+    private static let k2332bStationImages = (main: "NoodleBowl", dessert: "KitchenPlate")
 
     /// The sea floor: two sand banks, a tentacle at the right and coral at
     /// the left. The bubble clusters are painted into the water, so the

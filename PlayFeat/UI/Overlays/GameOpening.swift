@@ -39,11 +39,12 @@ struct GameOpening: View {
                     .frame(width: w, height: h)
                     .clipped()
 
-                // "Play Feat!" logo, centred in the upper third.
-                Image("Title")
+                // AstroFeast logo, centred in the upper third.
+                Image("AstroFeastLogo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: lw * 0.52)
+                    .accessibilityLabel(Text(verbatim: "AstroFeast"))
                     .position(x: w * 0.5, y: h * 0.33)
 
                 // Mascot peeking in from the left edge.
@@ -94,10 +95,6 @@ struct GameOpening: View {
         .onAppear {
             coinCount = GameStorage.coins
             mostDishesServed = GameStorage.highscore
-            // Main-menu theme. Loops until the player starts a run, where
-            // GameplayView stops it. startMusic is idempotent, so returning to
-            // the menu (from the shop or the results screen) never restarts it.
-            audio.startMusic("home_soundtrack")
         }
         .animation(.easeInOut(duration: 0.2), value: showSettings)
         .designScaled()

@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct IntroductionPopup: View {
+    @Environment(AudioManager.self) private var audio
     let introduction: KitchenIntroduction
     let onClose: () -> Void
 
@@ -34,6 +35,7 @@ struct IntroductionPopup: View {
             .padding(.vertical, 40)
             .sunrisePanel()
         }
+        .onAppear { audio.play(.hint) }
     }
 
     private var title: Text {

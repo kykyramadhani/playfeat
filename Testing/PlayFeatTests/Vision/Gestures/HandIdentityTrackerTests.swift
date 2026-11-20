@@ -82,6 +82,43 @@ struct HandIdentityTrackerTests {
         #expect(identified.first?.chirality == .left)
     }
 
+    /// After calibration a hand keeps its side through a misread flip, so
+    /// the drawn hand doesn't flicker between left and right art.
+    @Test func afterCalibrationAHandKeepsItsSide() {
+        var tracker = HandIdentityTracker()
+        _ = tracker.update(with: [reading(at: centre, chirality: .left)], at: 0)
+        tracker.keepsHandSides = true
+
+        let flipped = tracker.update(with: [reading(at: centre, chirality: .right)], at: 0.033)
+
+        #expect(flipped.first?.chirality == .left)
+    }
+
+    /// A hand still unknown at calibration learns its side once.
+    @Test func afterCalibrationAnUnknownHandStillLearnsItsSide() {
+        var tracker = HandIdentityTracker()
+        tracker.keepsHandSides = true
+        _ = tracker.update(with: [reading(at: centre)], at: 0)
+        _ = tracker.update(with: [reading(at: centre, chirality: .right)], at: 0.033)
+
+        let flipped = tracker.update(with: [reading(at: centre, chirality: .left)], at: 0.066)
+
+        #expect(flipped.first?.chirality == .right)
+    }
+
+    /// A lost hand comes back as a new one, read afresh.
+    @Test func afterCalibrationAHandFoundAgainIsReadAfresh() {
+        var tracker = HandIdentityTracker()
+        tracker.keepsHandSides = true
+        _ = tracker.update(with: [reading(at: centre, chirality: .left)], at: 0)
+
+        let found = tracker.update(with: [reading(at: centre, chirality: .right)], at: tracker.gracePeriod + 0.1)
+
+        #expect(found.first?.id == 1)
+        #expect(found.first?.chirality == .right)
+    }
+
+    /// While calibrating, a new reading still corrects the side.
     @Test func aNewKnownReadingUpdatesThePreviousChirality() {
         var tracker = HandIdentityTracker()
         _ = tracker.update(with: [reading(at: centre, chirality: .left)], at: 0)

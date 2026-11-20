@@ -16,6 +16,7 @@ import SwiftUI
 /// the marathon coins cover, or none to save them. A countdown moves on by
 /// itself, buying whatever is picked.
 struct RoundCompleteOverlay: View {
+    @Environment(AudioManager.self) private var audio
     let session: MarathonSession
     /// The card picked; nil when the player skipped.
     let onContinue: (MarathonCard?) -> Void
@@ -44,7 +45,7 @@ struct RoundCompleteOverlay: View {
             .padding(.top, 280)
         }
         .designScaled()
-        .task { await countDown() }
+        .task { audio.play(.cardReveal); await countDown() }
     }
 
     private var header: some View {
@@ -76,6 +77,7 @@ struct RoundCompleteOverlay: View {
             canAfford: isPicked || session.coins >= card.price
         ) {
             picked = isPicked ? nil : card
+            if !isPicked { audio.play(.cardPicked) }
         }
     }
 
@@ -158,7 +160,7 @@ struct MarathonUpgradeCard: View {
     private static let shape = RoundedRectangle(cornerRadius: 31.1)
 
     var body: some View {
-        ClickButton(action: action) {
+        ClickButton(action: action, sound: nil) {
             VStack(spacing: 7.9) {
                 Image("EnergyIcon")
                     .resizable()
@@ -244,6 +246,8 @@ extension MarathonCard {
 // MARK: - Report
 
 struct MarathonReportView: View {
+    @Environment(AudioManager.self) private var audio
+    var isNewBest = false
     let session: MarathonSession
     let onNext: () -> Void
 
@@ -268,6 +272,13 @@ struct MarathonReportView: View {
             }
             .foregroundStyle(Color.purple900)
             .frame(height: 187)
+        }
+        .task {
+            audio.play(.runOver)
+            if isNewBest {
+                do { try await Task.sleep(for: .seconds(1)) } catch { return }
+                audio.play(.bestScore)
+            }
         }
     }
 }

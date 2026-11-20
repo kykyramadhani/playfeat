@@ -35,7 +35,7 @@ extension KitchenScene {
         retireVanishedHandCursors(stillLive: liveIDs)
 
         guard let day, day.isRunning, !day.isOver, !day.isRoundOver else {
-            dropEverythingHeld()
+            letGoOfEverythingHeld()
             return
         }
         retireVanishedHands(stillLive: liveIDs, now: now)
@@ -62,10 +62,12 @@ extension KitchenScene {
     private func grabIfClosing(_ hand: inout KitchenHand, handID: Int, state: HandState, joints: [CGPoint]) {
         guard state == .fist, hand.previousState != .fist, hand.held == nil,
               let node = grabCandidate(touchedBy: joints) else { return }
+        node.liftedFrom = node.placement
         unpark(node)
         node.move(toParent: self)
         node.heldBy = handID
         node.fallingSince = nil
+        node.isFrozenInAir = false
         node.zPosition = Self.heldZ
         node.removeAllActions()
         node.run(.scale(to: Self.heldScale, duration: Self.heldScaleDuration))
@@ -106,6 +108,7 @@ extension KitchenScene {
         hand.openSince = openedAt
         guard now - openedAt >= releaseDelay else { return }
 
+        audio?.play(.bubblePut) // The bubble pops on an intentional release.
         settle(node)
         hand.held = nil
         hand.openSince = nil
@@ -136,10 +139,30 @@ extension KitchenScene {
         }
     }
 
-    /// The day paused or ended mid-carry: everything in a hand drops where it is.
+    /// Play stopped mid-carry. When a marathon round ends, everything held
+    /// hangs where it is while the player picks a card, ready to be taken
+    /// up again next round; otherwise it is let go where it is.
+    func letGoOfEverythingHeld() {
+        if let day, day.isRoundOver, !day.isOver {
+            freezeEverythingHeld()
+        } else {
+            dropEverythingHeld()
+        }
+    }
+
     private func dropEverythingHeld() {
         for hand in hands.values {
             if let node = hand.held { settle(node) }
+        }
+        hands.removeAll()
+    }
+
+    private func freezeEverythingHeld() {
+        for hand in hands.values {
+            guard let node = hand.held else { continue }
+            node.heldBy = nil
+            node.isFrozenInAir = true
+            node.run(.scale(to: 1, duration: Self.heldScaleDuration))
         }
         hands.removeAll()
     }

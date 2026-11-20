@@ -5,8 +5,9 @@
 //
 //  The kitchen art is one 1366×1024 picture fitted whole to the screen and
 //  centred, never cropped, so the counter's stations stay within reach on
-//  a wide MacBook screen too. Everything placed on it — props and
-//  customers — is measured in that picture's points (origin top-left) and
+//  a wide MacBook screen too. Everything placed on it — the counter's tools
+//  and stations (each planet's CounterLayout) and the customers — is
+//  measured in that picture's points (origin top-left) and
 //  mapped onto the screen here, so the SwiftUI art and the SpriteKit hit
 //  areas always line up. The truck around it is the exception: its walls
 //  stick to the screen's edges (`truckBands`), so a wider screen just opens
@@ -62,70 +63,9 @@ nonisolated extension KitchenLayout {
     /// the top of the screen down to the table's back edge.
     static let window = CGRect(x: 108, y: 0, width: 1151, height: 697)
 
-    static let grill = CGRect(x: 551, y: 755, width: 305, height: 166)
-    /// The middle of the grill's hot ring, where food cooks. The grill is
-    /// drawn in perspective, so it sits up and left of the box's centre.
-    static let grillRing = CGPoint(x: 719, y: 813)
-    /// How far apart two flatbreads sit when the grill holds two.
-    static let grillSlotGap: CGFloat = 110
-
-    /// ponytail: a stand-in spot for Planet 2's pot, at the far right of the
-    /// counter, until the positions in the team's design file are drawn in.
-    /// It covers the second glass spot.
-    static let pot = CGRect(x: 1110, y: 745, width: 200, height: 180)
-
-    /// Where `tool` stands on the counter.
-    static func area(of tool: CookingTool.Kind) -> CGRect {
-        switch tool {
-        case .grill: grill
-        case .pot: pot
-        }
-    }
-
-    /// Where each of `count` items cooks on `tool`, left to right.
-    static func cookingSpots(on tool: CookingTool.Kind, count: Int) -> [CGPoint] {
-        switch tool {
-        case .grill: grillSlots(count)
-        case .pot: [CGPoint(x: pot.midX, y: pot.midY)]
-        }
-    }
-
-    /// Where each of `count` flatbreads cooks, left to right.
-    static func grillSlots(_ count: Int) -> [CGPoint] {
-        guard count > 1 else { return [grillRing] }
-        let start = grillRing.x - grillSlotGap * CGFloat(count - 1) / 2
-        return (0..<count).map { CGPoint(x: start + grillSlotGap * CGFloat($0), y: grillRing.y) }
-    }
-
-    /// Plate spots, left to right. A single plate takes the one beside the
-    /// grill; a second, bought in the shop, goes further left.
-    private static let plateSpots = [
-        CGRect(x: 42, y: 778, width: 205, height: 117),
-        CGRect(x: 284, y: 778, width: 205, height: 117),
-    ]
-
     /// How wide the counter glass's mug is drawn, without its handle; what's
     /// put in the glass is drawn to match it.
     static let glassMugWidth: CGFloat = 144
-
-    /// Glass spots, left to right: the first beside the grill, a second further right.
-    private static let glassSpots = [
-        CGRect(x: 933, y: 769, width: 150, height: 137),
-        CGRect(x: 1130, y: 769, width: 150, height: 137),
-    ]
-
-    static let maxPlates = plateSpots.count
-    static let maxGlasses = glassSpots.count
-
-    /// Where `count` plates stand, left to right.
-    static func plates(_ count: Int) -> [CGRect] {
-        Array(plateSpots.suffix(min(max(count, 0), maxPlates)))
-    }
-
-    /// Where `count` glasses stand, left to right.
-    static func glasses(_ count: Int) -> [CGRect] {
-        Array(glassSpots.prefix(min(max(count, 0), maxGlasses)))
-    }
 
     /// The three places a customer stands. The two regular seats are the
     /// one leaning in from the left wall and the one hanging from the top

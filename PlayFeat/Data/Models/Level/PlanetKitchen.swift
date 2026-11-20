@@ -5,7 +5,8 @@
 //
 //  What one planet's kitchen is made of: which cooking tools it has and
 //  what each cooks, how fast food cooks and is ruined, the rules of its
-//  main-dish and dessert stations, its customers and what they order. The
+//  main-dish and dessert stations and where they all stand on the counter,
+//  its customers and what they order. The
 //  scene, the customer flows and the validation all read from here, so a
 //  planet's kitchen is data, not code.
 //
@@ -30,6 +31,10 @@ nonisolated struct PlanetKitchen {
     let regularAlien: AlienSpecies
     /// Who sits in the angry seat.
     let angryAlien: AlienSpecies
+    /// The counter with every cooking tool out.
+    let counter: CounterLayout
+    /// Counters laid out for early levels that have fewer tools out.
+    let earlyCounters: [CounterLayout]
 
     /// The alien drawn for a customer of `type`.
     func alien(for type: CustomerType) -> AlienSpecies {
@@ -43,6 +48,13 @@ nonisolated struct PlanetKitchen {
     /// all of the planet's when it lists none.
     func toolKinds(on level: LevelData) -> [CookingTool.Kind] {
         (level.tools ?? Array(tools.keys)).filter { tools[$0] != nil }.sorted()
+    }
+
+    /// The counter `level` is played on: the early one laid out for exactly
+    /// its cooking tools, else the full counter.
+    func counter(on level: LevelData) -> CounterLayout {
+        let kinds = Set(toolKinds(on: level))
+        return earlyCounters.first { $0.tools == kinds } ?? counter
     }
 
     /// The cooking tools `level` starts with, empty and ready to cook.

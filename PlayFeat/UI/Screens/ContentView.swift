@@ -28,7 +28,17 @@ struct ContentView: View {
     /// that has already been laid out, and views only rebuild for state they
     /// actually read.
     @AppStorage(AppLocalization.storageKey) private var language: AppLanguage = .english
-    
+
+    /// The galaxy map is mounted behind the launch screen, so its presence
+    /// alone does not mean the player has reached the planet selector.
+    private var showsMenuMusicScreen: Bool {
+        guard !showLaunchScreen else { return false }
+        switch sceneManager.screen {
+        case .mainMenu, .galaxy, .planetSelect, .marathon, .shop: return true
+        case .gameplay, .kitchen, .kitchenHandover, .postGame: return false
+        }
+    }
+
     var body: some View {
         ZStack {
             currentScreen
@@ -74,6 +84,13 @@ struct ContentView: View {
             }
             openDebugKitchenIfRequested()
             #endif
+        }
+        .onChange(of: showsMenuMusicScreen, initial: true) { _, shouldPlay in
+            if shouldPlay {
+                audio.startMusic(MusicTrack.menu)
+            } else {
+                audio.stopMusic(ifPlaying: MusicTrack.menu)
+            }
         }
         .onChange(of: language) { _, newValue in
             AppLocalization.apply(newValue)

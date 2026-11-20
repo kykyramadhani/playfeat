@@ -5,21 +5,41 @@
 //
 //  The recipe book, opened from the planet board: a pink page on the left
 //  for the chosen recipe — its name, picture, description and how to cook
-//  it — and a grid of every recipe on the right. Tiles past the known
-//  recipes are locked.
+//  it, or for an ingredient the dishes it goes in — and a scrolling grid of
+//  every recipe and ingredient on the right. A recipe stays a shadow of
+//  its dish until the kitchen has introduced it; before any is unlocked,
+//  the page says to go and play. Ingredients the player has upgraded are drawn premium.
 //
 
 import SwiftUI
 
 struct RecipeBookView: View {
-    let onClose: () -> Void
+    /// The planet's pages, dishes first.
+    private let entries: [RecipeBookEntry]
+    private let seenIntroductions: Set<String>
+    private let upgraded: Set<String>
+    private let onClose: () -> Void
 
-    @State private var selected = RecipeBook.entries[0]
+    /// The open page; nil until the first recipe is unlocked.
+    @State private var selected: RecipeBookEntry?
+
+    init(
+        planet: Planet.ID,
+        seenIntroductions: Set<String> = GameStorage.seenIntroductions,
+        upgraded: Set<String> = GameStorage.dishPricing.upgradedIngredients,
+        onClose: @escaping () -> Void
+    ) {
+        entries = RecipeBook.entries(on: planet)
+        self.seenIntroductions = seenIntroductions
+        self.upgraded = upgraded
+        self.onClose = onClose
+        _selected = State(initialValue: entries.first { $0.isUnlocked(afterSeeing: seenIntroductions) })
+    }
 
     var body: some View {
         SunrisePopupOverlay(title: Text("Recipe"), onClose: onClose) {
             HStack(alignment: .top) {
-                RecipePage(entry: selected)
+                page
                 Spacer(minLength: 0)
                 tiles
             }
@@ -29,22 +49,38 @@ struct RecipeBookView: View {
         }
     }
 
+    @ViewBuilder
+    private var page: some View {
+        if let selected {
+            RecipePage(entry: selected, upgraded: upgraded)
+        } else {
+            NoRecipesPage()
+        }
+    }
+
+    /// Each recipe keeps its place in the grid, locked until it's unlocked.
     private var tiles: some View {
+        ScrollView(.vertical) {
+            tileGrid
+        }
+        .frame(width: 343, height: RecipePage.height)
+    }
+
+    private var tileGrid: some View {
         LazyVGrid(columns: [GridItem(.fixed(165), spacing: 13), GridItem(.fixed(165))], spacing: 13.3) {
-            ForEach(0..<RecipeBook.tileCount, id: \.self) { index in
-                if RecipeBook.entries.indices.contains(index) {
-                    let entry = RecipeBook.entries[index]
+            ForEach(entries) { entry in
+                if entry.isUnlocked(afterSeeing: seenIntroductions) {
                     ClickButton(action: { selected = entry }) {
-                        RecipeTile(entry: entry, isSelected: entry == selected)
+                        RecipeTile(entry: entry, upgraded: upgraded, isSelected: entry == selected)
                     }
                     .buttonStyle(.plain)
                 } else {
-                    LockedRecipeTile()
+                    LockedRecipeTile(item: entry.item)
                 }
             }
         }
-        .frame(width: 343)
     }
+
 }
 
 // MARK: - Page
@@ -52,6 +88,11 @@ struct RecipeBookView: View {
 /// The chosen recipe, on the book's pink page.
 private struct RecipePage: View {
     let entry: RecipeBookEntry
+    let upgraded: Set<String>
+
+    static let width: CGFloat = 465
+    /// As tall as the page with a recipe on it, so the book keeps its size.
+    static let height: CGFloat = 577
 
     var body: some View {
         VStack(spacing: 5) {
@@ -61,7 +102,7 @@ private struct RecipePage: View {
                 .textCase(.uppercase)
                 .foregroundStyle(.white)
                 .frame(height: 46)
-            KitchenItemArt(item: entry.item)
+            KitchenItemArt(item: entry.item, upgraded: upgraded)
                 .frame(width: 178, height: 160)
             InfoBox(tab: Text("Description")) {
                 Text(entry.description)
@@ -70,11 +111,15 @@ private struct RecipePage: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
             }
-            InfoBox(tab: Text("How to Cook")) { howToCook }
+            if entry.isIngredient {
+                InfoBox(tab: Text("Used In")) { usedIn }
+            } else {
+                InfoBox(tab: Text("How to Cook")) { howToCook }
+            }
         }
         .padding(.horizontal, 29)
         .padding(.vertical, 25)
-        .frame(width: 465)
+        .frame(width: Self.width)
         .background(Color.nebulaPink, in: RoundedRectangle(cornerRadius: 16))
     }
 
@@ -85,17 +130,29 @@ private struct RecipePage: View {
             sign("PlusSign", size: 23.6)
             term(entry.madeFrom[1])
             sign("EqualsSign", size: 33.6)
-            KitchenItemArt(item: entry.item).frame(width: 51, height: 51)
+            KitchenItemArt(item: entry.item, upgraded: upgraded).frame(width: 51, height: 51)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(entry.name))
+    }
+
+    /// The dishes this ingredient goes in, in pictures.
+    private var usedIn: some View {
+        HStack(spacing: 24) {
+            ForEach(RecipeBook.dishes(using: entry.item)) { dish in
+                KitchenItemArt(item: dish.item, upgraded: upgraded)
+                    .frame(width: 70, height: 70)
+                    .accessibilityElement()
+                    .accessibilityLabel(Text(dish.name))
+            }
+        }
     }
 
     @ViewBuilder
     private func term(_ term: RecipeBookEntry.Term) -> some View {
         switch term {
         case .item(let item):
-            KitchenItemArt(item: item).frame(width: 51, height: 51)
+            KitchenItemArt(item: item, upgraded: upgraded).frame(width: 51, height: 51)
         case .tool(let image):
             Image(image).resizable().scaledToFit().frame(width: 59, height: 51)
         }
@@ -106,6 +163,25 @@ private struct RecipePage: View {
             .resizable()
             .frame(width: size, height: size)
             .foregroundStyle(.black)
+    }
+}
+
+/// The page before any recipe is unlocked: a locked picture and a nudge to
+/// go and cook.
+private struct NoRecipesPage: View {
+    var body: some View {
+        VStack(spacing: 30) {
+            BigQuestionMark(size: 160)
+                .foregroundStyle(.white)
+            Text("Play a level to discover new recipes!")
+                .font(.atkinson(size: 32, weight: .bold))
+                .tracking(0.64)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+        }
+        .padding(.horizontal, 29)
+        .frame(width: RecipePage.width, height: RecipePage.height)
+        .background(Color.nebulaPink, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -137,10 +213,11 @@ private struct InfoBox<Content: View>: View {
 
 private struct RecipeTile: View {
     let entry: RecipeBookEntry
+    let upgraded: Set<String>
     let isSelected: Bool
 
     var body: some View {
-        KitchenItemArt(item: entry.item)
+        KitchenItemArt(item: entry.item, upgraded: upgraded)
             .frame(width: 116, height: 104)
             .frame(width: 165, height: 184)
             .background(.white, in: RoundedRectangle(cornerRadius: 20))
@@ -155,17 +232,19 @@ private struct RecipeTile: View {
     }
 }
 
+/// A recipe not unlocked yet: its dish as a black shadow under a question
+/// mark.
 private struct LockedRecipeTile: View {
+    /// The dish this tile will show once unlocked.
+    let item: String
+
     var body: some View {
-        Image("LockedRecipe")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 116, height: 104)
+        KitchenItemArt(item: item)
+            .colorMultiply(.black)
             .overlay {
-                Text(verbatim: "?")
-                    .font(.atkinson(size: 32, weight: .bold))
-                    .foregroundStyle(.white)
+                BigQuestionMark(size: 32).foregroundStyle(.white)
             }
+            .frame(width: 116, height: 104)
             .frame(width: 165, height: 184)
             .background(.white, in: RoundedRectangle(cornerRadius: 20))
             .accessibilityElement(children: .ignore)
@@ -173,7 +252,37 @@ private struct LockedRecipeTile: View {
     }
 }
 
-#Preview {
-    RecipeBookView(onClose: {})
+private struct BigQuestionMark: View {
+    let size: CGFloat
+
+    var body: some View {
+        Text(verbatim: "?")
+            .font(.atkinson(size: size, weight: .bold))
+            .accessibilityHidden(true)
+    }
+}
+
+#Preview("Level 1 played, pepper upgraded") {
+    RecipeBookView(
+        planet: .kepler186f,
+        seenIntroductions: Set(KitchenIntroduction.introduced(byLevel: "1-1").map(\.id)),
+        upgraded: [KitchenMenu.pepper],
+        onClose: {}
+    )
+    .environment(AudioManager())
+}
+
+#Preview("K2-332 b to 2-3, noodles upgraded") {
+    RecipeBookView(
+        planet: .k2332b,
+        seenIntroductions: Set(["2-1", "2-2", "2-3"].flatMap(KitchenIntroduction.introduced(byLevel:)).map(\.id)),
+        upgraded: [KitchenMenu.rawNoodles],
+        onClose: {}
+    )
+    .environment(AudioManager())
+}
+
+#Preview("Nothing unlocked") {
+    RecipeBookView(planet: .kepler186f, seenIntroductions: [], upgraded: [], onClose: {})
         .environment(AudioManager())
 }

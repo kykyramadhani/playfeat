@@ -4,46 +4,19 @@
 //
 //  Created by Owen Limantoro on 22/08/26.
 //
+//  The camera game's lost-life warning: the screen's edges blink red.
+//
 
 import SwiftUI
 
 struct LoseHeartOverlay: View {
     var gameStateManager: GameStateManager
-    @State private var opacity: Double = 0
-    
+    @State private var livesLost = 0
+
     var body: some View {
-        redBorder()
-            .opacity(opacity)
-            .allowsHitTesting(false)
+        RedEdgeFlash(losses: livesLost)
             .onChange(of: gameStateManager.events.latest) { _, entry in
-                if case .lifeLost = entry?.event { blink() }
+                if case .lifeLost = entry?.event { livesLost += 1 }
             }
-    }
-    
-    private func blink() {
-        withAnimation(.easeInOut(duration: 0.2).repeatCount(6, autoreverses: true)) {
-            opacity = 1
-        } completion: {
-            opacity = 0
-        }
-    }
-
-}
-
-struct redBorder : View {
-    var body: some View {
-        // Red warning around the edges
-        LinearGradient(
-            stops: [
-                .init(color: .red.opacity(0.45), location: 0.0),
-                .init(color: .red.opacity(0.15), location: 0.25),
-                .init(color: .clear, location: 0.5),
-                .init(color: .red.opacity(0.15), location: 0.75),
-                .init(color: .red.opacity(0.45), location: 1.0)
-            ],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
-        .ignoresSafeArea()
     }
 }

@@ -51,14 +51,61 @@ nonisolated extension KitchenIntroduction {
         description: "Put a tentacle in the glass, then pour green slime over it."
     )
 
+    // MARK: - Planet 2
+
+    static let pot = KitchenIntroduction(
+        id: "tool.pot", kind: .tool(image: "KitchenPot"), name: "Pot",
+        description: "Boil the noodles in the pot before they go in the bowl."
+    )
+
+    static let noodleBowl = KitchenIntroduction(
+        id: "tool.bowl", kind: .tool(image: "NoodleBowl"), name: "Noodle Bowl",
+        description: "Noodle dishes are put together in the bowl."
+    )
+
+    static let cookiePlate = KitchenIntroduction(
+        id: "tool.cookiePlate", kind: .tool(image: "KitchenPlate"), name: "Cookie Plate",
+        description: "The Star Cookie is put together on the cookie plate."
+    )
+
+    static let coralNoodles = KitchenIntroduction(
+        id: "menu.\(KitchenMenu.coralNoodles)", kind: .menu(item: KitchenMenu.coralNoodles),
+        name: "Coral Noodles",
+        description: "Boil noodles in the pot, put them in the bowl, then add a coral leaf."
+    )
+
+    static let urchinNoodles = KitchenIntroduction(
+        id: "menu.\(KitchenMenu.urchinNoodles)", kind: .menu(item: KitchenMenu.urchinNoodles),
+        name: "Urchin Noodles",
+        description: "Boil noodles in the pot, put them in the bowl, then add a bubble urchin."
+    )
+
+    static let clamNoodles = KitchenIntroduction(
+        id: "menu.\(KitchenMenu.clamNoodles)", kind: .menu(item: KitchenMenu.clamNoodles),
+        name: "Clam Noodles",
+        description: "Boil noodles, put them in the bowl, then grill a lantern clam and add it."
+    )
+
+    static let starCookie = KitchenIntroduction(
+        id: "menu.\(KitchenMenu.starCookie)", kind: .menu(item: KitchenMenu.starCookie),
+        name: "Star Cookie",
+        description: "Put a sea cookie on the cookie plate, then add starfish sugar on top."
+    )
+
     /// What `levelID` brings into the kitchen, in the order it is shown:
     /// level 1 opens with the grill and the two flatbreads, level 4 adds the
-    /// glass and its dessert.
+    /// glass and its dessert. On Planet 2, 2-1 opens with the pot, the bowl
+    /// and Coral Noodles, then each day adds its dish (the grill on 2-3 is
+    /// Planet 1's, already met), and 2-4 the cookie plate and Star Cookie.
     /// ponytail: kept in code until the level files list what they introduce.
     static func introduced(byLevel levelID: String) -> [KitchenIntroduction] {
         switch levelID {
         case "1-1": [sunGrill, pepperFlatbread, mushroomFlatbread]
         case "1-4": [glass, slimyTentacles]
+        case "2-1": [pot, noodleBowl, coralNoodles]
+        case "2-2": [urchinNoodles]
+        case "2-3": [clamNoodles]
+        case "2-4": [cookiePlate, starCookie]
         default: []
         }
     }

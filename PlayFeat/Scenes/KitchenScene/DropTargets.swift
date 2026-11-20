@@ -72,7 +72,7 @@ extension KitchenScene {
     private func makeDropGlow(for target: DropTarget) -> SKNode? {
         switch target {
         case .customer: nil
-        case .station(let station): artGlow(Self.image(of: station), in: artRect(of: station), color: Self.dropGlowColor)
+        case .station(let station): artGlow(stationImage(of: station), in: artRect(of: station), color: Self.dropGlowColor)
         }
     }
 
@@ -81,7 +81,7 @@ extension KitchenScene {
     /// The station that turned an item away glows red and shakes for as
     /// long as the item hangs there.
     func shakeRed(_ station: KitchenBubbleNode.Placement) {
-        let glow = artGlow(Self.image(of: station), in: artRect(of: station), color: Self.refusalColor)
+        let glow = artGlow(stationImage(of: station), in: artRect(of: station), color: Self.refusalColor)
         glow.zPosition = Self.dropGlowZ
         addChild(glow)
         let nudge = bubbleRadius * 0.08
@@ -91,14 +91,6 @@ extension KitchenScene {
             .group([.repeat(shake, count: 2), .fadeOut(withDuration: KitchenRules.refuseHoldSec)]),
             .removeFromParent(),
         ]))
-    }
-
-    private static func image(of station: KitchenBubbleNode.Placement) -> String {
-        switch station {
-        case .cooker(let kind, _): KitchenArt.image(of: kind)
-        case .plate: "KitchenPlate"
-        case .glass: "KitchenGlass"
-        }
     }
 
     /// A halo in `color` cut from the tool's own image, with the tool

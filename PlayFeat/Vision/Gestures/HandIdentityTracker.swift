@@ -44,6 +44,12 @@ nonisolated struct HandIdentityTracker {
     /// so a bystander's hand can't take over a track from across the frame.
     var continuationRadius: CGFloat = 0.1
 
+    /// Set once calibration has picked the player. From then on each hand
+    /// keeps the side (left or right) it already has: Vision's guess flips
+    /// now and then, and the drawn hand would flip with it. A hand that is
+    /// lost and comes back gets a new ID, so its side is read afresh.
+    var keepsHandSides = false
+
     // MARK: - State
 
     /// One hand as remembered between frames.
@@ -129,8 +135,11 @@ nonisolated struct HandIdentityTracker {
             hand.location = reading.location
             hand.grabPoint = reading.grabPoint
             hand.skeleton = reading.skeleton
-            // An unreadable frame must not undo this hand's last known orientation.
-            if reading.chirality != .unknown { hand.chirality = reading.chirality }
+            // An unreadable frame must not undo this hand's last known
+            // orientation, and after calibration a known one stays put.
+            if reading.chirality != .unknown, hand.chirality == .unknown || !keepsHandSides {
+                hand.chirality = reading.chirality
+            }
 
             // Smooth the cursor: Vision's per-frame jitter is easily 20–30pt on
             // screen, enough to slide off an ingredient mid-grab.

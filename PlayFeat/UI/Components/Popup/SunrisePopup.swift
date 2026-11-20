@@ -88,7 +88,7 @@ struct SunrisePopup<Content: View>: View {
     }
 
     private func closeButton(_ action: @escaping () -> Void) -> some View {
-        RaisedIconButton(icon: "CloseIcon", label: "Close", palette: .pink, action: action)
+        RaisedIconButton(icon: "CloseIcon", label: "Close", palette: .pink, action: action, sound: .back)
             .frame(width: 76, height: 76)
             .offset(x: Self.frameRect.maxX - 59, y: Self.frameRect.minY - 27)
     }
@@ -97,6 +97,7 @@ struct SunrisePopup<Content: View>: View {
 /// A Sunrise popup over the screen: the screen dims behind it and it is
 /// scaled to the device like every other screen.
 struct SunrisePopupOverlay<Content: View>: View {
+    @Environment(AudioManager.self) private var audio
     let title: Text
     var onClose: (() -> Void)?
     @ViewBuilder let content: Content
@@ -105,7 +106,11 @@ struct SunrisePopupOverlay<Content: View>: View {
         ZStack {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
-                .onTapGesture { onClose?() }
+                .onTapGesture {
+                    guard let onClose else { return }
+                    audio.play(.back)
+                    onClose()
+                }
             SunrisePopup(title: title, onClose: onClose) { content }
         }
         .designScaled()

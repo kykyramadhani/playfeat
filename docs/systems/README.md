@@ -1,6 +1,6 @@
 # AstroFeast system documentation
 
-These guides explain the implementation in this working tree, reviewed on **18 November 2026**. The Xcode project and module are named **PlayFeat**; the app's display name is **AstroFeast**. Some older files still say GetCooking or VisionChef.
+These guides explain the implementation in this working tree, reviewed on **18 November 2026**. The app, Xcode project, and shared scheme are named **AstroFeast**. The Swift module is named **PlayFeat**. Some older files still say GetCooking or VisionChef.
 
 Start with the architecture guide, then follow the system you want to change. Each category has its own file, source map, behavior walkthrough, and maintenance notes. Values in tables describe the reviewed code, not permanent product requirements. Follow the linked implementation when the code and an older comment disagree.
 

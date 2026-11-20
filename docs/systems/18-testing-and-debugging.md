@@ -30,18 +30,18 @@ The repository uses Swift Testing (`@Test`, `#expect`, `#require`) for unit test
 
 ## Running checks
 
-Open `PlayFeat.xcodeproj`, choose an available iPad simulator and run the unit tests with Xcode's test action. For command-line use, first discover destinations:
+Open `AstroFeast.xcodeproj`, choose an available iPad simulator and run the unit tests with Xcode's test action. For command-line use, first discover destinations:
 
 ```sh
-xcodebuild -showdestinations -project PlayFeat.xcodeproj -scheme PlayFeat
+xcodebuild -showdestinations -project AstroFeast.xcodeproj -scheme AstroFeast
 ```
 
 Then replace `SIMULATOR_UDID` below with a real available destination ID:
 
 ```sh
 xcodebuild test \
-  -project PlayFeat.xcodeproj \
-  -scheme PlayFeat \
+  -project AstroFeast.xcodeproj \
+  -scheme AstroFeast \
   -destination 'platform=iOS Simulator,id=SIMULATOR_UDID' \
   -derivedDataPath /tmp/playfeat-tests-derived \
   -only-testing:PlayFeatTests \
@@ -50,7 +50,7 @@ xcodebuild test \
 
 Use `-only-testing:PlayFeatTests/SceneManagerTests` when investigating that suite. The local project contains recommended-SDK deployment settings and higher project-level values even though older prose describes iOS 17 support. Check effective build settings and your installed runtimes; do not assume every old simulator qualifies. The app target enables Mac Catalyst, while current unit-test targets are configured for iPad rather than Catalyst.
 
-The project file is ignored by the current `.gitignore`, so local Xcode settings can differ between checkouts. The shared scheme is tracked. This documentation did not change either setting or run a new application test pass.
+The project includes the shared AstroFeast scheme and the Functionality test plan.
 
 ## Debug launch arguments
 
@@ -101,7 +101,7 @@ Record actual runtime evidence when reporting a performance or animation fix. A 
 ## Source map
 
 - [Unit test tree](../../Testing/PlayFeatTests/)
-- [Test plan](../../Testing/Functionality.xctestplan), [shared scheme](../../PlayFeat.xcodeproj/xcshareddata/xcschemes/PlayFeat.xcscheme)
+- [Test plan](../../Testing/Functionality.xctestplan), [shared scheme](../../AstroFeast.xcodeproj/xcshareddata/xcschemes/AstroFeast.xcscheme)
 - [Scripted hands](../../Testing/PlayFeatTests/Scenes/ScriptedHandInput.swift), [sound recorder](../../Testing/PlayFeatTests/Audio/SoundRecorder.swift), [seeded generator](../../Testing/PlayFeatTests/Shared/SeededGenerator.swift)
 - [Launch/layout helpers](../../PlayFeat/Shared/DesignScale.swift)
 - [Existing cursor expectations](../../Testing/PlayFeatTests/Scenes/Nodes/HandCursorNodeTests.swift)

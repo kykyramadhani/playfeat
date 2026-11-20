@@ -16,12 +16,90 @@ enum SoundEffect: String, CaseIterable {
     case bell            = "bell_2x"            // dish finished / order up
     case bubbleGrab      = "bubble_grab"        // pick up an ingredient/item
     case bubblePut       = "bubble_put"         // place an ingredient down
-    case clockRunningOut = "clock_running_out"  // low-time warning (looping)
+    case clockRunningOut = "sfx_time_warning"   // low-time warning (looping)
     case countdown       = "countdown321"       // start of a round
     case loseHeart       = "lose_heart"         // mistake / dropped order
-    case putOrder        = "put_order"          // submit a completed order
+    case putOrder        = "sfx_serve_ok"        // submit a completed order
     case reset           = "reset"              // level restart / game reset
-    case uiClick         = "ui_click"           // menu button pressed
-    case wrongIngredient = "wrong_ingredients"  // a wrong ingredient placed on the plate
+    case uiClick         = "sfx_button"         // menu button pressed
+    case wrongIngredient = "sfx_wrong_dish"     // a wrong ingredient placed on the plate
     case scuffleCloud    = "scuffle_cloud"      // the puff of smoke when a dish is finished
+
+    case back = "sfx_back"
+    case place = "sfx_place"
+    case handFound = "sfx_hand_found"
+    case bakeLoop = "sfx_bake_loop"
+    case boilingPot = "sfx_boiling_pot"
+    case bakeReady = "sfx_bake_ready"
+    case bakeWarning = "sfx_bake_warning"
+    case bakeBurnt = "sfx_bake_burnt"
+    case customerArrive = "sfx_customer_arrive"
+    case angryArrive = "sfx_angry_arrive"
+    case tip = "sfx_tip"
+    case patienceRed = "sfx_patience_red"
+    case customerLeaves = "sfx_customer_leaves"
+    case dayEnd = "sfx_day_end"
+    /// Despite the filename, this belongs to the STORY level report only.
+    case storyReport = "sfx_round_over"
+    /// TODO(audio): Add the distinct sfx_run_over.wav (or .mp3) for Buffet's
+    /// final report. Until supplied, use lose_heart; never use sfx_round_over.
+    case runOver = "sfx_run_over"
+    case star1 = "sfx_star_1"
+    case star2 = "sfx_star_2"
+    case star3 = "sfx_star_3"
+    case noStar = "sfx_no_star"
+    case gasCollected = "sfx_gas_collected"
+    case hint = "sfx_hint"
+    case cardReveal = "sfx_card_reveal"
+    case cardPicked = "sfx_card_picked"
+    case coinSpentBuffet = "sfx_coin_spent_buffet"
+    case unlock = "sfx_unlock"
+    case bestScore = "sfx_best_score"
+
+    var resourceNames: [String] {
+        self == .runOver ? [rawValue, SoundEffect.loseHeart.rawValue] : [rawValue]
+    }
+
+    func resourceURL(in bundle: Bundle = .main) -> URL? {
+        for name in resourceNames {
+            for ext in ["wav", "mp3", "m4a", "caf"] {
+                if let url = bundle.url(forResource: name, withExtension: ext) { return url }
+            }
+        }
+        return nil
+    }
+
+    /// Speed and pitch are independent: x5 must not raise the pitch fivefold.
+    var playbackRate: Float {
+        switch self {
+        case .dayEnd: 5
+        case .angryArrive: 2
+        default: 1
+        }
+    }
+
+    var gain: Float {
+        switch self {
+        case .bakeLoop, .boilingPot: 0.16
+        case .bakeWarning, .clockRunningOut: 0.35
+        case .customerArrive, .angryArrive: 0.6
+        default: 0.8
+        }
+    }
+
+    static func star(_ number: Int) -> SoundEffect {
+        switch number {
+        case 1: .star1
+        case 2: .star2
+        default: .star3
+        }
+    }
+}
+
+nonisolated enum MusicTrack {
+    static let menu = "bgm_menu"
+    static let story = "bgm_story"
+    static let classic = "gameplay_getcooking"
+    // Only the retained underscore-named track is bundled. No alternate.
+    static let buffet = "music_buffet"
 }

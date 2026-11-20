@@ -3,17 +3,20 @@
 //  PlayFeat
 //  Created by kyky on 15/11/26.
 //
-//  Any planet-kitchen item drawn in SwiftUI, as it looks in a bubble. Fits
-//  whatever frame the caller gives it.
+//  Any planet-kitchen item drawn in SwiftUI, as it looks in a bubble, in its
+//  premium look when its ingredient is upgraded. Fits whatever frame the
+//  caller gives it.
 //
 
 import SwiftUI
 
 struct KitchenItemArt: View {
     let item: String
+    /// Ingredients the player has upgraded, which turn their items premium.
+    var upgraded: Set<String> = []
 
     var body: some View {
-        Self.trimmedImage(KitchenArt.image(of: item))
+        Self.trimmedImage(KitchenArt.image(of: item, upgraded: upgraded))
             .resizable()
             .scaledToFit()
             .accessibilityHidden(true)

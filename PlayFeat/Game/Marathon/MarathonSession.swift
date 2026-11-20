@@ -6,13 +6,16 @@
 //  One planet's marathon (its Buffet), run as in the prototype: a single endless
 //  kitchen day cut into 90-second rounds of play. When a round ends,
 //  everything freezes for a 15-second break where the player may buy one
-//  upgrade card with marathon coins, then play carries on where it stopped.
+//  upgrade card with marathon coins. The next round carries on where the
+//  last one stopped: the same customers, and anything held hangs in the air
+//  until it is grabbed again (KitchenScene).
 //  Marathon coins are the tips earned this run; they only buy cards and
 //  are gone when it ends. Three customers lost end the run.
 //
 //  The run starts with one plate and no glass; the glass appears once the
 //  dessert does, a second plate after 6 dishes and a second glass after 14.
-//  (On Planet 2 the plate is the noodle bowl and the glass the cookie plate.)
+//  (On Planet 2 the plate is the noodle bowl and the glass the cookie plate,
+//  which its counter has room for only one of.)
 //
 
 import Foundation
@@ -29,6 +32,9 @@ final class MarathonSession {
     static let breakSec = 15
     static let secondPlateAtDishes = 6
     static let secondGlassAtDishes = 14
+    /// How long before a round's end the clock warns: it shakes, turns red
+    /// and ticks.
+    static let roundEndingWarningSec: TimeInterval = 10
 
     /// The marathon's kitchen on `planet`: the prototype's marathon physics
     /// with the planet's gravity and tools. Customers and bubbles come from
@@ -85,8 +91,15 @@ final class MarathonSession {
     /// Rounds started, the one being played included.
     var roundsPlayed: Int { round }
     var averageDishesPerRound: Int { dishesServed / max(round, 1) }
+    /// Customers who gave up; `MarathonFlow.lostCustomersToEnd` of them end the run.
+    var lostCustomers: Int { day.ordersMissed }
 
     // MARK: - Breaks
+
+    /// The round's last seconds are running out.
+    var isRoundEnding: Bool {
+        day.timeLeft > 0 && day.timeLeft <= Self.roundEndingWarningSec
+    }
 
     /// The round's time is up: freeze and put up the break's cards.
     func startBreak() {
@@ -136,6 +149,20 @@ final class MarathonSession {
             plates: served >= Self.secondPlateAtDishes ? 2 : 1,
             glasses: dessertSeen ? glasses : 0
         )
+    }
+
+    /// How far the dishes served have come toward the next plate or glass.
+    var stationProgress: StationUnlockProgress {
+        StationUnlockProgress(dishesServed: dishesServed, unlocks: stationUnlocks)
+    }
+
+    /// The dishes served at which another plate or glass comes out, only
+    /// for those the planet's counter has room for.
+    var stationUnlocks: [Int] {
+        let counter = planet.kitchen.counter(on: day.level)
+        let secondPlate = counter.maxMainStations > 1 ? Self.secondPlateAtDishes : nil
+        let secondGlass = counter.maxDessertStations > 1 ? Self.secondGlassAtDishes : nil
+        return [secondPlate, secondGlass].compactMap { $0 }
     }
 
     /// Puts out any plate or glass the run has just earned.

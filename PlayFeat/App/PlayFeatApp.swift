@@ -64,11 +64,13 @@ struct PlayFeatApp: App {
         switch phase {
         case .active:
             handPoseManager.resume()
+            audio.resumeEffects()
             audio.fadeInMusic()
         case .inactive:
             handPoseManager.suspend()
         case .background:
             handPoseManager.suspend()
+            audio.suspendEffects()
             audio.fadeOutMusic()
         @unknown default:
             handPoseManager.suspend()

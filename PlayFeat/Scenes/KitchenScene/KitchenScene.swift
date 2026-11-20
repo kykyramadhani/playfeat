@@ -26,7 +26,13 @@ final class KitchenScene: SKScene {
 
     weak var day: KitchenDay?
     weak var handInput: (any HandInputSource)?
-    weak var audio: (any SoundPlaying)?
+    weak var audio: (any SoundPlaying)? {
+        didSet {
+            soundscape?.stopLoops()
+            soundscape = audio.map { KitchenSoundscape(sounds: $0) }
+        }
+    }
+    private var soundscape: KitchenSoundscape?
 
     // MARK: - Tuning
 
@@ -44,15 +50,8 @@ final class KitchenScene: SKScene {
     /// big enough to fill the grill's hot ring and most of the plate.
     static let cookwareFoodWidth: CGFloat = 118
 
-    /// How big an item is drawn where it has been put down.
-    static func placedScale(on placement: KitchenBubbleNode.Placement) -> CGFloat {
-        switch placement {
-        case .cooker, .plate: cookwareFoodWidth / (bubbleArtRadius * 2 * KitchenBubbleNode.foodFill)
-        // Whatever is in the glass is drawn as the whole glass, already sized
-        // to it (KitchenBubbleNode).
-        case .glass: 1
-        }
-    }
+    /// How much food grows once put down, to be `cookwareFoodWidth` wide.
+    static let cookwareFoodScale = cookwareFoodWidth / (bubbleArtRadius * 2 * KitchenBubbleNode.foodFill)
 
     let grabSlack: CGFloat = 30
     let dragSmoothing: CGFloat = 0.5
@@ -65,13 +64,12 @@ final class KitchenScene: SKScene {
     /// The day's cooking tools: the grill on Planet 1; the pot, and from
     /// 2-3 the grill, on Planet 2.
     var cookers: [CookingTool.Kind: CookingTool] = [:]
-    /// One per plate and glass on the counter, left to right, matching
+    /// Where the day's cooking tools, plates and glasses stand.
+    private(set) var counter: CounterLayout?
+    /// One per plate and glass on the counter, in the order they came out, matching
     /// `plateSpots` and `glassSpots`.
     var plates: [AssemblyStation] = []
     var glasses: [AssemblyStation] = []
-    /// Where the plates and glasses stand, in art points.
-    var plateSpots: [CGRect] = []
-    var glassSpots: [CGRect] = []
     var hands: [Int: KitchenHand] = [:]
     var handCursors: [Int: HandCursorNode] = [:]
     /// The cooking ring around the item on each cooking-tool slot.
@@ -109,6 +107,7 @@ final class KitchenScene: SKScene {
         self.day = day
         self.bubbleSupply = bubbleSupply
         cookers = kitchen?.cookingTools(on: day.level) ?? [:]
+        counter = kitchen?.counter(on: day.level)
         syncTools()
     }
 
@@ -148,6 +147,7 @@ final class KitchenScene: SKScene {
         updateCookers(now: day.elapsed)
         updateHands(now: currentTime, frameDelta: frameDelta)
         updateDropGlows()
+        soundscape?.update(day: day, cookers: cookers)
     }
 
     // MARK: - Spawning
@@ -175,9 +175,15 @@ final class KitchenScene: SKScene {
         )
     }
 
-    /// Still a bubble drifting through the window: not carried, put down or falling.
+    /// Still a bubble drifting through the window: not carried, put down,
+    /// falling or frozen in the air.
     private func isFloating(_ node: KitchenBubbleNode) -> Bool {
-        node.heldBy == nil && node.placement == nil && node.fallingSince == nil
+        isLoose(node) && node.fallingSince == nil
+    }
+
+    /// Moving on its own: not carried, put down or frozen in the air.
+    private func isLoose(_ node: KitchenBubbleNode) -> Bool {
+        node.heldBy == nil && node.placement == nil && !node.isFrozenInAir
     }
 
     /// Close enough to where bubbles come in that a new one would overlap it.
@@ -218,7 +224,7 @@ final class KitchenScene: SKScene {
         // before its centre would reach the window's bottom edge.
         let drift = motion.bubbleVelocity(crossing: window.height - bubbleRadius, lifeSec: level.bubbleLifeSec)
 
-        for node in bubbles where node.heldBy == nil && node.placement == nil {
+        for node in bubbles where isLoose(node) {
             // A refused item's fall starts a moment ahead: until then it hangs.
             let velocity = node.fallingSince.map { motion.releasedVelocity(after: now - $0) } ?? drift
             node.position.x += velocity.dx * playDelta
@@ -258,7 +264,9 @@ final class KitchenScene: SKScene {
 
     /// Serves, puts down, refuses or drops `node`, depending on where it was
     /// let go, in the prototype's order: a dish at a customer first, then
-    /// the grill and the plates and glasses, else it falls.
+    /// the grill and the plates and glasses. A finished dish let go anywhere
+    /// else goes back to its plate, since it took a while to make; anything
+    /// else falls.
     func settle(_ node: KitchenBubbleNode) {
         node.heldBy = nil
         node.zPosition = 2
@@ -266,12 +274,12 @@ final class KitchenScene: SKScene {
 
         if let seat = customerSeat(around: node) {
             serveOrReject(node, at: seat)
+        } else if let station = station(taking: node) {
+            put(node, on: station)
+        } else if KitchenMenu.isDish(node.ingredient), let home = home(for: node) {
+            sendBack(node, to: home)
         } else if let station = station(under: node) {
-            if accepts(node.ingredient, on: station) {
-                put(node, on: station)
-            } else {
-                refuse(node, at: station)
-            }
+            refuse(node, at: station)
         } else {
             drop(node)
         }
@@ -280,10 +288,39 @@ final class KitchenScene: SKScene {
     /// Hangs `node` where it was let go for a moment, out of reach, while
     /// the station that turned it away shakes red; then it falls.
     func refuse(_ node: KitchenBubbleNode, at station: KitchenBubbleNode.Placement) {
-        node.fallingSince = (day?.elapsed ?? 0) + KitchenRules.refuseHoldSec
+        hangThenFall(node)
         shakeRed(station)
         audio?.play(.wrongIngredient)
     }
+
+    /// Leaves `node` hanging where it was let go for a moment, out of
+    /// reach, so the player sees it turned away; then it falls.
+    func hangThenFall(_ node: KitchenBubbleNode) {
+        node.fallingSince = (day?.elapsed ?? 0) + KitchenRules.refuseHoldSec
+    }
+
+    /// Where a dish let go away from the customers goes: the plate or glass
+    /// it was lifted off, or, if that has been used since, any other that
+    /// takes it.
+    private func home(for dish: KitchenBubbleNode) -> KitchenBubbleNode.Placement? {
+        if let liftedFrom = dish.liftedFrom, accepts(dish.ingredient, on: liftedFrom) { return liftedFrom }
+        return stations.first { $0.isForAssembly && accepts(dish.ingredient, on: $0) }
+    }
+
+    /// Puts `dish` back down on `station`, gliding there from where it was
+    /// let go rather than jumping.
+    private func sendBack(_ dish: KitchenBubbleNode, to station: KitchenBubbleNode.Placement) {
+        let letGoAt = dish.position
+        put(dish, on: station)
+        guard dish.placement == station else { return }
+        dish.removeAllActions()
+        dish.position = letGoAt
+        let glide = SKAction.move(to: centre(of: station), duration: Self.sendBackDuration)
+        glide.timingMode = .easeOut
+        dish.run(.group([glide, .scale(to: dish.placedScale, duration: Self.sendBackDuration)]))
+    }
+
+    private static let sendBackDuration: TimeInterval = 0.35
 
     /// Lets `node` fall (or, under flipped gravity, float) from where it was
     /// let go, down behind the table; let go over the table itself, it goes
@@ -300,20 +337,38 @@ final class KitchenScene: SKScene {
     /// Settles `node` onto a station: bare food, slid into place, out of
     /// reach of gravity.
     func setDown(_ node: KitchenBubbleNode, at placement: KitchenBubbleNode.Placement, position: CGPoint) {
+        node.interior = KitchenArt.interior(of: stationImage(of: placement))
         node.placement = placement
         node.fallingSince = nil
         node.removeAllActions()
-        node.run(.group([
-            .move(to: position, duration: 0.15),
-            .scale(to: Self.placedScale(on: placement), duration: 0.15),
-        ]))
-        audio?.play(.bubblePut)
+        if node.isDrawnAsWholeStation {
+            snapOntoStation(node, at: position)
+        } else {
+            node.run(.group([
+                .move(to: position, duration: Self.setDownDuration),
+                .scale(to: node.placedScale, duration: Self.setDownDuration),
+            ]))
+        }
+        audio?.play(.place)
     }
+
+    /// A picture of the whole pot or bowl lands exactly over the counter's
+    /// own station art. Sliding or shrinking in from the hand's size would
+    /// show a second, oversized station for a moment.
+    private func snapOntoStation(_ node: KitchenBubbleNode, at position: CGPoint) {
+        node.position = position
+        node.setScale(node.placedScale)
+    }
+
+    /// How long put-down food takes to slide into place and grow to fill
+    /// the cookware.
+    private static let setDownDuration: TimeInterval = 0.15
 
     /// Lifts an item back off wherever it was put down, ready to be carried.
     func unpark(_ node: KitchenBubbleNode) {
         guard let placement = node.placement else { return }
         liftOffStation(node, at: placement)
+        node.interior = nil
         node.placement = nil
         node.removeAllActions()
         node.setScale(1)
@@ -327,4 +382,5 @@ final class KitchenScene: SKScene {
         bubbles.removeAll { $0 === node }
         node.pop()
     }
+
 }
