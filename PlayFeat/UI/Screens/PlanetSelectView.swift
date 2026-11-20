@@ -215,7 +215,7 @@ struct PlanetSelectView: View {
     private func openMarathon() {
         if !progress.isMarathonUnlocked {
             notice = .lockedMarathon
-        } else if GameStorage.hasSeenMarathonSpoiler || progress.isPlanetComplete {
+        } else if TutorialProgress().hasSeenBuffetSpoiler(on: planet.id) || progress.isPlanetComplete {
             sceneManager.goToMarathon()
         } else {
             showSpoilerWarning = true
@@ -223,7 +223,8 @@ struct PlanetSelectView: View {
     }
 
     private func enterMarathonAfterWarning() {
-        GameStorage.hasSeenMarathonSpoiler = true
+        var tutorial = TutorialProgress()
+        tutorial.seeBuffetSpoiler(on: planet.id)
         showSpoilerWarning = false
         sceneManager.goToMarathon()
     }

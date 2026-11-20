@@ -88,6 +88,12 @@ struct PlanetScreen<Content: View>: View {
                 showSettings = true
             }
             .frame(width: 76, height: 76)
+            .contextMenu {
+                // The exhibition team can reset hints from the planet menu.
+                Button("New Visitor", systemImage: "person.badge.plus") {
+                    TutorialProgress.reset()
+                }
+            }
             .padding(.trailing, 46)
             .padding(.top, 38)
         }

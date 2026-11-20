@@ -41,6 +41,8 @@ final class KitchenBubbleNode: SKNode {
 
     /// `HandData.id` of the hand carrying this, if any.
     var heldBy: Int?
+    /// Cleared if the player catches the discarded item before it disappears.
+    var isTutorialDiscard = false
     /// Play time it was let go mid-air, while it falls. Nil otherwise. A
     /// refused item gets a time just ahead: it hangs where it was let go,
     /// out of reach, until then.

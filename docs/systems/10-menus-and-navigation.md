@@ -4,7 +4,7 @@
 
 `AppScreen` is an enum of full-screen destinations. `ContentView.currentScreen` switches over it; there is no navigation stack to pop. `SceneManager` methods choose explicit destinations. Back buttons therefore call a known route rather than a generic history operation.
 
-Popups, calibration, introductions, countdowns and reports are often **inside** a screen. Showing one does not necessarily change `AppScreen` or destroy the scene underneath.
+Popups, calibration, countdowns and reports are often **inside** a screen. Showing one does not necessarily change `AppScreen` or destroy the scene underneath.
 
 ## Current primary flow
 
@@ -15,9 +15,10 @@ flowchart TD
     Board --> Detail[Level detail popup]
     Detail --> Kitchen[Kitchen screen]
     Kitchen --> Calibration[Seat calibration]
-    Calibration --> Intro[Unseen introductions]
-    Intro --> Countdown[3-2-1-GO]
-    Countdown --> Play[Story play]
+    Calibration -->|Story| Countdown[3-2-1-GO]
+    Calibration -->|Buffet| Rules[Buffet rules card]
+    Rules --> Countdown
+    Countdown --> Play[Kitchen play]
     Play --> Report[Report over the same kitchen]
     Report -->|Back| Board
     Report -->|Retry| Kitchen
@@ -45,11 +46,13 @@ The underlying initial route is `.galaxy`. `LaunchView` sits over it until Start
 
 ## Kitchen presentation state
 
-A kitchen visit owns calibration state, countdown, pause/settings visibility, unseen introductions and marathon overlay state. Its `KitchenDay` is separate from those presentation decisions.
+A kitchen visit owns calibration state, countdown, pause/settings visibility, and Buffet overlay state. Its `KitchenDay` is separate from those presentation decisions.
 
 For a story visit the screen loads owned tool counts and upgraded ingredient pricing. For marathon it reuses `SceneManager.marathon.day`. Both prepare a new scene, inject hands and audio, and start the camera.
 
-`KitchenIntroduction.introduced(byLevel:)` currently associates the grill and two flatbreads with `1-1`, and the glass/dessert with `1-4`. Dismissing an introduction records its ID. Only after all introductions are closed does the countdown task start play.
+Story visits start the countdown after calibration. Buffet opens a short rules card before the countdown on each run. The card can be dismissed early.
+
+Kitchen guides highlight live ingredients, tools, and customers. Accepted drops and serves advance the matching steps in the guide, and hints persist across visits. Story levels still unlock their associated recipe-book pages when play begins. Long-press the settings gear on the planet board and select **New Visitor** to reset tutorial progress while keeping recipe unlocks, scores, and purchases.
 
 ## Pause, restart and background return
 
@@ -84,7 +87,7 @@ Change route ownership in `SceneManager`, screen composition in `ContentView`, a
 - [Route enum](../../PlayFeat/App/AppScreen.swift), [route methods](../../PlayFeat/App/SceneManager.swift), [root switch](../../PlayFeat/UI/Screens/ContentView.swift)
 - [Launch](../../PlayFeat/UI/Screens/LaunchView.swift), [kitchen flow](../../PlayFeat/UI/Screens/KitchenView.swift)
 - [Pause popup](../../PlayFeat/UI/Overlays/PausePopup.swift), [hidden Stop control](../../PlayFeat/UI/Overlays/StopButtonLayer.swift)
-- [Introduction catalog](../../PlayFeat/Data/Models/KitchenIntroduction.swift), [recipe book model](../../PlayFeat/Data/Models/RecipeBook.swift)
+- [Kitchen guide](../../PlayFeat/Scenes/KitchenScene/Tutorial.swift), [tutorial progress](../../PlayFeat/Game/Level/TutorialProgress.swift), [recipe book model](../../PlayFeat/Data/Models/RecipeBook.swift)
 - [Story report](../../PlayFeat/UI/Overlays/LevelReportView.swift), [classic report](../../PlayFeat/UI/Screens/PostGameView.swift)
 - [Navigation tests](../../Testing/PlayFeatTests/App/SceneManagerTests.swift), [recipe-book tests](../../Testing/PlayFeatTests/Data/Models/RecipeBookTests.swift)
 

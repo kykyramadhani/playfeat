@@ -68,6 +68,7 @@ extension KitchenScene {
         node.heldBy = handID
         node.fallingSince = nil
         node.isFrozenInAir = false
+        node.isTutorialDiscard = false
         node.zPosition = Self.heldZ
         node.removeAllActions()
         node.run(.scale(to: Self.heldScale, duration: Self.heldScaleDuration))
@@ -109,7 +110,7 @@ extension KitchenScene {
         guard now - openedAt >= releaseDelay else { return }
 
         audio?.play(.bubblePut) // The bubble pops on an intentional release.
-        settle(node)
+        settle(node, releasedByPlayer: true)
         hand.held = nil
         hand.openSince = nil
     }

@@ -1,6 +1,76 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld lost customers end the run" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permainan berakhir jika %lld pelanggan pergi"
+          }
+        }
+      }
+    },
+    "New Visitor" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengunjung Baru"
+          }
+        }
+      }
+    },
+    "New" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baru"
+          }
+        }
+      }
+    },
+    "Points" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poin"
+          }
+        }
+      }
+    },
+    "A second plate holds more food while you cook." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piring kedua menampung lebih banyak makanan saat kamu memasak."
+          }
+        }
+      }
+    },
+    "A second bowl lets you prepare two orders at once." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mangkuk kedua membantumu menyiapkan dua pesanan sekaligus."
+          }
+        }
+      }
+    },
+    "Upgrade an ingredient to earn more per dish." : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tingkatkan bahan untuk mendapat lebih banyak koin per hidangan."
+          }
+        }
+      }
+    },
     "%@ marathon coins" : {
       "comment" : "Marathon: marathon coins the player can still spend; the number is bold.",
       "localizations" : {
