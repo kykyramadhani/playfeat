@@ -21,6 +21,8 @@ nonisolated struct PlanetBackdrop {
         let imageName: String
         let fit: Fit
         var drift: Drift?
+        /// Expands toward the right while keeping the left ground edge covered.
+        var widthScale: CGFloat = 1
     }
 
     /// How a layer is scaled and placed when the screen isn't the layer's shape.

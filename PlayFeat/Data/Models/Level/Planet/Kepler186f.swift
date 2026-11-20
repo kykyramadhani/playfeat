@@ -25,10 +25,24 @@ nonisolated extension Planet {
             dessert: KitchenMenu.slimyTentacles,
             angryOrder: KitchenMenu.slimyTentacles,
             regularAlien: .regular,
-            angryAlien: .square
+            angryAlien: .square,
+            counter: keplerCounter,
+            earlyCounters: []
         ),
         buffet: keplerBuffet,
         backdrop: keplerBackdrop
+    )
+
+    /// The grill in the middle with the plate to its left and the glass to
+    /// its right; a second plate goes further left, a second glass further
+    /// right.
+    private static let keplerCounter = CounterLayout(
+        toolAreas: [.grill: CGRect(x: 551, y: 755, width: 305, height: 166)],
+        mainSpots: [CGRect(x: 284, y: 778, width: 205, height: 117), CGRect(x: 42, y: 778, width: 205, height: 117)],
+        dessertSpots: [
+            CGRect(x: 933, y: 769, width: 150, height: 137), CGRect(x: 1130, y: 769, width: 150, height: 137),
+        ],
+        stationImages: (main: "KitchenPlate", dessert: "KitchenGlass")
     )
 
     /// A violet desert under a pale sky, with a tiny spaceship hovering far off.
@@ -37,7 +51,8 @@ nonisolated extension Planet {
             .init(imageName: "KeplerSky", fit: .cover),
             .init(imageName: "KeplerDunesFar", fit: .groundBand),
             .init(imageName: "KeplerDunes", fit: .groundBand),
-            .init(imageName: "KeplerRivers", fit: .groundBand),
+            // Keep the near lava channel to the right of the landed ship's wheels.
+            .init(imageName: "KeplerRivers", fit: .groundBand, widthScale: 1.7),
             .init(imageName: "KeplerSpaceship", fit: .topTrailing, drift: .bob(height: 8, period: 4)),
         ],
         galaxyImageName: "KeplerPlanet"

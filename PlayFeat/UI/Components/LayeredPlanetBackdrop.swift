@@ -41,6 +41,7 @@ private struct LandscapeLayer: View {
             .resizable()
             .frame(width: frame.width, height: frame.height)
             .modifier(DriftEffect(drift: layer.drift, scale: layerScale, isDrifting: isDrifting))
+            .scaleEffect(x: layer.widthScale, y: 1, anchor: .leading)
             .offset(x: frame.minX, y: frame.minY)
             .onAppear(perform: startDrifting)
     }

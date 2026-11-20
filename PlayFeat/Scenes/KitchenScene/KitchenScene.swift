@@ -44,15 +44,8 @@ final class KitchenScene: SKScene {
     /// big enough to fill the grill's hot ring and most of the plate.
     static let cookwareFoodWidth: CGFloat = 118
 
-    /// How big an item is drawn where it has been put down.
-    static func placedScale(on placement: KitchenBubbleNode.Placement) -> CGFloat {
-        switch placement {
-        case .cooker, .plate: cookwareFoodWidth / (bubbleArtRadius * 2 * KitchenBubbleNode.foodFill)
-        // Whatever is in the glass is drawn as the whole glass, already sized
-        // to it (KitchenBubbleNode).
-        case .glass: 1
-        }
-    }
+    /// How much food grows once put down, to be `cookwareFoodWidth` wide.
+    static let cookwareFoodScale = cookwareFoodWidth / (bubbleArtRadius * 2 * KitchenBubbleNode.foodFill)
 
     let grabSlack: CGFloat = 30
     let dragSmoothing: CGFloat = 0.5
@@ -65,13 +58,12 @@ final class KitchenScene: SKScene {
     /// The day's cooking tools: the grill on Planet 1; the pot, and from
     /// 2-3 the grill, on Planet 2.
     var cookers: [CookingTool.Kind: CookingTool] = [:]
-    /// One per plate and glass on the counter, left to right, matching
+    /// Where the day's cooking tools, plates and glasses stand.
+    private(set) var counter: CounterLayout?
+    /// One per plate and glass on the counter, in the order they came out, matching
     /// `plateSpots` and `glassSpots`.
     var plates: [AssemblyStation] = []
     var glasses: [AssemblyStation] = []
-    /// Where the plates and glasses stand, in art points.
-    var plateSpots: [CGRect] = []
-    var glassSpots: [CGRect] = []
     var hands: [Int: KitchenHand] = [:]
     var handCursors: [Int: HandCursorNode] = [:]
     /// The cooking ring around the item on each cooking-tool slot.
@@ -109,6 +101,7 @@ final class KitchenScene: SKScene {
         self.day = day
         self.bubbleSupply = bubbleSupply
         cookers = kitchen?.cookingTools(on: day.level) ?? [:]
+        counter = kitchen?.counter(on: day.level)
         syncTools()
     }
 
@@ -300,12 +293,13 @@ final class KitchenScene: SKScene {
     /// Settles `node` onto a station: bare food, slid into place, out of
     /// reach of gravity.
     func setDown(_ node: KitchenBubbleNode, at placement: KitchenBubbleNode.Placement, position: CGPoint) {
+        node.interior = KitchenArt.interior(of: stationImage(of: placement))
         node.placement = placement
         node.fallingSince = nil
         node.removeAllActions()
         node.run(.group([
             .move(to: position, duration: 0.15),
-            .scale(to: Self.placedScale(on: placement), duration: 0.15),
+            .scale(to: node.placedScale, duration: 0.15),
         ]))
         audio?.play(.bubblePut)
     }
@@ -314,6 +308,7 @@ final class KitchenScene: SKScene {
     func unpark(_ node: KitchenBubbleNode) {
         guard let placement = node.placement else { return }
         liftOffStation(node, at: placement)
+        node.interior = nil
         node.placement = nil
         node.removeAllActions()
         node.setScale(1)

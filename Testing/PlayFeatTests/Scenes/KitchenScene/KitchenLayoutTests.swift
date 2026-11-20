@@ -33,8 +33,15 @@ struct KitchenLayoutTests {
         let macBook = CGSize(width: 1512, height: 945)
         let layout = KitchenLayout(screenSize: macBook)
 
-        #expect(layout.viewPoint(CGPoint(x: 0, y: KitchenLayout.grill.maxY)).y <= macBook.height)
-        #expect(layout.viewPoint(CGPoint(x: 0, y: KitchenLayout.pot.maxY)).y <= macBook.height)
+        let counters = PlanetCatalog.all.flatMap { [$0.kitchen.counter] + $0.kitchen.earlyCounters }
+        let lowestEdge = counters.flatMap { counter in
+            CookingTool.Kind.allCases.map { counter.area(of: $0) }.filter { !$0.isNull }
+                + counter.mainStationSpots(count: counter.maxMainStations)
+                + counter.dessertStationSpots(count: counter.maxDessertStations)
+        }.map(\.maxY).max() ?? 0
+
+        #expect(lowestEdge > 0)
+        #expect(layout.viewPoint(CGPoint(x: 0, y: lowestEdge)).y <= macBook.height)
     }
 
     /// A screen taller than the art fits its width instead, with no margins.
@@ -141,35 +148,8 @@ struct KitchenLayoutTests {
         #expect(layout.sceneRect(KitchenLayout.window).maxY == KitchenLayout.artSize.height)
     }
 
-    /// One plate stands beside the grill; a second goes further left, and
-    /// never more than the counter has spots for.
-    @Test func plateSpotsKeepTheFirstPlateBesideTheGrill() {
-        let one = KitchenLayout.plates(1)
-        let two = KitchenLayout.plates(2)
-
-        #expect(one.count == 1)
-        #expect(two.last == one.first)
-        #expect(two[0].maxX < two[1].minX)
-        #expect(KitchenLayout.plates(5).count == KitchenLayout.maxPlates)
-    }
-
-    @Test func glassSpotsKeepTheFirstGlassBesideTheGrill() {
-        let two = KitchenLayout.glasses(2)
-
-        #expect(KitchenLayout.glasses(1) == [two[0]])
-        #expect(two[0].maxX < two[1].minX)
-        #expect(KitchenLayout.glasses(0).isEmpty)
-    }
-
     /// The two green aliens take regular customers; the red one is the angry alien's.
     @Test func theRedAliensPositionIsTheAngryCustomers() {
         #expect(KitchenLayout.positionTypes == [.regular, .regular, .angry])
-    }
-
-    @Test func twoGrillSlotsSitEitherSideOfTheRing() {
-        let slots = KitchenLayout.grillSlots(2)
-
-        #expect(KitchenLayout.grillSlots(1) == [KitchenLayout.grillRing])
-        #expect(slots[0].x < KitchenLayout.grillRing.x && KitchenLayout.grillRing.x < slots[1].x)
     }
 }

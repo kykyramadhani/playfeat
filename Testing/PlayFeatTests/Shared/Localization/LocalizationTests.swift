@@ -119,6 +119,16 @@ struct LocalizationTests {
             "Bake a flatbread on the grill, put it on the plate, then add a pepper.",
             "Bake a flatbread on the grill, put it on the plate, then add a mushroom.",
             "Put a tentacle in the glass, then pour green slime over it.",
+            // Planet 2 introductions
+            "Pot", "Noodle Bowl", "Cookie Plate",
+            "Coral Noodles", "Urchin Noodles", "Clam Noodles", "Star Cookie",
+            "Boil the noodles in the pot before they go in the bowl.",
+            "Noodle dishes are put together in the bowl.",
+            "The Star Cookie is put together on the cookie plate.",
+            "Boil noodles in the pot, put them in the bowl, then add a coral leaf.",
+            "Boil noodles in the pot, put them in the bowl, then add a bubble urchin.",
+            "Boil noodles, put them in the bowl, then grill a lantern clam and add it.",
+            "Put a sea cookie on the cookie plate, then add starfish sugar on top.",
             // Marathon rounds, pause and report
             "Continue", "Faster Grill I", "Faster Pot", "Boil time 6 s → 4.5 s", "Second Grill Spot", "Cozy Seats", "Golden Flatbread", "Round Pause",
             "Resume", "Restart Marathon", "Home", "Nothing left to buy. Take a breather.",

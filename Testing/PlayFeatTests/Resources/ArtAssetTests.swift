@@ -64,14 +64,50 @@ struct ArtAssetTests {
     ])
     func everyKitchenItemHasArt(item: String) {
         let everythingUpgraded = Set(DishPricing.baseValues.keys)
+        let cooking = CookingTool.Kind.allCases.flatMap { tool in
+            [
+                KitchenArt.image(of: item, cookingOn: tool),
+                KitchenArt.image(of: item, cookingOn: tool, upgraded: everythingUpgraded),
+            ]
+        }
         let names = [
             KitchenArt.image(of: item), KitchenArt.placedImage(of: item),
             KitchenArt.image(of: item, upgraded: everythingUpgraded),
             KitchenArt.placedImage(of: item, upgraded: everythingUpgraded),
-        ]
+        ] + cooking
         for name in names {
             #expect(UIImage(named: name) != nil, "missing kitchen art '\(name)' for '\(item)'")
         }
+    }
+
+    /// Each planet's counter draws its cooking tools and stations by name; a
+    /// missing one is a hole in the counter.
+    @Test(arguments: PlanetCatalog.all.map(\.id))
+    func everyCounterPictureExists(planet: Planet.ID) {
+        let counter = PlanetCatalog.planet(planet).kitchen.counter
+        let stations = [counter.mainStationImage, counter.dessertStationImage]
+        let rimMasks = stations.compactMap { KitchenArt.interior(of: $0)?.maskImage }
+        let names = stations + rimMasks + counter.tools.map(KitchenArt.image(of:))
+        for name in names {
+            #expect(UIImage(named: name) != nil, "missing counter art '\(name)' on \(planet)")
+        }
+    }
+
+    /// Pictures of the pot or the bowl with food in it are drawn straight
+    /// over the counter's, so each family is cut to one frame: the pot's to
+    /// the empty pot's own, the bowl's to one around the bowl. A picture cut
+    /// differently would jump off its station.
+    @Test(arguments: [
+        ["KitchenPot", "PotNoodlesCooking", "PotNoodlesCooked"],
+        [
+            "NoodlesBoiled", "PremiumNoodlesInBowl", "CoralNoodles", "UrchinNoodles", "ClamNoodles",
+            "PremiumCoralNoodles", "PremiumUrchinNoodles", "PremiumClamNoodles",
+        ],
+    ])
+    func wholeStationPicturesShareOneFrame(names: [String]) {
+        let sizes = Set(names.compactMap { UIImage(named: $0).map { "\($0.size)" } })
+
+        #expect(sizes.count == 1, "frames differ: \(sizes)")
     }
 
     /// Every alien in every mood is drawn by name as patience runs out; a

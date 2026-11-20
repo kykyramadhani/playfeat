@@ -61,7 +61,7 @@ struct KitchenDropTargetTests {
         _ = carry(KitchenMenu.pepper, atArtPoint: CGPoint(x: 683, y: 400), in: scene)
         #expect(scene.litTargets.isEmpty)
 
-        scene.hands[1]?.held?.position = scene.layout.sceneRect(KitchenLayout.grill).center
+        scene.hands[1]?.held?.position = scene.layout.sceneRect(scene.artRect(of: .cooker(.grill, slot: 0))).center
         scene.updateDropGlows()
         #expect(scene.litTargets.isEmpty)
     }

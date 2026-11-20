@@ -98,10 +98,11 @@ struct PlanetSelectView: View {
 
     // MARK: - Left side
 
-    /// The spaceship parked on the sand, its fuel gauge on the side.
+    /// Each planet's landed ship, with its fuel gauge on the side panel.
     private var spaceship: some View {
-        Image("LandedSpaceship")
+        Image(planet.id == .k2332b ? "K2332bSpaceship" : "LandedSpaceship")
             .resizable()
+            .scaledToFit()
             .frame(width: 764, height: 674)
             .accessibilityHidden(true)
             .overlay(alignment: .topLeading) {
@@ -115,7 +116,7 @@ struct PlanetSelectView: View {
                         }
                 }
                 .buttonStyle(.plain)
-                .padding(.leading, 242.5)
+                .padding(.leading, planet.id == .k2332b ? 342.5 : 242.5)
                 .padding(.top, 252.5)
             }
     }

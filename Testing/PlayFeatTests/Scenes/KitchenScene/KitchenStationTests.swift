@@ -42,7 +42,7 @@ struct KitchenStationTests {
     @Test func aRawFlatbreadLetGoOverTheGrillGoesOnIt() throws {
         let (scene, _) = try makeScene()
 
-        let flatbread = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
+        let flatbread = letGo(Menu.rawFlatbread, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
 
         #expect(flatbread.placement == .cooker(.grill, slot: 0))
         #expect(flatbread.fallingSince == nil)
@@ -51,7 +51,7 @@ struct KitchenStationTests {
     /// Bakes at 6 s, glows 8 s after that, burns 12 s after that.
     @Test func theGrillBakesThenGlowsThenBurns() throws {
         let (scene, _) = try makeScene()
-        let flatbread = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
+        let flatbread = letGo(Menu.rawFlatbread, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
 
         scene.updateCookers(now: 6)
         #expect(flatbread.ingredient == Menu.bakedFlatbread)
@@ -65,9 +65,9 @@ struct KitchenStationTests {
 
     @Test func aFlatbreadOnATakenSlotKnocksTheOldOneOff() throws {
         let (scene, _) = try makeScene()
-        let first = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
+        let first = letGo(Menu.rawFlatbread, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
 
-        let second = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
+        let second = letGo(Menu.rawFlatbread, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
 
         #expect(second.placement == .cooker(.grill, slot: 0))
         #expect(first.placement == nil)
@@ -78,7 +78,7 @@ struct KitchenStationTests {
     @Test func aPepperLetGoOverTheGrillIsRefused() throws {
         let (scene, day) = try makeScene()
 
-        let pepper = letGo(Menu.pepper, over: KitchenLayout.grill, in: scene)
+        let pepper = letGo(Menu.pepper, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
 
         #expect(pepper.placement == nil)
         #expect(pepper.isRefused(at: day.elapsed))
@@ -87,7 +87,7 @@ struct KitchenStationTests {
 
     @Test func takingTheFlatbreadOffFreesTheGrill() throws {
         let (scene, _) = try makeScene()
-        let flatbread = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
+        let flatbread = letGo(Menu.rawFlatbread, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
 
         scene.unpark(flatbread)
 
@@ -101,12 +101,12 @@ struct KitchenStationTests {
         let (scene, day) = try makeScene()
         day.start()
         day.tick(at: 0)
-        let flatbread = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
+        let flatbread = letGo(Menu.rawFlatbread, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
         // Frame by frame: the day's clock credits at most a short step per tick.
         for frame in 1...40 { day.tick(at: Double(frame) * 0.1) }
         scene.unpark(flatbread)
 
-        flatbread.position = scene.layout.sceneRect(KitchenLayout.grill).center
+        flatbread.position = scene.layout.sceneRect(scene.artRect(of: .cooker(.grill, slot: 0))).center
         scene.settle(flatbread)
         scene.updateCookers(now: day.elapsed + 2)
 
@@ -184,18 +184,20 @@ struct KitchenStationTests {
 
     // MARK: - A plate added mid-run
 
-    /// The second plate goes in on the far left, so a dish already on the
-    /// first plate counts one further along.
+    /// The second plate goes in on its own spot, so what is on the first
+    /// stays there.
     @Test func aSecondPlateKeepsWhatIsOnTheFirst() throws {
         let (scene, day) = try makeScene()
-        let pepper = letGo(Menu.pepper, over: scene.artRect(of: .plate(0)), in: scene)
+        let firstPlate = scene.artRect(of: .plate(0))
+        let pepper = letGo(Menu.pepper, over: firstPlate, in: scene)
 
         day.tools = KitchenTools(plates: 2, glasses: 1)
         scene.syncTools()
 
         #expect(scene.plates.count == 2)
-        #expect(pepper.placement == .plate(1))
-        #expect(scene.plates[1].contents == [Menu.pepper])
+        #expect(pepper.placement == .plate(0))
+        #expect(scene.plates[0].contents == [Menu.pepper])
+        #expect(scene.artRect(of: .plate(0)) == firstPlate)
     }
 }
 
@@ -204,13 +206,91 @@ struct KitchenStationTests {
 extension KitchenStationTests {
 
     /// Food on the grill and plate is drawn big enough to fill the grill's
-    /// hot ring; what's in a glass is drawn as the whole glass, already at its size.
-    @Test func foodOnTheGrillAndPlateIsDrawnToFillTheCookware() {
-        let onCookware = KitchenScene.placedScale(on: .cooker(.grill, slot: 0)) * KitchenScene.bubbleArtRadius * 2
-            * KitchenBubbleNode.foodFill
+    /// hot ring.
+    @Test func foodOnTheCookwareIsDrawnToFillIt() {
+        let onCookware = KitchenScene.cookwareFoodScale * KitchenScene.bubbleArtRadius * 2 * KitchenBubbleNode.foodFill
 
         #expect(abs(onCookware - KitchenScene.cookwareFoodWidth) < 0.001)
-        #expect(KitchenScene.placedScale(on: .plate(0)) == KitchenScene.placedScale(on: .cooker(.grill, slot: 0)))
-        #expect(KitchenScene.placedScale(on: .glass(0)) == 1)
+    }
+
+    @Test func foodPutOnAPlateGrowsToFillIt() {
+        let pepper = KitchenBubbleNode(ingredient: Menu.pepper, radius: KitchenScene.bubbleArtRadius)
+        pepper.placement = .plate(0)
+
+        #expect(pepper.placedScale == KitchenScene.cookwareFoodScale)
+    }
+
+    /// What's in a glass is drawn as the whole glass, already at its size.
+    @Test func whatsInAGlassIsAlreadyItsSize() {
+        let tentacle = KitchenBubbleNode(ingredient: Menu.tentacle, radius: KitchenScene.bubbleArtRadius)
+        tentacle.placement = .glass(0)
+
+        #expect(tentacle.isDrawnAsWholeStation)
+        #expect(tentacle.placedScale == 1)
+    }
+}
+
+// MARK: - Planet 2
+
+extension KitchenStationTests {
+
+    /// Planet 2's counter has spots for two bowls but one cookie plate, so a
+    /// player owning two of each gets two bowls and one cookie plate.
+    @Test func planetTwoSetsOutTwoBowlsButOneCookiePlate() throws {
+        let (scene, _) = makeKitchenScene(level: try LevelLoader.load("2-4"), ownedPlates: 2, ownedGlasses: 2)
+
+        #expect(scene.plates.count == 2)
+        #expect(scene.glasses.count == 1)
+    }
+
+    /// A topping put in the bowl sits down inside it, cut off at the rim;
+    /// on Planet 1's plate food just sits on top.
+    @Test func aToppingInTheBowlSitsInsideIt() throws {
+        let (scene, _) = makeKitchenScene(level: try LevelLoader.load("2-1"))
+
+        let coral = letGo(Menu.coral, over: scene.artRect(of: .plate(0)), in: scene)
+
+        #expect(coral.placement == .plate(0))
+        #expect(coral.interior?.maskImage == "NoodleBowlRimMask")
+    }
+
+    @Test func foodOnAPlateSitsOnTop() throws {
+        let (scene, _) = try makeScene()
+
+        let pepper = letGo(Menu.pepper, over: scene.artRect(of: .plate(0)), in: scene)
+
+        #expect(pepper.placement == .plate(0))
+        #expect(pepper.interior == nil)
+    }
+
+    @Test func aToppingLiftedOutOfTheBowlIsWholeAgain() throws {
+        let (scene, _) = makeKitchenScene(level: try LevelLoader.load("2-1"))
+        let coral = letGo(Menu.coral, over: scene.artRect(of: .plate(0)), in: scene)
+
+        scene.unpark(coral)
+
+        #expect(coral.interior == nil)
+    }
+
+    @Test func noodlesLetGoOverThePotBoilThereDrawnAsTheWholePot() throws {
+        let (scene, _) = makeKitchenScene(level: try LevelLoader.load("2-1"))
+
+        let noodles = letGo(Menu.rawNoodles, over: scene.artRect(of: .cooker(.pot, slot: 0)), in: scene)
+
+        #expect(noodles.placement == .cooker(.pot, slot: 0))
+        #expect(noodles.isDrawnAsWholeStation)
+        #expect(noodles.placedScale == 1)
+    }
+
+    @Test func aNoodleDishMadeInTheBowlIsDrawnAsTheWholeBowl() throws {
+        let (scene, _) = makeKitchenScene(level: try LevelLoader.load("2-1"))
+        let bowl = scene.artRect(of: .plate(0))
+
+        letGo(Menu.boiledNoodles, over: bowl, in: scene)
+        letGo(Menu.coral, over: bowl, in: scene)
+        let dish = try #require(scene.bubbles.first { $0.ingredient == Menu.coralNoodles })
+
+        #expect(dish.isDrawnAsWholeStation)
+        #expect(dish.xScale == 1)
     }
 }
