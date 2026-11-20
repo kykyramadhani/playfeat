@@ -43,12 +43,11 @@ nonisolated struct KitchenUpgrade: Identifiable, Equatable {
 nonisolated enum KitchenShop {
     /// The ingredients tab, each with the bubble ingredient whose value it raises.
     static let ingredientUpgrades: [(ingredient: String, upgrade: KitchenUpgrade)] = [
-        ingredient(KitchenMenu.rawFlatbread, image: "FlatbreadRaw", upgradedTo: 16, price: 45, after: "1-1"),
-        ingredient(KitchenMenu.pepper, image: "Pepper", upgradedTo: 18, price: 35, after: "1-1"),
-        ingredient(KitchenMenu.mushroom, image: "GlowyMushroom", upgradedTo: 24, price: 30, after: "1-2"),
-        ingredient(KitchenMenu.tentacle, image: "KitchenTentacle", upgradedTo: 17, price: 25, after: "1-3"),
-        ingredient(KitchenMenu.slime, image: KitchenArt.image(of: KitchenMenu.slime), upgradedTo: 12, price: 25,
-                   after: "1-3"),
+        ingredient(KitchenMenu.rawFlatbread, upgradedTo: 16, price: 45, after: "1-1"),
+        ingredient(KitchenMenu.pepper, upgradedTo: 18, price: 35, after: "1-1"),
+        ingredient(KitchenMenu.mushroom, upgradedTo: 24, price: 30, after: "1-2"),
+        ingredient(KitchenMenu.tentacle, upgradedTo: 17, price: 25, after: "1-3"),
+        ingredient(KitchenMenu.slime, upgradedTo: 12, price: 25, after: "1-3"),
     ]
 
     static let upgrades: [KitchenUpgrade] = ingredientUpgrades.map(\.upgrade) + [
@@ -69,11 +68,13 @@ nonisolated enum KitchenShop {
         upgrades.first { $0.id == id }
     }
 
+    /// An ingredient's upgrade, shown with the premium look it buys.
     private static func ingredient(
-        _ item: String, image: String, upgradedTo value: Int, price: Int, after levelID: String
+        _ item: String, upgradedTo value: Int, price: Int, after levelID: String
     ) -> (ingredient: String, upgrade: KitchenUpgrade) {
         let base = DishPricing.baseValues[item] ?? 0
-        let upgrade = KitchenUpgrade(id: "ingredient.\(item)", tab: .ingredients, image: image, stat: .coins,
+        let upgrade = KitchenUpgrade(id: "ingredient.\(item)", tab: .ingredients,
+                                     image: KitchenArt.premiumImage(of: item), stat: .coins,
                                      values: [base, value], prices: [price], availableAfter: levelID)
         return (item, upgrade)
     }

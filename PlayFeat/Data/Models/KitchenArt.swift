@@ -20,6 +20,11 @@ nonisolated enum KitchenArt {
         premium(premiumImages[item], upgraded) ?? images[item] ?? item
     }
 
+    /// The ingredient's premium picture, as the shop shows its upgrade.
+    static func premiumImage(of ingredient: String) -> String {
+        image(of: ingredient, upgraded: [ingredient])
+    }
+
     /// A cooking tool's picture on the counter.
     static func image(of tool: CookingTool.Kind) -> String {
         switch tool {

@@ -49,6 +49,15 @@ struct KitchenShopTests {
 
     /// On Kepler-186f the tools tab only adds a plate and a glass: the grill
     /// upgrade waits for planet 2.
+    /// Each ingredient card shows the premium look the upgrade buys.
+    @Test func ingredientCardsShowThePremiumArt() {
+        let images = KitchenShop.upgrades(on: .ingredients).map(\.image)
+
+        #expect(images == [
+            "PremiumFlatbreadRaw", "PremiumPepper", "PremiumGlowyMushroom", "PremiumTentacle", "PremiumSlime",
+        ])
+    }
+
     @Test func theToolsTabSellsOnlyThePlateAndGlass() {
         #expect(KitchenShop.upgrades(on: .ingredients).count == KitchenShop.ingredientUpgrades.count)
         #expect(KitchenShop.upgrades(on: .tools).map(\.id) == [KitchenShop.plateID, KitchenShop.glassID])
