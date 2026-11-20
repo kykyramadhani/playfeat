@@ -27,7 +27,8 @@ struct SeatedAlien: View {
             SeatedAlien(imageName: AlienSpecies.regular.imageName(in: .yellow),
                         pose: KitchenLayout.seats[index].alienPose)
         }
-        Image("KitchenCounter")
+        Image("TruckWall")
+        Image("TruckCounter")
     }
     .frame(width: KitchenLayout.artSize.width, height: KitchenLayout.artSize.height, alignment: .topLeading)
     .scaleEffect(0.5)

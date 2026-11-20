@@ -8,7 +8,9 @@
 //  a wide MacBook screen too. Everything placed on it — props and
 //  customers — is measured in that picture's points (origin top-left) and
 //  mapped onto the screen here, so the SwiftUI art and the SpriteKit hit
-//  areas always line up.
+//  areas always line up. The truck around it is the exception: its walls
+//  stick to the screen's edges (`truckBands`), so a wider screen just opens
+//  a wider window.
 //
 
 import CoreGraphics
@@ -20,7 +22,7 @@ nonisolated struct KitchenLayout {
 
     /// Aspect-fit: the whole art shows. On a screen wider than the art (every
     /// Mac and most iPads) it fills the height and leaves a margin each side,
-    /// which `KitchenBackdrop` fills by stretching the truck's walls.
+    /// which the truck's walls and counter reach across (`truckBands`).
     var scale: CGFloat {
         min(screenSize.width / Self.artSize.width, screenSize.height / Self.artSize.height)
     }
@@ -156,20 +158,27 @@ nonisolated extension KitchenLayout {
         let alienPose: AlienPose
         let orderSheet: CGRect
 
-        /// How far the alien moves to be just off screen on its side, in art
-        /// points: past the far edge of the whole drawn picture.
-        var offstageOffset: CGSize {
-            let drawn = alienPose.drawnBounds
-            return switch entersFrom {
-            case .left: CGSize(width: -drawn.maxX, height: 0)
-            case .top: CGSize(width: 0, height: -drawn.maxY)
-            }
-        }
-
         /// Where a dish is handed over: one invisible box around the alien
         /// and its order sheet, so the player only has to get the dish near
         /// the customer, not onto the drawing itself.
         var serveArea: CGRect { alien.union(orderSheet) }
+
+        /// This seat moved `distance` art points to the right (left if
+        /// negative), its alien and order sheet together.
+        func movedSideways(by distance: CGFloat) -> Seat {
+            let pose = AlienPose(
+                center: CGPoint(x: alienPose.center.x + distance, y: alienPose.center.y),
+                isMirrored: alienPose.isMirrored,
+                turnDegrees: alienPose.turnDegrees
+            )
+            return Seat(
+                customerType: customerType,
+                entersFrom: entersFrom,
+                alien: alien.offsetBy(dx: distance, dy: 0),
+                alienPose: pose,
+                orderSheet: orderSheet.offsetBy(dx: distance, dy: 0)
+            )
+        }
     }
 
     /// How a seat's alien is drawn. Every alien picture is in one pose,
@@ -211,4 +220,78 @@ nonisolated extension KitchenLayout {
 
 extension CGRect {
     var center: CGPoint { CGPoint(x: midX, y: midY) }
+}
+
+// MARK: - The truck around the art
+
+nonisolated extension KitchenLayout {
+    /// The truck art's plain middle, in art points. Inside it the window's
+    /// edges and the counter's front edge run level, so it can be widened
+    /// without bending anything; outside it the walls, the counter's slanted
+    /// ends and the chains keep their drawn shape.
+    static let truckStretchBand: ClosedRange<CGFloat> = 400...966
+
+    /// One upright band of a truck layer and where it lands on screen.
+    struct TruckBand: Equatable {
+        /// The band's left and right edges on the art.
+        let artSpan: ClosedRange<CGFloat>
+        /// Where the band is drawn, in view points.
+        let screenRect: CGRect
+
+        /// Where the whole layer is drawn so this band lands on `screenRect`.
+        /// Clip it to `screenRect` to show only the band.
+        var layerRect: CGRect {
+            let widthScale = screenRect.width / (artSpan.upperBound - artSpan.lowerBound)
+            return CGRect(
+                x: screenRect.minX - artSpan.lowerBound * widthScale,
+                y: screenRect.minY,
+                width: KitchenLayout.artSize.width * widthScale,
+                height: screenRect.height
+            )
+        }
+    }
+
+    /// The truck's left and right bands stuck to the screen's edges at the
+    /// art's scale, and the middle band widened to meet them. On a screen
+    /// the art's shape the three bands tile the art exactly.
+    var truckBands: [TruckBand] {
+        let top = viewPoint(.zero).y
+        let height = Self.artSize.height * scale
+        let middle = Self.truckStretchBand
+        let leftWidth = middle.lowerBound * scale
+        let rightWidth = (Self.artSize.width - middle.upperBound) * scale
+
+        let left = CGRect(x: 0, y: top, width: leftWidth, height: height)
+        let right = CGRect(x: screenSize.width - rightWidth, y: top, width: rightWidth, height: height)
+        let centre = CGRect(x: left.maxX, y: top, width: right.minX - left.maxX, height: height)
+        return [
+            TruckBand(artSpan: 0...middle.lowerBound, screenRect: left),
+            TruckBand(artSpan: middle, screenRect: centre),
+            TruckBand(artSpan: middle.upperBound...Self.artSize.width, screenRect: right),
+        ]
+    }
+
+    /// The seat at `index` as placed on this screen. The walls stand at the
+    /// screen's edges, not the art's, so on a wider screen each seat moves
+    /// out with the wall on its side of the art, keeping its customer leaning
+    /// on that wall (and sliding all the way behind it to leave).
+    func seat(at index: Int) -> Seat {
+        let seat = Self.seats[index]
+        let wallShift = sideMargin / scale
+        let isOnTheLeft = seat.alien.midX < Self.artSize.width / 2
+        return seat.movedSideways(by: isOnTheLeft ? -wallShift : wallShift)
+    }
+
+    /// How far the customer at seat `index` slides to be out of sight behind
+    /// its wall, in art points: until the far edge of its whole picture
+    /// passes the art's edge. Taken from the seat as drawn: a seat moved out
+    /// with its wall (`seat(at:)`) has just as far to go.
+    static func offstageOffset(ofSeatAt index: Int) -> CGSize {
+        let seat = seats[index]
+        let drawn = seat.alienPose.drawnBounds
+        return switch seat.entersFrom {
+        case .left: CGSize(width: -drawn.maxX, height: 0)
+        case .top: CGSize(width: 0, height: -drawn.maxY)
+        }
+    }
 }
