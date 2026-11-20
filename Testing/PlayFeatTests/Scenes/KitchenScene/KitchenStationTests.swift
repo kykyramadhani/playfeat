@@ -200,24 +200,82 @@ struct KitchenStationTests {
         #expect(scene.artRect(of: .plate(0)) == firstPlate)
     }
 
-    // MARK: - A marathon's new round
+    // MARK: - A dish let go away from the customers
 
-    /// A new round starts from a bare kitchen: nothing cooking, nothing on
-    /// the plates or in the glasses, and the plates earned still out.
-    @Test func clearingTheKitchenEmptiesEveryToolButKeepsThePlates() throws {
+    /// Mid-air, clear of every station and serve area.
+    private static let midAir = CGPoint(x: 683, y: 400)
+
+    /// Makes a mushroom flatbread on the first plate and lifts it off, as a
+    /// hand picking it up would.
+    private func liftedDish(in scene: KitchenScene) throws -> KitchenBubbleNode {
+        letGo(Menu.bakedFlatbread, over: scene.artRect(of: .plate(0)), in: scene)
+        letGo(Menu.mushroom, over: scene.artRect(of: .plate(0)), in: scene)
+        let dish = try #require(scene.bubbles.first { $0.placement == .plate(0) })
+        dish.liftedFrom = dish.placement
+        scene.unpark(dish)
+        dish.position = scene.layout.scenePoint(Self.midAir)
+        return dish
+    }
+
+    /// A finished dish takes a while to make, so a missed release doesn't
+    /// lose it.
+    @Test func aDishLetGoInMidAirGoesBackToItsPlate() throws {
+        let (scene, _) = try makeScene()
+        let dish = try liftedDish(in: scene)
+
+        scene.settle(dish)
+
+        #expect(dish.placement == .plate(0))
+        #expect(dish.fallingSince == nil)
+        #expect(scene.plates[0].contents == [Menu.mushroomFlatbread])
+    }
+
+    @Test func aDishLetGoOverTheGrillGoesBackToItsPlate() throws {
+        let (scene, _) = try makeScene()
+        let dish = try liftedDish(in: scene)
+        dish.position = scene.layout.sceneRect(scene.artRect(of: .cooker(.grill, slot: 0))).center
+
+        scene.settle(dish)
+
+        #expect(dish.placement == .plate(0))
+    }
+
+    /// Its own plate has been used since, so it goes to another that takes it.
+    @Test func aDishWhosePlateIsTakenGoesToAnotherPlate() throws {
         let (scene, day) = try makeScene()
         day.tools = KitchenTools(plates: 2, glasses: 1)
         scene.syncTools()
-        letGo(Menu.rawFlatbread, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
-        letGo(Menu.pepper, over: scene.artRect(of: .plate(1)), in: scene)
-        letGo(Menu.tentacle, over: scene.artRect(of: .glass(0)), in: scene)
+        let dish = try liftedDish(in: scene)
+        letGo(Menu.pepper, over: scene.artRect(of: .plate(0)), in: scene)
 
-        scene.clearKitchen()
+        scene.settle(dish)
 
-        #expect(scene.bubbles.isEmpty)
-        #expect(scene.cookers.values.allSatisfy { $0.slots.allSatisfy { $0 == nil } })
-        #expect(scene.plates.count == 2)
-        #expect((scene.plates + scene.glasses).allSatisfy { $0.contents.isEmpty })
+        #expect(dish.placement == .plate(1))
+    }
+
+    @Test func aDishWithNoFreePlateFalls() throws {
+        let (scene, _) = try makeScene()
+        let dish = try liftedDish(in: scene)
+        letGo(Menu.pepper, over: scene.artRect(of: .plate(0)), in: scene)
+
+        scene.settle(dish)
+
+        #expect(dish.placement == nil)
+        #expect(dish.fallingSince != nil)
+    }
+
+    /// Only finished dishes go back: an ingredient off the plate still falls.
+    @Test func anIngredientLetGoInMidAirStillFalls() throws {
+        let (scene, _) = try makeScene()
+        let pepper = letGo(Menu.pepper, over: scene.artRect(of: .plate(0)), in: scene)
+        pepper.liftedFrom = pepper.placement
+        scene.unpark(pepper)
+        pepper.position = scene.layout.scenePoint(Self.midAir)
+
+        scene.settle(pepper)
+
+        #expect(pepper.placement == nil)
+        #expect(pepper.fallingSince != nil)
     }
 }
 

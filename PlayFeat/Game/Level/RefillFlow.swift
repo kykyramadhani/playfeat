@@ -7,8 +7,10 @@
 //  only once they step up. Each counter spot has its own timer; the first
 //  customer steps up at once and the other spots fill `refillDelaySec`
 //  apart. When a spot frees, the next customer steps up `refillDelaySec`
-//  later. Nobody new comes after the day's duration, but whoever is at the
-//  counter can still be served (overtime); the day ends once they're gone.
+//  later. Nobody new comes in the day's last `closingSec` (after 70 s of a
+//  90 s day), so every order taken can still be finished. Whoever is at the
+//  counter when the clock runs out can still be served (overtime); the day
+//  ends once they're gone.
 //
 
 import Foundation
@@ -35,13 +37,15 @@ nonisolated struct RefillFlow: CustomerFlow {
         bubblePool = level.pool
         angryOrder = PlanetCatalog.planet(level.planet).kitchen.angryOrder
         self.random = AnyRandomNumberGenerator(random)
-        stepUpTimes = Self.openingStepUps(from: 0, refill: refill)
+        stepUpTimes = (0..<refill.counterSpots).map { TimeInterval($0) * refill.refillDelaySec }
     }
 
-    /// Each spot's first customer, a refill delay apart from `start`.
-    private static func openingStepUps(from start: TimeInterval, refill: LevelData.Refill) -> [TimeInterval?] {
-        (0..<refill.counterSpots).map { start + TimeInterval($0) * refill.refillDelaySec }
-    }
+    /// The end of the day nobody new steps up in: a customer arriving later
+    /// couldn't have their order made before the clock runs out.
+    static let closingSec: TimeInterval = 20
+
+    /// Customers step up until this play time.
+    var lastArrivalSec: TimeInterval { durationSec - Self.closingSec }
 
     var counterSpots: Int { refill.counterSpots }
     var customerSpacing: TimeInterval? { nil }
@@ -51,12 +55,8 @@ nonisolated struct RefillFlow: CustomerFlow {
         angryAt: [], angryEvery: nil, patienceSec: 0, angryPatienceSec: 0
     )
 
-    mutating func counterCleared(at time: TimeInterval) {
-        stepUpTimes = Self.openingStepUps(from: time, refill: refill)
-    }
-
     mutating func arrivals(at time: TimeInterval, atCounter: Int) -> [Arrival] {
-        guard time < durationSec else { return [] }
+        guard time < lastArrivalSec else { return [] }
         var arrivals: [Arrival] = []
         for spot in stepUpTimes.indices {
             guard let due = stepUpTimes[spot], time >= due, atCounter + arrivals.count < counterSpots else { continue }

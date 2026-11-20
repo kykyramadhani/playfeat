@@ -143,20 +143,18 @@ struct MarathonSessionTests {
         #expect(!session.isRoundEnding)
     }
 
-    /// The next round doesn't carry on where the last stopped: whoever was
-    /// waiting leaves without counting as lost, and one customer steps up.
-    @Test func aNewRoundStartsFromAnEmptyCounter() {
+    /// The next round carries on where the last stopped: the customers
+    /// waiting at the break are still there, with the same orders.
+    @Test func aNewRoundCarriesOnWithTheSameCustomers() {
         let session = makeSession()
         play(session.day, to: 20)
-        let lostBefore = session.lostCustomers
-        #expect(session.day.presentCustomers.count == 2)
+        let waiting = session.day.presentCustomers.map { "\($0.seat) \($0.dish) \($0.seatedAt)" }
+        #expect(!waiting.isEmpty)
 
         session.startBreak()
         session.endBreak()
 
-        #expect(session.day.presentCustomers.count == 1)
-        #expect(session.day.presentCustomers.allSatisfy { $0.seatedAt == session.day.elapsed })
-        #expect(session.lostCustomers == lostBefore)
+        #expect(session.day.presentCustomers.map { "\($0.seat) \($0.dish) \($0.seatedAt)" } == waiting)
     }
 
     // MARK: - Cards

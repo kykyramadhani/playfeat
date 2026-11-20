@@ -62,6 +62,11 @@ nonisolated enum KitchenMenu {
         starCookie: [seaCookie, starfishSugar],
     ]
 
+    /// Whether `item` is a finished dish a customer can order.
+    static func isDish(_ item: String) -> Bool {
+        recipes[item] != nil
+    }
+
     /// What bubbles have to bring for `dish`: its recipe, with anything
     /// cooked caught raw, since the tools do the cooking.
     static func bubbleIngredients(of dish: String) -> Set<String> {

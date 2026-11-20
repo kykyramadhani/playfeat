@@ -175,9 +175,15 @@ final class KitchenScene: SKScene {
         )
     }
 
-    /// Still a bubble drifting through the window: not carried, put down or falling.
+    /// Still a bubble drifting through the window: not carried, put down,
+    /// falling or frozen in the air.
     private func isFloating(_ node: KitchenBubbleNode) -> Bool {
-        node.heldBy == nil && node.placement == nil && node.fallingSince == nil
+        isLoose(node) && node.fallingSince == nil
+    }
+
+    /// Moving on its own: not carried, put down or frozen in the air.
+    private func isLoose(_ node: KitchenBubbleNode) -> Bool {
+        node.heldBy == nil && node.placement == nil && !node.isFrozenInAir
     }
 
     /// Close enough to where bubbles come in that a new one would overlap it.
@@ -218,7 +224,7 @@ final class KitchenScene: SKScene {
         // before its centre would reach the window's bottom edge.
         let drift = motion.bubbleVelocity(crossing: window.height - bubbleRadius, lifeSec: level.bubbleLifeSec)
 
-        for node in bubbles where node.heldBy == nil && node.placement == nil {
+        for node in bubbles where isLoose(node) {
             // A refused item's fall starts a moment ahead: until then it hangs.
             let velocity = node.fallingSince.map { motion.releasedVelocity(after: now - $0) } ?? drift
             node.position.x += velocity.dx * playDelta
@@ -258,7 +264,9 @@ final class KitchenScene: SKScene {
 
     /// Serves, puts down, refuses or drops `node`, depending on where it was
     /// let go, in the prototype's order: a dish at a customer first, then
-    /// the grill and the plates and glasses, else it falls.
+    /// the grill and the plates and glasses. A finished dish let go anywhere
+    /// else goes back to its plate, since it took a while to make; anything
+    /// else falls.
     func settle(_ node: KitchenBubbleNode) {
         node.heldBy = nil
         node.zPosition = 2
@@ -266,12 +274,12 @@ final class KitchenScene: SKScene {
 
         if let seat = customerSeat(around: node) {
             serveOrReject(node, at: seat)
+        } else if let station = station(taking: node) {
+            put(node, on: station)
+        } else if KitchenMenu.isDish(node.ingredient), let home = home(for: node) {
+            sendBack(node, to: home)
         } else if let station = station(under: node) {
-            if accepts(node.ingredient, on: station) {
-                put(node, on: station)
-            } else {
-                refuse(node, at: station)
-            }
+            refuse(node, at: station)
         } else {
             drop(node)
         }
@@ -280,10 +288,39 @@ final class KitchenScene: SKScene {
     /// Hangs `node` where it was let go for a moment, out of reach, while
     /// the station that turned it away shakes red; then it falls.
     func refuse(_ node: KitchenBubbleNode, at station: KitchenBubbleNode.Placement) {
-        node.fallingSince = (day?.elapsed ?? 0) + KitchenRules.refuseHoldSec
+        hangThenFall(node)
         shakeRed(station)
         audio?.play(.wrongIngredient)
     }
+
+    /// Leaves `node` hanging where it was let go for a moment, out of
+    /// reach, so the player sees it turned away; then it falls.
+    func hangThenFall(_ node: KitchenBubbleNode) {
+        node.fallingSince = (day?.elapsed ?? 0) + KitchenRules.refuseHoldSec
+    }
+
+    /// Where a dish let go away from the customers goes: the plate or glass
+    /// it was lifted off, or, if that has been used since, any other that
+    /// takes it.
+    private func home(for dish: KitchenBubbleNode) -> KitchenBubbleNode.Placement? {
+        if let liftedFrom = dish.liftedFrom, accepts(dish.ingredient, on: liftedFrom) { return liftedFrom }
+        return stations.first { $0.isForAssembly && accepts(dish.ingredient, on: $0) }
+    }
+
+    /// Puts `dish` back down on `station`, gliding there from where it was
+    /// let go rather than jumping.
+    private func sendBack(_ dish: KitchenBubbleNode, to station: KitchenBubbleNode.Placement) {
+        let letGoAt = dish.position
+        put(dish, on: station)
+        guard dish.placement == station else { return }
+        dish.removeAllActions()
+        dish.position = letGoAt
+        let glide = SKAction.move(to: centre(of: station), duration: Self.sendBackDuration)
+        glide.timingMode = .easeOut
+        dish.run(.group([glide, .scale(to: dish.placedScale, duration: Self.sendBackDuration)]))
+    }
+
+    private static let sendBackDuration: TimeInterval = 0.35
 
     /// Lets `node` fall (or, under flipped gravity, float) from where it was
     /// let go, down behind the table; let go over the table itself, it goes
@@ -346,21 +383,4 @@ final class KitchenScene: SKScene {
         node.pop()
     }
 
-    /// Pops every item, in the window, in a hand or put down, and empties
-    /// the cooking tools, plates and glasses: a marathon's new round starts
-    /// from a bare kitchen. The plates and glasses earned stay out.
-    func clearKitchen() {
-        soundscape?.clearCooking()
-        for node in bubbles { remove(node) }
-        for id in hands.keys { hands[id]?.held = nil }
-        for (tool, cooker) in cookers {
-            for slot in cooker.slots.indices { cookers[tool]?.clear(slot) }
-        }
-        cookingGauges.values.forEach { $0.removeFromParent() }
-        cookingGauges.removeAll()
-        if let kitchen {
-            plates = plates.map { _ in kitchen.mainStation }
-            glasses = glasses.map { _ in kitchen.dessertStation }
-        }
-    }
 }

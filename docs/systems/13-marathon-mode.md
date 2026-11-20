@@ -12,9 +12,9 @@ A run begins at round 1 with one plate, no glass, base dish pricing, one grill s
 
 Each round lasts 90 seconds of **play time**. `day.roundEndsAt` starts at 90 and increases by 90 after each break. The same customers, items, score and cooking state remain, rather than constructing another day.
 
-At a round boundary, `KitchenDay.tick` holds the clock because `isRoundOver` is true. `KitchenView.startBreak` asks for cards and presents `RoundCompleteOverlay`. The overlay has its own 15-second countdown and continues automatically with the selected card, or without a purchase if skipped. Continuing advances the deadline, updates grill upgrades and dismisses the break.
+At a round boundary, `KitchenDay.tick` holds the clock because `isRoundOver` is true. `KitchenView.startBreak` asks for cards and presents `RoundCompleteOverlay`. The overlay has its own 15-second countdown and continues automatically with the selected card, or without a purchase if skipped. Continuing advances the deadline, updates grill upgrades and dismisses the break; a 3-2-1 plays before play time runs again.
 
-Rendering is not universally paused during a round break: play time and interaction are gated, while the view/scene can still render. The hand interaction gate settles carried items when play is unavailable. Treat "freeze" in comments as a statement about play time/rules, not proof that every cursor or presentation animation stops.
+Rendering is not universally paused during a round break: play time and interaction are gated, while the view/scene can still render. When a round ends mid-carry, carried items are not settled: they freeze where the hand held them (`isFrozenInAir`), out of gravity's reach, and stay there into the next round until a hand grabs them again. Any other stop (pause, app leaving the foreground, the run ending) settles carried items as usual. Treat "freeze" in comments as a statement about play time/rules, not proof that every cursor or presentation animation stops.
 
 ## Customer difficulty and stages
 

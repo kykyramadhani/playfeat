@@ -28,10 +28,6 @@ protocol CustomerFlow {
     /// A counter spot emptied at `time`: served or given up.
     nonisolated mutating func spotFreed(at time: TimeInterval)
 
-    /// Everyone left the counter at `time`, neither served nor lost (a
-    /// marathon's new round): customers step up again as at the opening bell.
-    nonisolated mutating func counterCleared(at time: TimeInterval)
-
     /// A dish was served; `served` counts it.
     nonisolated mutating func dishServed(totalServed served: Int)
 

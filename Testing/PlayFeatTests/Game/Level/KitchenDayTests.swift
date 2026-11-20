@@ -84,19 +84,27 @@ struct KitchenDayTests {
         #expect(day.presentCustomers.count == 1)
     }
 
-    /// Clearing the counter sends everyone away unserved and unlost, and the
-    /// spots fill again as at the opening bell, from now.
-    @Test func aClearedCounterFillsAgainAsAtTheOpeningBell() {
-        let day = makeDay(makeLevel(counterSpots: 2, patienceSec: 200))
-        run(day, to: 10)
-        #expect(day.presentCustomers.count == 2)
+    /// Nobody new steps up in the day's last 20 s, so every order taken can
+    /// still be made: a spot freed at 69 s would refill at 71 s, too late.
+    @Test func noNewCustomerStepsUpAfterSeventySeconds() {
+        let day = makeDay(makeLevel(patienceSec: 200))
+        run(day, to: 69)
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
 
-        day.clearCounter()
+        run(day, to: 85, from: 69.2)
+
+        #expect(day.presentCustomers.isEmpty)
+    }
+
+    /// A spot freed at 67 s refills at 69 s, still before the cutoff.
+    @Test func aRefillDueBeforeSeventySecondsStillStepsUp() {
+        let day = makeDay(makeLevel(patienceSec: 200))
+        run(day, to: 67)
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+
+        run(day, to: 69.6, from: 67.2)
 
         #expect(day.presentCustomers.count == 1)
-        #expect(day.presentCustomers.allSatisfy { $0.seatedAt == day.elapsed })
-        #expect(day.ordersMissed == 0)
-        #expect(day.ordersDelivered == 0)
     }
 
     @Test func theLevelsAngryCustomersOrderTheDessert() {

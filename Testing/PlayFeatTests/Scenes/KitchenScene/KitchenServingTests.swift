@@ -52,15 +52,33 @@ struct KitchenServingTests {
         #expect(day.presentCustomers.map(\.dish) == [KitchenMenu.mushroomFlatbread])
     }
 
-    /// As in the prototype, a dish the customer didn't order is turned away
-    /// and lost.
-    @Test func aWrongDishAtACustomerIsTurnedAwayAndLost() throws {
+    /// A dish the customer didn't order is turned away: it hangs for a
+    /// moment under the red cross, then falls.
+    @Test func aWrongDishAtACustomerIsTurnedAwayAndFalls() throws {
         let (scene, day) = makeScene()
         let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
 
         let dish = letGo(KitchenMenu.slimyTentacles, atArtPoint: KitchenLayout.seats[seat].orderSheet.center, in: scene)
 
-        #expect(!scene.bubbles.contains { $0 === dish })
+        #expect(dish.isRefused(at: day.elapsed))
+        #expect(day.points == 0)
+        #expect(day.presentCustomers.count == 2)
+    }
+
+    /// A flatbread lifted off the plate before its topping went on is
+    /// turned away like any wrong dish, rather than falling past.
+    @Test func aPlateMissingItsToppingIsTurnedAwayLikeAWrongDish() throws {
+        let (scene, day) = makeScene()
+        let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
+        let flatbread = KitchenBubbleNode(ingredient: KitchenMenu.bakedFlatbread, radius: 80)
+        flatbread.liftedFrom = .plate(0)
+        flatbread.position = scene.layout.scenePoint(KitchenLayout.seats[seat].orderSheet.center)
+        scene.addChild(flatbread)
+        scene.bubbles.append(flatbread)
+
+        scene.settle(flatbread)
+
+        #expect(flatbread.isRefused(at: day.elapsed))
         #expect(day.points == 0)
         #expect(day.presentCustomers.count == 2)
     }

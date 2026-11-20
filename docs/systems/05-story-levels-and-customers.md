@@ -61,7 +61,7 @@ stars = count of level targets reached by total income
 
 A customer giving up loses up to 10 **points**, capped by currently available points; accumulated tips are not deducted. Story tips are 5 when more than half the patience remains, 2 from 20% through 50%, and 0 below 20%. Angry story customers double that tip.
 
-An unupgraded pepper flatbread pays 20; a quick green-zone serve adds 5, giving total income 25. On Level 1, that reaches the first target (20) but not the second (40). A wrong dish rejected by the scene is not the same as a timed-out customer: rejection removes the item, while the waiting customer's own patience continues.
+An unupgraded pepper flatbread pays 20; a quick green-zone serve adds 5, giving total income 25. On Level 1, that reaches the first target (20) but not the second (40). A wrong dish rejected by the scene is not the same as a timed-out customer: rejection shows a red cross and the item hangs for `KitchenRules.refuseHoldSec`, then falls, while the waiting customer's own patience continues. Anything lifted off a plate or glass counts as a dish here, so a flatbread missing its topping is turned away the same way. A finished dish let go away from every customer is not lost: it glides back to the plate or glass it came from, or to any other that takes it, and only falls if none can.
 
 ## Current level values
 
@@ -80,7 +80,7 @@ These values are snapshots of the bundled JSON. Energy is currently UI informati
 
 ## Overtime and results
 
-At 90 seconds, `RefillFlow` stops creating new customers. The day ends only when the counter and waiting queue are empty. Existing customers can still be served; bubbles keep arriving in overtime while the day is running.
+From 70 seconds (`durationSec - RefillFlow.closingSec`), `RefillFlow` stops creating new customers, so every order taken can still be made before the clock runs out. Marathons have no such cutoff. The day ends only when the counter and waiting queue are empty. Existing customers can still be served; bubbles keep arriving in overtime while the day is running.
 
 When `day.isOver` changes to true, `KitchenView.endDay` pauses play, stops music/camera, reads the previous best stars, banks the day, and creates a `LevelReport`. Best stars only increase; day income is added to the global coin balance. The report remains over the frozen kitchen. Stars reveal in place; there are currently no flying-star effects or extra report fuel gauge.
 

@@ -26,6 +26,12 @@ final class KitchenBubbleNode: SKNode {
         /// (`PlanetKitchen`).
         case plate(Int)
         case glass(Int)
+
+        /// A plate or glass, where a dish is put together, rather than a
+        /// cooking tool.
+        var isForAssembly: Bool {
+            if case .cooker = self { false } else { true }
+        }
     }
 
     private(set) var ingredient: String
@@ -41,6 +47,13 @@ final class KitchenBubbleNode: SKNode {
     var fallingSince: TimeInterval?
     /// The lane a bubble came in on; nil for anything that didn't.
     var lane: Int?
+    /// The station the hand last lifted it off; nil if it was grabbed out
+    /// of the air. A finished dish let go away from the customers goes back
+    /// there, and anything off a plate or glass counts as a dish to them.
+    var liftedFrom: Placement?
+    /// Left where a hand held it when a marathon round ended: it hangs
+    /// there, out of gravity's reach, until a hand grabs it again.
+    var isFrozenInAir = false
     /// How long this item has cooked on a cooking tool (grill, pot), raw or
     /// done, so one taken off and put back on carries on from there.
     var cookedSeconds: TimeInterval?

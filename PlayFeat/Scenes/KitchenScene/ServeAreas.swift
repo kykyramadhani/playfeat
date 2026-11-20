@@ -6,24 +6,31 @@
 //  Handing a finished dish to a customer. Each position has an invisible
 //  serve area around the alien and its order sheet. A customer pulls in the
 //  dish they ordered as soon as it is carried near, like a magnet, without
-//  the hand having to open. Any other dish let go in there is turned away
-//  with a red cross and lost, as in the prototype. The payment and the
-//  customer leaving are KitchenDay's.
+//  the hand having to open. Any other dish let go in there, or anything
+//  lifted off a plate or glass (a flatbread missing its topping), is turned
+//  away with a red cross and falls. The payment and the customer leaving
+//  are KitchenDay's.
 //
 
 import SpriteKit
 
 extension KitchenScene {
 
-    /// The customer a let-go `node` is handed to, if it is a dish let go in
-    /// a customer's serve area. Where two areas overlap, the customer who
+    /// The customer a let-go `node` is handed to, if it is offered as a dish
+    /// in a customer's serve area. Where two areas overlap, the customer who
     /// wants the dish wins.
     func customerSeat(around node: KitchenBubbleNode) -> Int? {
-        guard let day, KitchenMenu.recipes[node.ingredient] != nil else { return nil }
+        guard let day, isOfferedAsDish(node) else { return nil }
         let reached = KitchenLayout.seats.indices.filter { seat in
             day.isOccupied(seat) && layout.sceneRect(layout.seat(at: seat).serveArea).contains(node.position)
         }
         return reached.first { day.wants(node.ingredient, at: $0) } ?? reached.first
+    }
+
+    /// A finished dish, or anything served up off a plate or glass. A bare
+    /// ingredient from the air just falls past the customers.
+    private func isOfferedAsDish(_ node: KitchenBubbleNode) -> Bool {
+        KitchenMenu.isDish(node.ingredient) || (node.liftedFrom?.isForAssembly ?? false)
     }
 
     /// The seat whose serve area holds `point` and whose customer ordered
@@ -49,7 +56,7 @@ extension KitchenScene {
     }
 
     /// Serves the customer at `seat` if they ordered `node`; otherwise the
-    /// dish is turned away and lost.
+    /// dish is turned away and falls.
     func serveOrReject(_ node: KitchenBubbleNode, at seat: Int) {
         if let day, day.serve(node.ingredient, at: seat) {
             audio?.play(.putOrder)
@@ -58,7 +65,7 @@ extension KitchenScene {
         } else {
             audio?.play(.wrongIngredient)
             showCross(at: layout.sceneRect(layout.seat(at: seat).orderSheet).center)
-            remove(node)
+            hangThenFall(node)
         }
     }
 

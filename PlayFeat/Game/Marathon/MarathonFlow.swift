@@ -60,10 +60,6 @@ nonisolated struct MarathonFlow: CustomerFlow {
 
     mutating func spotFreed(at time: TimeInterval) {}
 
-    mutating func counterCleared(at time: TimeInterval) {
-        nextArrivalAt = time
-    }
-
     mutating func dishServed(totalServed served: Int) {
         dishesServed = served
         patience = max(Self.patienceFloor, patience * Self.patienceDecay)
