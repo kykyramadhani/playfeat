@@ -15,8 +15,26 @@ struct LevelCard: View {
     let isLocked: Bool
 
     private static let size = CGSize(width: 208.5, height: 134.9)
-    private static let starSize: CGFloat = 53
+    private static let faceSize = CGSize(width: 188.7, height: 111.3)
+    static let starSize: CGFloat = 53
+    private static let starSpacing: CGFloat = 3.4
+    private static let starRowTop: CGFloat = 3.8
+    /// How much lower the side stars sit than the middle one.
+    private static let sideStarDrop: CGFloat = 16.7
     private static let maxStars = 3
+
+    /// The centre of star `index` (0 is the left one), in card points, so a
+    /// newly earned star can fly off the card from where it's drawn.
+    static func starCenter(_ index: Int) -> CGPoint {
+        let rowWidth = starSize * CGFloat(maxStars) + starSpacing * CGFloat(maxStars - 1)
+        let rowLeft = (size.width - rowWidth) / 2
+        let faceTop = (size.height - faceSize.height) / 2
+        let drop = index == 1 ? 0 : sideStarDrop
+        return CGPoint(
+            x: rowLeft + (starSize + starSpacing) * CGFloat(index) + starSize / 2,
+            y: faceTop + starRowTop + drop + starSize / 2
+        )
+    }
 
     var body: some View {
         RoundedRectangle(cornerRadius: 11.6)
@@ -33,8 +51,8 @@ struct LevelCard: View {
     private var face: some View {
         RoundedRectangle(cornerRadius: 6.9)
             .fill(.white)
-            .frame(width: 188.7, height: 111.3)
-            .overlay(alignment: .top) { starRow.padding(.top, 3.8) }
+            .frame(width: Self.faceSize.width, height: Self.faceSize.height)
+            .overlay(alignment: .top) { starRow.padding(.top, Self.starRowTop) }
             .overlay {
                 Text(verbatim: "\(number)")
                     .font(.atkinson(size: 45, weight: .bold))
@@ -45,13 +63,13 @@ struct LevelCard: View {
 
     /// The middle star sits higher than its neighbours.
     private var starRow: some View {
-        HStack(alignment: .top, spacing: 3.4) {
+        HStack(alignment: .top, spacing: Self.starSpacing) {
             ForEach(0..<Self.maxStars, id: \.self) { index in
                 Image("LevelStar")
                     .resizable()
                     .frame(width: Self.starSize, height: Self.starSize)
                     .foregroundStyle(isEarned(index) ? Color.starYellow : Color.starEmpty)
-                    .padding(.top, index == 1 ? 0 : 16.7)
+                    .padding(.top, index == 1 ? 0 : Self.sideStarDrop)
             }
         }
     }

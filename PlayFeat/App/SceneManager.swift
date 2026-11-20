@@ -47,9 +47,29 @@ final class SceneManager {
     /// until the player moves on.
     private(set) var levelReport: LevelReport?
 
-    /// Keeps the kitchen mounted behind the finished day's report.
+    /// Keeps the kitchen mounted behind the finished day's report, and keeps
+    /// any stars it added for the planet board to fly to its fuel gauge.
     func showReport(_ report: LevelReport) {
         levelReport = report
+        if let delivery = StarDelivery(report: report) { keep(delivery) }
+    }
+
+    /// Stars earned since the planet board last showed them, in the order
+    /// they were earned. NEXT can play several levels before the board is
+    /// seen again; a level played twice keeps one delivery.
+    private(set) var starDeliveries: [StarDelivery] = []
+
+    /// The board has flown the stars earned on `levelIDs` to its gauge.
+    func markStarsDelivered(on levelIDs: [String]) {
+        starDeliveries.removeAll { levelIDs.contains($0.levelID) }
+    }
+
+    private func keep(_ delivery: StarDelivery) {
+        if let index = starDeliveries.firstIndex(where: { $0.levelID == delivery.levelID }) {
+            starDeliveries[index] = starDeliveries[index].followed(by: delivery)
+        } else {
+            starDeliveries.append(delivery)
+        }
     }
 
     /// NEXT opens the following level on the same planet; the planet's

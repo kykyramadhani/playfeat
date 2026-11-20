@@ -235,6 +235,54 @@ struct SceneManagerTests {
         #expect(manager.levelReport == nil)
     }
 
+    // MARK: - Stars for the fuel gauge
+
+    /// A day that beat the level's best leaves its new stars for the board.
+    @Test func aReportWithNewStarsLeavesThemForTheBoard() {
+        let manager = SceneManager()
+
+        manager.showReport(makeOneStarReport(previousBest: 0))
+
+        #expect(manager.starDeliveries == [StarDelivery(levelID: "test", previousBest: 0, newBest: 1)])
+    }
+
+    @Test func aReportWithNoNewStarsLeavesNothing() {
+        let manager = SceneManager()
+
+        manager.showReport(makeOneStarReport(previousBest: 1))
+
+        #expect(manager.starDeliveries.isEmpty)
+    }
+
+    @Test func aLevelPlayedTwiceBeforeTheBoardKeepsOneDelivery() {
+        let manager = SceneManager()
+        manager.showReport(makeOneStarReport(previousBest: 0))
+
+        manager.showReport(makeOneStarReport(previousBest: 0))
+
+        #expect(manager.starDeliveries.count == 1)
+    }
+
+    @Test func theBoardTakesOnlyItsOwnPlanetsStars() {
+        let manager = SceneManager()
+        manager.showReport(makeOneStarReport(previousBest: 0))
+
+        manager.markStarsDelivered(on: ["1-1", "1-2"])
+        #expect(manager.starDeliveries.count == 1)
+
+        manager.markStarsDelivered(on: ["test"])
+        #expect(manager.starDeliveries.isEmpty)
+    }
+
+    /// A day on the test level that served one order: one star.
+    private func makeOneStarReport(previousBest: Int) -> LevelReport {
+        let day = makeDay()
+        day.start()
+        for frame in 0...5 { day.tick(at: Double(frame) * 0.2) }
+        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        return LevelReport(day: day, previousBestStars: previousBest)
+    }
+
     private func makeReport(for level: LevelData) -> LevelReport {
         let day = KitchenDay(
             storyLevel: level,
