@@ -3,14 +3,15 @@
 //  PlayFeat
 //  Created by kyky on 16/11/26.
 //
-//  The kitchen shop over the level board: an INGREDIENTS | TOOLS switch over
-//  a scrolling grid of that section's upgrade cards. Buying spends coins at once and
+//  A planet's kitchen shop over its level board: an INGREDIENTS | TOOLS
+//  switch over a scrolling grid of that section's upgrade cards. Buying spends coins at once and
 //  is saved; the next kitchen day uses the upgrade.
 //
 
 import SwiftUI
 
 struct ShopPopup: View {
+    let planet: Planet.ID
     /// Levels finished with a star: each item goes on sale after a set one.
     let clearedLevels: Set<String>
     let onClose: () -> Void
@@ -32,7 +33,7 @@ struct ShopPopup: View {
                         alignment: .leading,
                         spacing: 27
                     ) {
-                        ForEach(KitchenShop.upgrades(on: tab)) { item in
+                        ForEach(KitchenShop.upgrades(on: tab, planet: planet)) { item in
                             card(for: item)
                         }
                     }
@@ -131,7 +132,12 @@ private struct ShopSectionSwitch: View {
     }
 }
 
-#Preview {
-    ShopPopup(clearedLevels: [], onClose: {})
+#Preview("Kepler-186f, nothing cleared") {
+    ShopPopup(planet: .kepler186f, clearedLevels: [], onClose: {})
+        .environment(AudioManager())
+}
+
+#Preview("K2-332 b, every level cleared") {
+    ShopPopup(planet: .k2332b, clearedLevels: Set(Planet.k2332b.levelIDs), onClose: {})
         .environment(AudioManager())
 }

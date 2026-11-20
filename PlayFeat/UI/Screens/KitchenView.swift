@@ -56,7 +56,9 @@ struct KitchenView: View {
             positionTypes: KitchenLayout.positionTypes,
             pricing: GameStorage.dishPricing,
             tools: KitchenTools(
-                for: level, ownedPlates: GameStorage.kitchenPlates, ownedGlasses: GameStorage.kitchenGlasses
+                for: level,
+                ownedPlates: GameStorage.kitchenPlates(on: level.planet),
+                ownedGlasses: GameStorage.kitchenGlasses(on: level.planet)
             )
         )
         _day = State(initialValue: day)

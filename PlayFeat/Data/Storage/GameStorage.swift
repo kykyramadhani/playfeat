@@ -74,11 +74,16 @@ struct GameStorage {
         UserDefaults.standard.set(upgradeLevel(id) + 1, forKey: upgradeLevelKey(id))
     }
 
-    /// Plates on the kitchen counter: one to start, two with the shop's upgrade.
-    static var kitchenPlates: Int { ownedTools(KitchenShop.plateID) }
+    /// Plates (or noodle bowls) on `planet`'s counter: one to start, two
+    /// with that planet's shop upgrade.
+    static func kitchenPlates(on planet: Planet.ID) -> Int {
+        ownedTools(KitchenShop.mainStationID(on: planet))
+    }
 
-    /// Glasses, the same way as plates.
-    static var kitchenGlasses: Int { ownedTools(KitchenShop.glassID) }
+    /// Glasses (or cookie plates), the same way; one where none is sold.
+    static func kitchenGlasses(on planet: Planet.ID) -> Int {
+        KitchenShop.dessertStationID(on: planet).map(ownedTools) ?? 1
+    }
 
     private static func ownedTools(_ id: String) -> Int {
         KitchenShop.upgrade(id)?.value(atLevel: upgradeLevel(id)) ?? 1

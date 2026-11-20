@@ -64,13 +64,16 @@ struct PlanetSelectView: View {
         .overlay { levelPopup }
         .overlay {
             if showRecipeBook {
-                RecipeBookView(onClose: { showRecipeBook = false })
+                RecipeBookView(planet: planet.id, onClose: { showRecipeBook = false })
                     .transition(.opacity)
             }
         }
         .overlay {
             if showShop {
-                ShopPopup(clearedLevels: GameStorage.clearedLevels(on: planet), onClose: { showShop = false })
+                ShopPopup(
+                    planet: planet.id, clearedLevels: GameStorage.clearedLevels(on: planet),
+                    onClose: { showShop = false }
+                )
                     .transition(.opacity)
             }
         }

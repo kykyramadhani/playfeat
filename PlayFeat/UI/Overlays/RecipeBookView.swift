@@ -14,6 +14,8 @@
 import SwiftUI
 
 struct RecipeBookView: View {
+    /// The planet's pages, dishes first.
+    private let entries: [RecipeBookEntry]
     private let seenIntroductions: Set<String>
     private let upgraded: Set<String>
     private let onClose: () -> Void
@@ -22,14 +24,16 @@ struct RecipeBookView: View {
     @State private var selected: RecipeBookEntry?
 
     init(
+        planet: Planet.ID,
         seenIntroductions: Set<String> = GameStorage.seenIntroductions,
         upgraded: Set<String> = GameStorage.dishPricing.upgradedIngredients,
         onClose: @escaping () -> Void
     ) {
+        entries = RecipeBook.entries(on: planet)
         self.seenIntroductions = seenIntroductions
         self.upgraded = upgraded
         self.onClose = onClose
-        _selected = State(initialValue: RecipeBook.entries.first { $0.isUnlocked(afterSeeing: seenIntroductions) })
+        _selected = State(initialValue: entries.first { $0.isUnlocked(afterSeeing: seenIntroductions) })
     }
 
     var body: some View {
@@ -64,7 +68,7 @@ struct RecipeBookView: View {
 
     private var tileGrid: some View {
         LazyVGrid(columns: [GridItem(.fixed(165), spacing: 13), GridItem(.fixed(165))], spacing: 13.3) {
-            ForEach(RecipeBook.entries) { entry in
+            ForEach(entries) { entry in
                 if entry.isUnlocked(afterSeeing: seenIntroductions) {
                     ClickButton(action: { selected = entry }) {
                         RecipeTile(entry: entry, upgraded: upgraded, isSelected: entry == selected)
@@ -260,6 +264,7 @@ private struct BigQuestionMark: View {
 
 #Preview("Level 1 played, pepper upgraded") {
     RecipeBookView(
+        planet: .kepler186f,
         seenIntroductions: Set(KitchenIntroduction.introduced(byLevel: "1-1").map(\.id)),
         upgraded: [KitchenMenu.pepper],
         onClose: {}
@@ -267,7 +272,17 @@ private struct BigQuestionMark: View {
     .environment(AudioManager())
 }
 
+#Preview("K2-332 b to 2-3, noodles upgraded") {
+    RecipeBookView(
+        planet: .k2332b,
+        seenIntroductions: Set(["2-1", "2-2", "2-3"].flatMap(KitchenIntroduction.introduced(byLevel:)).map(\.id)),
+        upgraded: [KitchenMenu.rawNoodles],
+        onClose: {}
+    )
+    .environment(AudioManager())
+}
+
 #Preview("Nothing unlocked") {
-    RecipeBookView(seenIntroductions: [], upgraded: [], onClose: {})
+    RecipeBookView(planet: .kepler186f, seenIntroductions: [], upgraded: [], onClose: {})
         .environment(AudioManager())
 }

@@ -255,6 +255,17 @@
         }
       }
     },
+    "Boiled Noodles" : {
+      "comment" : "Recipe book: noodles boiled in the pot.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi Rebus"
+          }
+        }
+      }
+    },
     "Both flatbreads +6 points" : {
       "comment" : "Marathon card effect.",
       "localizations" : {
@@ -262,6 +273,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kedua roti pipih +6 poin"
+          }
+        }
+      }
+    },
+    "Bubble Urchin" : {
+      "comment" : "Planet 2 ingredient: a sea urchin topping.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bulu Babi Gelembung"
           }
         }
       }
@@ -406,6 +428,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Piring Kue"
+          }
+        }
+      }
+    },
+    "Coral Leaf" : {
+      "comment" : "Planet 2 ingredient: a coral topping.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daun Koral"
           }
         }
       }
@@ -708,6 +741,17 @@
         }
       }
     },
+    "Grilled Clam" : {
+      "comment" : "Recipe book: a lantern clam opened on the grill.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kerang Panggang"
+          }
+        }
+      }
+    },
     "Help" : {
       "comment" : "VoiceOver label for the help button on the planet screen.",
       "extractionState" : "stale",
@@ -819,6 +863,17 @@
         }
       }
     },
+    "Lantern Clam" : {
+      "comment" : "Planet 2 ingredient: a glowing clam, grilled before use.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kerang Lentera"
+          }
+        }
+      }
+    },
     "Leaderboard" : {
       "comment" : "Title of the marathon screen's ranking board.",
       "localizations" : {
@@ -897,13 +952,233 @@
         }
       }
     },
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor." : {
-      "comment" : "Placeholder description until the real text is written.",
+    "Ooh, that smells like bread—hold on, I actually made bread!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor."
+            "value" : "Ooh, wanginya kayak roti—tunggu, aku beneran bikin roti!"
+          }
+        }
+      }
+    },
+    "Mmm… hoo, hoo, HOT—why did I take such a big bite?" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mmm… hah, hah, PEDAS—kenapa tadi aku gigit besar banget?"
+          }
+        }
+      }
+    },
+    "Whoa, even with the bread on top I can still see the mushrooms glowing!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wah, padahal sudah ditutup roti, jamurnya masih kelihatan menyala!"
+          }
+        }
+      }
+    },
+    "Eww, it wobbles when I move the glass—wait, let me do that again." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iih, goyang-goyang kalau gelasnya kugerakkan—tunggu, coba sekali lagi."
+          }
+        }
+      }
+    },
+    "Oop, it folded over my hand like a tiny blanket." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ups, rotinya terlipat di tanganku kayak selimut mungil."
+          }
+        }
+      }
+    },
+    "Phew, my nose is tingling and I haven’t even bitten it yet!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fiuh, hidungku sudah geli padahal belum kugigit!"
+          }
+        }
+      }
+    },
+    "Oooh, look at you glowing in my cupboard like a tiny night-light!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ooh, lihat kamu menyala di lemariku kayak lampu tidur mungil!"
+          }
+        }
+      }
+    },
+    "Ah!—oh, that’s my own hand making it wave." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ah!—oh, ternyata tanganku sendiri yang bikin dia melambai."
+          }
+        }
+      }
+    },
+    "Eugh, it went ‘blorp’—I wonder if it’ll do that again." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iyuh, bunyinya ‘blorp’—kira-kira bakal bunyi lagi nggak, ya?"
+          }
+        }
+      }
+    },
+    "Slurp—hold on, am I still eating the same noodle?" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sluurp—tunggu, aku masih makan mi yang sama, ya?"
+          }
+        }
+      }
+    },
+    "Ooh, it opened up—hello in there, you smell surprisingly good!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ooh, kerangnya terbuka—halo yang di dalam, wanginya ternyata enak!"
+          }
+        }
+      }
+    },
+    "Crunch! Oh, that was the coral—I was worried I’d eaten a bit of the bowl." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kres! Oh, itu koralnya—kukira tadi aku menggigit mangkuknya."
+          }
+        }
+      }
+    },
+    "Pop! Hehe, I’m trying to eat quietly but the bubbles aren’t helping." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plop! Hehe, aku coba makan diam-diam, tapi gelembungnya bikin berisik."
+          }
+        }
+      }
+    },
+    "Mmm… I ate the clam first and now I’m checking its shell for bonus noodles." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mmm… kerangnya kumakan duluan, sekarang aku cek cangkangnya, siapa tahu ada bonus mi."
+          }
+        }
+      }
+    },
+    "Ooh, a cookie covered in tiny stars—I’m going to eat a constellation!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ooh, kue penuh bintang mungil—aku mau makan satu rasi bintang!"
+          }
+        }
+      }
+    },
+    "Huh, I tried to untangle these and somehow made a smaller, tighter tangle." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lho, aku coba mengurai mi ini, malah jadi kusut yang lebih kecil dan lebih rapat."
+          }
+        }
+      }
+    },
+    "Crunch, crunch… ooh, I can hear myself eating inside my helmet!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kres, kres… ooh, suara kunyahanku kedengaran di dalam helm!"
+          }
+        }
+      }
+    },
+    "Ooh, bubbles—I’ll poke just one before we start cooking… okay, two." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ooh, gelembung—aku tusuk satu saja sebelum mulai masak… oke, dua."
+          }
+        }
+      }
+    },
+    "Whoa, look inside—it’s like a tiny lunchbox someone packed for me!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wah, lihat dalamnya—kayak kotak bekal mungil yang disiapkan buatku!"
+          }
+        }
+      }
+    },
+    "Sniff, sniff… smells like a cookie, looks like a sand dollar, going in my mouth." : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endus, endus… baunya kayak kue, bentuknya kayak dolar pasir, langsung masuk mulut."
+          }
+        }
+      }
+    },
+    "Aww, tiny stars—I’ve spent so long arranging them that I forgot to taste one!" : {
+      "comment" : "Recipe book: what the chef says about this dish or ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aww, bintang mungil—saking lamanya kususun, aku lupa mencicipi satu!"
           }
         }
       }
@@ -1605,6 +1880,17 @@
         }
       }
     },
+    "Sea Cookie" : {
+      "comment" : "Planet 2 ingredient: the plain cookie the dessert starts from.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kue Laut"
+          }
+        }
+      }
+    },
     "Second Grill Spot" : {
       "comment" : "Marathon card: the grill holds two flatbreads.",
       "localizations" : {
@@ -1798,8 +2084,20 @@
         }
       }
     },
+    "Starfish Sugar" : {
+      "comment" : "Planet 2 ingredient: the sugar stars put on the cookie.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gula Bintang Laut"
+          }
+        }
+      }
+    },
     "Start" : {
       "comment" : "Title of the button that leaves the launch screen once loading finishes.",
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -1907,6 +2205,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kue Bintang disusun di atas piring kue."
+          }
+        }
+      }
+    },
+    "Tide Noodles" : {
+      "comment" : "Planet 2 ingredient: the raw noodles.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi Pasang"
           }
         }
       }

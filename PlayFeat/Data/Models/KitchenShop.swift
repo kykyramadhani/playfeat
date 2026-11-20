@@ -3,12 +3,12 @@
 //  PlayFeat
 //  Created by kyky on 16/11/26.
 //
-//  What the planet kitchen's shop sells, on two tabs. Ingredients raise
-//  what the dishes they go in are worth; tools put a second plate or glass
-//  on the counter. On Kepler-186f the grill can't be upgraded yet (that
-//  comes on planet 2). An item goes on sale once a set level is cleared,
-//  as in the prototype. Values follow the prototype; prices are its
-//  placeholders until the economy is balanced.
+//  What each planet's kitchen shop sells, on two tabs. Ingredients raise
+//  what the dishes they go in are worth; tools put a second plate, glass or
+//  noodle bowl on the counter. An item goes on sale once a set level is
+//  cleared, and is sold on that level's planet. Planet 1's values follow the
+//  prototype, Planet 2's its level design (18 Nov); prices are placeholders
+//  until the economy is balanced.
 //
 
 nonisolated struct KitchenUpgrade: Identifiable, Equatable {
@@ -38,30 +38,67 @@ nonisolated struct KitchenUpgrade: Identifiable, Equatable {
     func isUnlocked(clearedLevels: Set<String>) -> Bool {
         clearedLevels.contains(availableAfter)
     }
+
+    /// Sold on the planet of the level that puts it on sale.
+    var planet: Planet.ID? {
+        PlanetCatalog.planet(forLevel: availableAfter)?.id
+    }
 }
 
 nonisolated enum KitchenShop {
-    /// The ingredients tab, each with the bubble ingredient whose value it raises.
+    /// Every planet's ingredients tab, each with the bubble ingredient
+    /// whose value it raises.
     static let ingredientUpgrades: [(ingredient: String, upgrade: KitchenUpgrade)] = [
         ingredient(KitchenMenu.rawFlatbread, upgradedTo: 16, price: 45, after: "1-1"),
         ingredient(KitchenMenu.pepper, upgradedTo: 18, price: 35, after: "1-1"),
         ingredient(KitchenMenu.mushroom, upgradedTo: 24, price: 30, after: "1-2"),
         ingredient(KitchenMenu.tentacle, upgradedTo: 17, price: 25, after: "1-3"),
         ingredient(KitchenMenu.slime, upgradedTo: 12, price: 25, after: "1-3"),
+        ingredient(KitchenMenu.rawNoodles, upgradedTo: 15, price: 55, after: "2-1"),
+        ingredient(KitchenMenu.coral, upgradedTo: 15, price: 30, after: "2-1"),
+        ingredient(KitchenMenu.urchin, upgradedTo: 15, price: 30, after: "2-2"),
+        ingredient(KitchenMenu.rawClam, upgradedTo: 20, price: 40, after: "2-3"),
+        ingredient(KitchenMenu.seaCookie, upgradedTo: 15, price: 30, after: "2-4"),
+        ingredient(KitchenMenu.starfishSugar, upgradedTo: 10, price: 20, after: "2-4"),
     ]
 
+    /// Every planet's items, both tabs. Planet 2 sells a second bowl but
+    /// no second cookie plate: its counter has room for only one.
+    /// ponytail: the design's Planet 2 tool upgrades (Faster Pot, Faster
+    /// Grill, Longer Hold, Bigger Grill) wait for their prices from the
+    /// balancing sheet.
     static let upgrades: [KitchenUpgrade] = ingredientUpgrades.map(\.upgrade) + [
         KitchenUpgrade(id: plateID, tab: .tools, image: "KitchenPlate", stat: .count(icon: "KitchenPlate"),
                        values: [1, 2], prices: [30], availableAfter: "1-1"),
         KitchenUpgrade(id: glassID, tab: .tools, image: "KitchenGlass", stat: .count(icon: "KitchenGlass"),
                        values: [1, 2], prices: [30], availableAfter: "1-4"),
+        KitchenUpgrade(id: bowlID, tab: .tools, image: "NoodleBowl", stat: .count(icon: "NoodleBowl"),
+                       values: [1, 2], prices: [30], availableAfter: "2-1"),
     ]
 
     static let plateID = "tool.plate"
     static let glassID = "tool.glass"
+    static let bowlID = "tool.bowl"
 
-    static func upgrades(on tab: KitchenUpgrade.Tab) -> [KitchenUpgrade] {
-        upgrades.filter { $0.tab == tab }
+    /// What `planet`'s shop sells on `tab`.
+    static func upgrades(on tab: KitchenUpgrade.Tab, planet: Planet.ID) -> [KitchenUpgrade] {
+        upgrades.filter { $0.tab == tab && $0.planet == planet }
+    }
+
+    /// The upgrade that adds a second main station (plate, bowl) on `planet`.
+    static func mainStationID(on planet: Planet.ID) -> String {
+        switch planet {
+        case .kepler186f: plateID
+        case .k2332b: bowlID
+        }
+    }
+
+    /// The upgrade that adds a second dessert station on `planet`, if it sells one.
+    static func dessertStationID(on planet: Planet.ID) -> String? {
+        switch planet {
+        case .kepler186f: glassID
+        case .k2332b: nil
+        }
     }
 
     static func upgrade(_ id: String) -> KitchenUpgrade? {
