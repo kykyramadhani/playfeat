@@ -84,6 +84,21 @@ struct KitchenDayTests {
         #expect(day.presentCustomers.count == 1)
     }
 
+    /// Clearing the counter sends everyone away unserved and unlost, and the
+    /// spots fill again as at the opening bell, from now.
+    @Test func aClearedCounterFillsAgainAsAtTheOpeningBell() {
+        let day = makeDay(makeLevel(counterSpots: 2, patienceSec: 200))
+        run(day, to: 10)
+        #expect(day.presentCustomers.count == 2)
+
+        day.clearCounter()
+
+        #expect(day.presentCustomers.count == 1)
+        #expect(day.presentCustomers.allSatisfy { $0.seatedAt == day.elapsed })
+        #expect(day.ordersMissed == 0)
+        #expect(day.ordersDelivered == 0)
+    }
+
     @Test func theLevelsAngryCustomersOrderTheDessert() {
         let day = makeDay(makeLevel(counterSpots: 2, angryAt: [2], refillDelaySec: 0))
 

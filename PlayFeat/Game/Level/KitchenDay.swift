@@ -166,6 +166,16 @@ final class KitchenDay {
 
     // MARK: - Customers
 
+    /// Sends everyone at or waiting for the counter away, neither served nor
+    /// lost, and steps the next customers up as at the opening bell: a
+    /// marathon's new round starts from an empty counter.
+    func clearCounter() {
+        counter = Counter(positionTypes: counter.positionTypes)
+        departures = []
+        flow.counterCleared(at: elapsed)
+        advance(to: elapsed)
+    }
+
     /// Steps customers up, stands them at the counter, and sends away anyone
     /// whose patience ran out, in the prototype's order.
     private func advance(to time: TimeInterval) {

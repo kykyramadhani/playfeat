@@ -199,6 +199,26 @@ struct KitchenStationTests {
         #expect(scene.plates[0].contents == [Menu.pepper])
         #expect(scene.artRect(of: .plate(0)) == firstPlate)
     }
+
+    // MARK: - A marathon's new round
+
+    /// A new round starts from a bare kitchen: nothing cooking, nothing on
+    /// the plates or in the glasses, and the plates earned still out.
+    @Test func clearingTheKitchenEmptiesEveryToolButKeepsThePlates() throws {
+        let (scene, day) = try makeScene()
+        day.tools = KitchenTools(plates: 2, glasses: 1)
+        scene.syncTools()
+        letGo(Menu.rawFlatbread, over: scene.artRect(of: .cooker(.grill, slot: 0)), in: scene)
+        letGo(Menu.pepper, over: scene.artRect(of: .plate(1)), in: scene)
+        letGo(Menu.tentacle, over: scene.artRect(of: .glass(0)), in: scene)
+
+        scene.clearKitchen()
+
+        #expect(scene.bubbles.isEmpty)
+        #expect(scene.cookers.values.allSatisfy { $0.slots.allSatisfy { $0 == nil } })
+        #expect(scene.plates.count == 2)
+        #expect((scene.plates + scene.glasses).allSatisfy { $0.contents.isEmpty })
+    }
 }
 
 // MARK: - Size on the counter

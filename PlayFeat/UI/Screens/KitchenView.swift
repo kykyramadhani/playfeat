@@ -286,7 +286,8 @@ struct KitchenView: View {
     }
 
     /// Buys the card picked, if any, puts its upgrade on the grill, and
-    /// plays on into the next round.
+    /// starts the next round afresh: the counter and the kitchen are
+    /// cleared, and a 3-2-1 plays before the first customer's clock runs.
     private func endBreak(buying card: MarathonCard?) {
         guard let marathon else { return }
         if let card {
@@ -294,8 +295,11 @@ struct KitchenView: View {
             try? marathon.buy(card)
         }
         applyUpgrades(of: marathon)
+        day.pause()
+        scene.clearKitchen()
         marathon.endBreak()
         withAnimation(.easeOut(duration: 0.3)) { marathonStep = nil }
+        resumeCountdownRequest += 1
     }
 
     /// The marathon's tool cards, on the scene's cooking tools.

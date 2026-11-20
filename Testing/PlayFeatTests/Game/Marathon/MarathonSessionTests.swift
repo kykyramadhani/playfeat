@@ -129,6 +129,22 @@ struct MarathonSessionTests {
         #expect(session.day.roundEndsAt == MarathonSession.roundSec * 2)
     }
 
+    /// The next round doesn't carry on where the last stopped: whoever was
+    /// waiting leaves without counting as lost, and one customer steps up.
+    @Test func aNewRoundStartsFromAnEmptyCounter() {
+        let session = makeSession()
+        play(session.day, to: 20)
+        let lostBefore = session.lostCustomers
+        #expect(session.day.presentCustomers.count == 2)
+
+        session.startBreak()
+        session.endBreak()
+
+        #expect(session.day.presentCustomers.count == 1)
+        #expect(session.day.presentCustomers.allSatisfy { $0.seatedAt == session.day.elapsed })
+        #expect(session.lostCustomers == lostBefore)
+    }
+
     // MARK: - Cards
 
     @Test func theFirstBreakOffersItsSetHand() {

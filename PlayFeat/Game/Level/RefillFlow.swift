@@ -35,7 +35,12 @@ nonisolated struct RefillFlow: CustomerFlow {
         bubblePool = level.pool
         angryOrder = PlanetCatalog.planet(level.planet).kitchen.angryOrder
         self.random = AnyRandomNumberGenerator(random)
-        stepUpTimes = (0..<refill.counterSpots).map { TimeInterval($0) * refill.refillDelaySec }
+        stepUpTimes = Self.openingStepUps(from: 0, refill: refill)
+    }
+
+    /// Each spot's first customer, a refill delay apart from `start`.
+    private static func openingStepUps(from start: TimeInterval, refill: LevelData.Refill) -> [TimeInterval?] {
+        (0..<refill.counterSpots).map { start + TimeInterval($0) * refill.refillDelaySec }
     }
 
     var counterSpots: Int { refill.counterSpots }
@@ -45,6 +50,10 @@ nonisolated struct RefillFlow: CustomerFlow {
         counterSpots: 0, refillDelaySec: 0, firstOrder: KitchenMenu.pepperFlatbread, orderPool: [:],
         angryAt: [], angryEvery: nil, patienceSec: 0, angryPatienceSec: 0
     )
+
+    mutating func counterCleared(at time: TimeInterval) {
+        stepUpTimes = Self.openingStepUps(from: time, refill: refill)
+    }
 
     mutating func arrivals(at time: TimeInterval, atCounter: Int) -> [Arrival] {
         guard time < durationSec else { return [] }

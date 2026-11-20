@@ -338,4 +338,21 @@ final class KitchenScene: SKScene {
         bubbles.removeAll { $0 === node }
         node.pop()
     }
+
+    /// Pops every item, in the window, in a hand or put down, and empties
+    /// the cooking tools, plates and glasses: a marathon's new round starts
+    /// from a bare kitchen. The plates and glasses earned stay out.
+    func clearKitchen() {
+        for node in bubbles { remove(node) }
+        for id in hands.keys { hands[id]?.held = nil }
+        for (tool, cooker) in cookers {
+            for slot in cooker.slots.indices { cookers[tool]?.clear(slot) }
+        }
+        cookingGauges.values.forEach { $0.removeFromParent() }
+        cookingGauges.removeAll()
+        if let kitchen {
+            plates = plates.map { _ in kitchen.mainStation }
+            glasses = glasses.map { _ in kitchen.dessertStation }
+        }
+    }
 }

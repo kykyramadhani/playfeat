@@ -6,7 +6,9 @@
 //  One planet's marathon (its Buffet), run as in the prototype: a single endless
 //  kitchen day cut into 90-second rounds of play. When a round ends,
 //  everything freezes for a 15-second break where the player may buy one
-//  upgrade card with marathon coins, then play carries on where it stopped.
+//  upgrade card with marathon coins. The next round starts afresh: the
+//  counter is cleared and customers step up as at the start, while the
+//  score, the coins, the cards and the rising difficulty carry on.
 //  Marathon coins are the tips earned this run; they only buy cards and
 //  are gone when it ends. Three customers lost end the run.
 //
@@ -85,6 +87,8 @@ final class MarathonSession {
     /// Rounds started, the one being played included.
     var roundsPlayed: Int { round }
     var averageDishesPerRound: Int { dishesServed / max(round, 1) }
+    /// Customers who gave up; `MarathonFlow.lostCustomersToEnd` of them end the run.
+    var lostCustomers: Int { day.ordersMissed }
 
     // MARK: - Breaks
 
@@ -95,10 +99,11 @@ final class MarathonSession {
         offer = planet.buffet.cards.offer(forBreak: breaksTaken, owning: owned)
     }
 
-    /// Back to play for the next round.
+    /// On to the next round, from an empty counter.
     func endBreak() {
         round += 1
         day.roundEndsAt = (day.roundEndsAt ?? 0) + Self.roundSec
+        day.clearCounter()
     }
 
     func buy(_ card: MarathonCard) throws(MarathonCardError) {
