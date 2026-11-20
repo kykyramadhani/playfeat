@@ -111,6 +111,8 @@ struct LocalizationTests {
             // Settings, level report, recipe book, introductions, shop
             "One Hand Mode", "Recap", "Order Delivered", "Order Missed", "Total Income",
             "Next", "Back", "Retry", "Recipe", "Description", "How to Cook", "Locked",
+            "Play a level to discover new recipes!", "Used In",
+            "Raw Flatbread", "Pepper", "Mushroom", "Tentacle", "Slime",
             "Baked Flatbread", "Pepper Flatbread", "Mushroom Flatbread", "Slimy Tentacles",
             "New Tools", "New Menu", "Sun Grill", "Glass", "Max",
             "Desserts are put together in the glass.",

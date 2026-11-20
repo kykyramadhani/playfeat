@@ -13,6 +13,8 @@ struct OrderSheet: View {
     let dish: String
     /// 1 when the customer sits down, 0 when they leave.
     let patience: Double
+    /// Upgraded ingredients, so the order shows the dish as it will be made.
+    var upgraded: Set<String> = []
 
     private static let barWidth: CGFloat = 129
     /// Below this the bar turns red.
@@ -47,7 +49,7 @@ struct OrderSheet: View {
     }
 
     private var dishArt: some View {
-        KitchenItemArt(item: dish)
+        KitchenItemArt(item: dish, upgraded: upgraded)
             .frame(width: 106, height: 100)
     }
 }

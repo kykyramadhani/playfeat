@@ -921,6 +921,17 @@
         }
       }
     },
+    "Mushroom" : {
+      "comment" : "Recipe book page: the glowing mushroom ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jamur"
+          }
+        }
+      }
+    },
     "Mushroom Flatbread" : {
       "comment" : "Name of the mushroom flatbread dish.",
       "localizations" : {
@@ -1157,6 +1168,17 @@
         }
       }
     },
+    "Pepper" : {
+      "comment" : "Recipe book page: the pepper ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cabai"
+          }
+        }
+      }
+    },
     "Pepper Flatbread" : {
       "comment" : "Name of the pepper flatbread dish.",
       "localizations" : {
@@ -1242,6 +1264,17 @@
         }
       }
     },
+    "Play a level to discover new recipes!" : {
+      "comment" : "Recipe book page before any recipe is unlocked.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mainkan level untuk menemukan resep baru!"
+          }
+        }
+      }
+    },
     "PlayFeat!" : {
       "localizations" : {
         "id" : {
@@ -1270,6 +1303,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Masukkan tentakel ke dalam gelas, lalu tuang lendir hijau di atasnya."
+          }
+        }
+      }
+    },
+    "Raw Flatbread" : {
+      "comment" : "Recipe book page: the uncooked flatbread ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roti Pipih Mentah"
           }
         }
       }
@@ -1565,6 +1609,17 @@
         }
       }
     },
+    "Slime" : {
+      "comment" : "Recipe book page: the green slime ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lendir"
+          }
+        }
+      }
+    },
     "Slimy Tentacles" : {
       "comment" : "Name of the glass dessert: green slime with a tentacle.",
       "localizations" : {
@@ -1702,6 +1757,17 @@
         }
       }
     },
+    "Tentacle" : {
+      "comment" : "Recipe book page: the tentacle ingredient.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentakel"
+          }
+        }
+      }
+    },
     "Time Left" : {
       "comment" : "VoiceOver label for the kitchen's day timer.",
       "localizations" : {
@@ -1776,6 +1842,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Total Poin"
+          }
+        }
+      }
+    },
+    "Used In" : {
+      "comment" : "Recipe book: the box showing which dishes an ingredient goes in.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dipakai di"
           }
         }
       }

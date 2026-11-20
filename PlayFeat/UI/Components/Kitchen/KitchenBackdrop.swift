@@ -120,7 +120,7 @@ private struct KitchenCustomers: View {
                     SeatedAlien(imageName: alienImage(of: customer, patienceLeft: patience), pose: seat.alienPose)
                         .transition(.offset(KitchenLayout.offstageOffset(ofSeatAt: customer.seat)))
                 case .orderSheets:
-                    OrderSheet(dish: customer.dish, patience: patience)
+                    OrderSheet(dish: customer.dish, patience: patience, upgraded: day.pricing.upgradedIngredients)
                         .placed(in: seat.orderSheet)
                         .transition(.asymmetric(insertion: .opacity, removal: .identity))
                 }
