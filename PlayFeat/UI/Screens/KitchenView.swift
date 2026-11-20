@@ -136,6 +136,9 @@ struct KitchenView: View {
     private var dayOverlays: some View {
         ZStack {
             KitchenHUD(day: day, marathonCoins: marathon?.coins)
+            if let marathon {
+                MarathonHUD(session: marathon)
+            }
 
             if countdown >= 0, introductions.isEmpty {
                 GetReadyOverlay(count: countdown)

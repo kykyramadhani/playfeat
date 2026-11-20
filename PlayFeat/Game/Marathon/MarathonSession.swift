@@ -14,7 +14,8 @@
 //
 //  The run starts with one plate and no glass; the glass appears once the
 //  dessert does, a second plate after 6 dishes and a second glass after 14.
-//  (On Planet 2 the plate is the noodle bowl and the glass the cookie plate.)
+//  (On Planet 2 the plate is the noodle bowl and the glass the cookie plate,
+//  which its counter has room for only one of.)
 //
 
 import Foundation
@@ -141,6 +142,20 @@ final class MarathonSession {
             plates: served >= Self.secondPlateAtDishes ? 2 : 1,
             glasses: dessertSeen ? glasses : 0
         )
+    }
+
+    /// How far the dishes served have come toward the next plate or glass.
+    var stationProgress: StationUnlockProgress {
+        StationUnlockProgress(dishesServed: dishesServed, unlocks: stationUnlocks)
+    }
+
+    /// The dishes served at which another plate or glass comes out, only
+    /// for those the planet's counter has room for.
+    var stationUnlocks: [Int] {
+        let counter = planet.kitchen.counter(on: day.level)
+        let secondPlate = counter.maxMainStations > 1 ? Self.secondPlateAtDishes : nil
+        let secondGlass = counter.maxDessertStations > 1 ? Self.secondGlassAtDishes : nil
+        return [secondPlate, secondGlass].compactMap { $0 }
     }
 
     /// Puts out any plate or glass the run has just earned.

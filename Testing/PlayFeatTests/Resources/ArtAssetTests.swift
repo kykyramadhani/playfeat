@@ -44,6 +44,18 @@ struct ArtAssetTests {
         #expect(UIImage(named: "RingingBell") != nil)
     }
 
+    /// The marathon HUD's coin and lost-customer cross, and its colours.
+    /// Referenced by name, so a rename leaves an empty plaque.
+    @Test(arguments: ["MarathonCoinIcon", "LostCustomerCross"])
+    func theMarathonHUDArtExists(name: String) {
+        #expect(UIImage(named: name) != nil, "missing marathon HUD art '\(name)'")
+    }
+
+    @Test(arguments: ["LostCustomerMark", "LostCustomerMarkSpare", "BuffetProgressTrack"])
+    func theMarathonHUDColoursExist(name: String) {
+        #expect(UIColor(named: name) != nil, "missing marathon HUD colour '\(name)'")
+    }
+
     /// The served-dish count's icon. Referenced by name from `PointCard`, so a
     /// rename leaves the badge showing a bare number with no other symptom.
     @Test func theServedDishIconExists() {

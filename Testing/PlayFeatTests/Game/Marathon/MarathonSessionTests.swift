@@ -91,7 +91,7 @@ struct MarathonSessionTests {
 
         play(session.day, to: 100)
 
-        #expect(session.day.ordersMissed >= MarathonFlow.lostCustomersToEnd)
+        #expect(session.lostCustomers >= MarathonFlow.lostCustomersToEnd)
         #expect(session.isOver)
     }
 
@@ -189,6 +189,13 @@ struct MarathonSessionTests {
         let session = makeSession()
 
         #expect(session.tools == KitchenTools(plates: 1, glasses: 0))
+    }
+
+    /// The side bar's tags: Planet 1's counter has room for a second plate
+    /// and a second glass; Planet 2's only for a second bowl.
+    @Test(arguments: [(Planet.ID.kepler186f, [6, 14]), (.k2332b, [6])])
+    func theBarShowsOnlyTheStationsTheCounterHasRoomFor(planet: Planet.ID, unlocks: [Int]) {
+        #expect(makeSession(on: PlanetCatalog.planet(planet)).stationUnlocks == unlocks)
     }
 
     // MARK: - Planet 2 (K2-332 b)

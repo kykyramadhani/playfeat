@@ -23,7 +23,7 @@
       }
     },
     "%lld of %lld" : {
-      "comment" : "VoiceOver: how full the spaceship's fuel gauge is, e.g. 6 of 10.",
+      "comment" : "VoiceOver: a count out of a total, e.g. the fuel gauge's 6 of 10 or a marathon's customers lost.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -472,6 +472,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kursi Nyaman"
+          }
+        }
+      }
+    },
+    "Customers Lost" : {
+      "comment" : "Marathon HUD, VoiceOver: the crosses for customers who gave up; three end the run.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pelanggan Terlewat"
           }
         }
       }
@@ -1825,8 +1836,7 @@
       }
     },
     "Round %lld" : {
-      "comment" : "Marathon HUD: which round is being played.",
-      "extractionState" : "stale",
+      "comment" : "Marathon HUD: which round is being played. Shown in capitals.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
