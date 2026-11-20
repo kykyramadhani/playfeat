@@ -14,8 +14,6 @@
 import SwiftUI
 
 struct PlanetScreen<Content: View>: View {
-    @Environment(AudioManager.self) private var audio
-
     /// What fills the screen behind the content.
     enum Backdrop {
         /// A planet's own landscape, for its board and Buffet.
@@ -49,10 +47,7 @@ struct PlanetScreen<Content: View>: View {
                     .zIndex(1)
             }
         }
-        .onAppear {
-            coinCount = GameStorage.coins
-            audio.startMusic("home_soundtrack")
-        }
+        .onAppear { coinCount = GameStorage.coins }
         .animation(.easeInOut(duration: 0.2), value: showSettings)
         .animation(.easeInOut(duration: 0.2), value: showEnergyNotice)
     }

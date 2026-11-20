@@ -125,7 +125,7 @@ struct PlanetSelectView: View {
     }
 
     private var backToGalaxyButton: some View {
-        ClickButton(action: sceneManager.goToGalaxy) {
+        ClickButton(action: sceneManager.goToGalaxy, sound: .back) {
             VStack(spacing: 0) {
                 Image("GalaxyIcon")
                     .resizable()

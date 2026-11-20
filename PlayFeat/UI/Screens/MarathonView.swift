@@ -14,7 +14,7 @@ import SwiftUI
 struct MarathonView: View {
     @Bindable var sceneManager: SceneManager
 
-    @State private var highestScore = GameStorage.highscore
+    @State private var highestScore = 0
     @State private var leaderboard: [LeaderboardEntry] = []
 
     private static let leaderboardSize = 5
@@ -28,13 +28,13 @@ struct MarathonView: View {
         }
         .designScaled()
         .task {
-            highestScore = GameStorage.highscore
+            highestScore = GameStorage.bestMarathonScore(on: sceneManager.planet)
             leaderboard = await GameCenter.topEntries(count: Self.leaderboardSize)
         }
     }
 
     private var storyModeButton: some View {
-        ClickButton(action: sceneManager.goToPlanetSelect) {
+        ClickButton(action: sceneManager.goToPlanetSelect, sound: .back) {
             HStack(spacing: 9) {
                 Image("BackTriangle")
                     .resizable()

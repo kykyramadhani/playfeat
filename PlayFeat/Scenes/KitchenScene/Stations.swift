@@ -195,6 +195,7 @@ extension KitchenScene {
     /// as many as the counter has spots for.
     func syncTools() {
         guard let tools = day?.tools, let kitchen, let counter else { return }
+        let alreadySetUp = !plates.isEmpty
         let newPlates = min(tools.plates, counter.maxMainStations) - plates.count
         if newPlates > 0 {
             plates += Array(repeating: kitchen.mainStation, count: newPlates)
@@ -202,6 +203,9 @@ extension KitchenScene {
         let newGlasses = min(tools.glasses, counter.maxDessertStations) - glasses.count
         if newGlasses > 0 {
             glasses += Array(repeating: kitchen.dessertStation, count: newGlasses)
+        }
+        if alreadySetUp, newPlates > 0 || newGlasses > 0, day?.isRunning == true {
+            audio?.play(.unlock)
         }
     }
 

@@ -25,6 +25,7 @@ struct ReportButton {
     let palette: RaisedButtonPalette
     let label: Color
     let action: () -> Void
+    var sound: SoundEffect? = .uiClick
 
     static func next(_ action: @escaping () -> Void) -> ReportButton {
         ReportButton(title: "Next", icon: "PlayIcon", palette: .pink, label: .electricPink, action: action)
@@ -163,7 +164,7 @@ struct ReportPopup<Header: View>: View {
     }
 
     private func reportButton(_ button: ReportButton) -> some View {
-        ClickButton(action: button.action) {
+        ClickButton(action: button.action, sound: button.sound) {
             HStack(spacing: 11.8) {
                 Text(button.title)
                     .font(.atkinson(size: 28, weight: .bold))

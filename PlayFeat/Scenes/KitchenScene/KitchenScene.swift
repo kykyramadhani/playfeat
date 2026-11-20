@@ -26,7 +26,13 @@ final class KitchenScene: SKScene {
 
     weak var day: KitchenDay?
     weak var handInput: (any HandInputSource)?
-    weak var audio: (any SoundPlaying)?
+    weak var audio: (any SoundPlaying)? {
+        didSet {
+            soundscape?.stopLoops()
+            soundscape = audio.map { KitchenSoundscape(sounds: $0) }
+        }
+    }
+    private var soundscape: KitchenSoundscape?
 
     // MARK: - Tuning
 
@@ -141,6 +147,7 @@ final class KitchenScene: SKScene {
         updateCookers(now: day.elapsed)
         updateHands(now: currentTime, frameDelta: frameDelta)
         updateDropGlows()
+        soundscape?.update(day: day, cookers: cookers)
     }
 
     // MARK: - Spawning
@@ -305,7 +312,7 @@ final class KitchenScene: SKScene {
                 .scale(to: node.placedScale, duration: Self.setDownDuration),
             ]))
         }
-        audio?.play(.bubblePut)
+        audio?.play(.place)
     }
 
     /// A picture of the whole pot or bowl lands exactly over the counter's
@@ -343,6 +350,7 @@ final class KitchenScene: SKScene {
     /// the cooking tools, plates and glasses: a marathon's new round starts
     /// from a bare kitchen. The plates and glasses earned stay out.
     func clearKitchen() {
+        soundscape?.clearCooking()
         for node in bubbles { remove(node) }
         for id in hands.keys { hands[id]?.held = nil }
         for (tool, cooker) in cookers {

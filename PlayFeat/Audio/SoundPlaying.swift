@@ -12,6 +12,8 @@ import Foundation
 /// Class-bound so `GameScene` can hold it `weak`, like its other dependencies.
 protocol SoundPlaying: AnyObject {
     func play(_ effect: SoundEffect)
+    func startLoop(_ effect: SoundEffect, key: String)
+    func stopLoop(key: String)
     func startClockWarning()
     func stopClockWarning()
     func setMusicRate(_ rate: Float)

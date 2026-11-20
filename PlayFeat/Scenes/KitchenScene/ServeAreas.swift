@@ -53,6 +53,7 @@ extension KitchenScene {
     func serveOrReject(_ node: KitchenBubbleNode, at seat: Int) {
         if let day, day.serve(node.ingredient, at: seat) {
             audio?.play(.putOrder)
+            if day.lastTip > 0 { audio?.play(.tip) }
             handOver(node, to: seat)
         } else {
             audio?.play(.wrongIngredient)

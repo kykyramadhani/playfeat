@@ -106,6 +106,7 @@ extension KitchenScene {
         hand.openSince = openedAt
         guard now - openedAt >= releaseDelay else { return }
 
+        audio?.play(.bubblePut) // The bubble pops on an intentional release.
         settle(node)
         hand.held = nil
         hand.openSince = nil

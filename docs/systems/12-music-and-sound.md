@@ -1,78 +1,106 @@
 # Music and sound
 
-## Ownership and interfaces
+## Ownership
 
-`PlayFeatApp` creates one `AudioManager` and injects it into SwiftUI. Scenes receive it through the `SoundPlaying` protocol. Tests use `SoundRecorder` instead of audio hardware. The classic game attaches a `GameAudio` listener to translate rule events into sound; the kitchen scene calls effect playback directly at interaction points.
+`PlayFeatApp` owns one `AudioManager`. SwiftUI reads it from the environment;
+SpriteKit scenes receive `SoundPlaying`. Classic rule events still go through
+`GameAudio`. `KitchenSoundscape` translates kitchen customer and cooking changes
+into cues without replaying them every frame. Tests use `SoundRecorder`.
 
-Music control belongs to screens/session lifecycle, not to each ingredient node. A button usually uses `ClickButton`, which plays `.uiClick` before executing its action.
+`EffectPlayer` decodes effect resources with `AVAudioFile`, caches PCM buffers,
+and plays overlapping voices through `AVAudioEngine`. Each voice has its own
+`AVAudioUnitTimePitch`; every playback chooses a random pitch from -1 to +2
+semitones (-100 to +200 cents). Speed and pitch are independent. A loop chooses
+its pitch when it starts. Music uses its own streaming `AVAudioPlayer` and does
+not inherit random effect pitch. At most 16 one-shot voices can overlap.
 
-## Initialization
+## Resources and tracks
 
-`AudioManager` configures an `.ambient` audio session, preloads WAV bytes for every `SoundEffect`, and reads saved volume settings. The capture session is video-only and explicitly avoids reconfiguring this shared audio session.
+Selected supplied assets live in `PlayFeat/Resources/Sounds/AstroFeast`.
+The shared resource lookup accepts WAV, MP3, M4A and CAF. Existing `bubble_grab`
+and `bubble_put` are identical to the supplied versions and are not duplicated.
+Neither the alternate `music buffet` nor the deleted `dry-fart` is bundled.
 
-The manager retains active one-shot players until their delegate reports completion. Each play call creates its own player from cached data, allowing repeated/overlapping effects without cutting off the previous sound. Missing resources are logged or skipped; adding an enum case without bundling the file does not create sound automatically.
-
-## Music tracks and rate
-
-| Use | Caller behavior |
+| Context | Track |
 |---|---|
-| Planet/galaxy/marathon-home chrome | `PlanetScreen` starts `home_soundtrack` |
-| Kitchen/classic play after countdown | `startMusic()` defaults to `gameplay_getcooking` |
-| End of day or screen teardown | Stop/fade gameplay music |
-| Background/foreground | Fade/pause and resume the retained player |
+| Galaxy after START, planet board, and Buffet home | `bgm_menu` |
+| Story kitchens on both planets | `bgm_story` |
+| Buffet gameplay | `music_buffet` (retained underscore filename) |
+| Legacy classic gameplay | `gameplay_getcooking` |
 
-Music files are resolved by base name with `.wav`. A music player loops indefinitely. Starting an already-playing identical track is a no-op, preventing every screen update or round from restarting it. Starting a different track stops/fades the old player and begins the new one with a fade-in; it does not wait synchronously for the old fade to finish.
+`ContentView` starts menu music when the launch screen closes and the galaxy
+map appears. Entering a story level or starting a Buffet run fades out the
+menu track immediately. The gameplay track starts after the countdown.
+Returning to the menu starts its track again, and outgoing gameplay screens
+stop only their own track during teardown.
 
-The default music fade-in is 1.5 seconds; the usual stop and background fades are 0.6 seconds. `setMusicRate` is an absolute setter clamped to 0.5–2.0, with rate playback enabled on the player.
+Buffet's music rate rises with customer-arrival pressure, capped at 1.5x.
+Story music stays at normal speed. Re-entering the same playing track does not
+restart it. Music and effects retain independent volume controls in Settings.
+The effect slider also updates existing loop and one-shot voices immediately.
 
-The classic `Difficulty` tier drives music tempo through `GameAudio`. Kitchen/marathon code does not currently apply that same tier-based tempo rule.
+## Effects and event timing
 
-## Effects catalog
+`SoundEffect` maps semantic cases to supplied filenames. The shared
+`ClickButton` uses `sfx_button` with randomized pitch; callers can override the
+sound or pass nil. Back/close controls use `sfx_back`. Card selection suppresses
+the generic click and uses `sfx_card_picked` instead.
 
-| Event/purpose | Enum / WAV base name |
+| Event | Resource / behavior |
 |---|---|
-| Reward/star chime | `addPoint` / `add_point` |
-| Classic bell | `bell` / `bell_2x` |
-| Grab and place | `bubbleGrab` / `bubble_grab`, `bubblePut` / `bubble_put` |
-| Low classic dish time | `clockRunningOut` / `clock_running_out` |
-| Countdown | `countdown` / `countdown321` |
-| Lost life/failure feedback | `loseHeart` / `lose_heart` |
-| Submit an order | `putOrder` / `put_order` |
-| Reset | `reset` / `reset` |
-| Button press | `uiClick` / `ui_click` |
-| Refused/wrong ingredient | `wrongIngredient` / `wrong_ingredients` |
-| Finished-dish cloud | `scuffleCloud` / `scuffle_cloud` |
+| Successful grab/catch | `bubble_grab` |
+| Intentional release / bubble pop | Existing `bubble_put` |
+| Accepted tool/vessel placement | `sfx_place` |
+| Regular / angry arrival | `sfx_customer_arrive` / `sfx_angry_arrive` |
+| Correct serve / refusal / positive tip | `sfx_serve_ok` / `sfx_wrong_dish` / `sfx_tip` |
+| Customer first enters red patience | `sfx_patience_red`, once per customer |
+| Customer gives up | `sfx_customer_leaves`, story and Buffet |
+| Grill / pot is cooking | Quiet keyed `sfx_bake_loop` / `sfx_boiling_pot` loop |
+| Cooking becomes ready / ruined | `sfx_bake_ready` / `sfx_bake_burnt`, once per transition |
+| Tool's food is overcooking | Keyed `sfx_bake_warning` loop |
+| Final 10 seconds | Keyed `sfx_time_warning`, story day or Buffet round |
+| Story clock reaches zero | `sfx_day_end`, **5x speed**; remaining customers can still be served |
+| Story level report appears | `sfx_round_over` (`storyReport`) |
+| Results stars / zero stars | Corresponding `sfx_star_1`, `sfx_star_2`, `sfx_star_3` / `sfx_no_star` |
+| New star reaches fuel gauge | `sfx_gas_collected`, fitted to the 0.25-second gauge-fill animation |
+| Introduction / planet or station unlock | `sfx_hint` / `sfx_unlock` |
+| Buffet upgrade break / pick / actual purchase | `sfx_card_reveal` / `sfx_card_picked` / `sfx_coin_spent_buffet` |
+| Buffet final report | `sfx_run_over`, with the temporary fallback below |
+| New Buffet personal best | `sfx_best_score`; records are points per planet, separate from classic dish counts |
 
-Exact callers determine where these play. An enum's name is not a global subscription to all similarly named game events.
+**Asset handoff note:** `sfx_round_over` is for STORY reports only. The distinct
+Buffet `sfx_run_over` file has not been supplied. `SoundEffect.runOver` looks for
+that filename first, then temporarily falls back to `lose_heart`. Add the new
+file to the app resources to replace the fallback; the TODO is beside the enum
+case. Do not redirect Buffet to the story report file.
 
-## Classic event-driven audio
+The angry-arrival clip runs at **2x speed**. Gas playback rate is calculated
+from the decoded clip duration; changing the source clip still fits the same
+animation. All three speed adjustments preserve the randomized pitch range.
 
-`GameAudio.attach` sets the manager's single `onEvent` listener. The scene and HUD independently consume the numbered event log; they do not take that callback slot.
+Cooking cues use each tool's actual `CookTiming`, including Planet 2 and faster
+Buffet tools. Taking ready food off and putting it back does not play another
+ready ding. New bubbles entering the screen remain silent. There are no new
+invented files for release-whoosh, missed-item, topping or stage-up sounds.
 
-Run restart stops the warning, synchronizes tempo and plays reset. A lost life stops the warning and plays its sting. A dish served plays the order sound and schedules a reward chime 0.35 seconds later, unless the game has ended meanwhile. Low-time begin/end events start and stop a dedicated looping warning player.
+## Pause and background
 
-The warning loop is separate from background music and ordinary one-shots. It must be stopped when the relevant countdown ends or play stops, not merely hidden with the HUD.
+Kitchen loops stop when the day pauses, a Buffet round ends, the player leaves,
+or the app backgrounds. Backgrounding stops volatile effect voices; returning
+allows effects again. Music fades/pauses and resumes separately.
 
-## Volume and background behavior
+`sfx_hand_found` plays after the initial seat check.
 
-Effects default to 1.0 and music to 0.45. Settings persists the values and updates the live manager. `isEnabled` is a runtime master guard; the current Settings popup mainly exposes volumes rather than a persisted master switch.
+## Verification
 
-Background fading marks a player as awaiting resume, lowers volume and pauses after the delay. The delayed pause checks that the same player is still current and the fade-out is still intended. Foreground return clears that flag, resumes and fades in. This prevents a late background callback from pausing music that already resumed.
+- `EffectPlaybackTests`: resource decoding (including MP3), exact rate
+  overrides, fuel duration, report separation, random pitch bounds, voice cap,
+  simultaneous loop idempotence and graph cleanup.
+- `KitchenSoundscapeTests`: arrival/patience/loss deduplication, cooking
+  transitions, both tool loops and pause cleanup.
+- `MarathonRecordTests`: independent per-planet records and new-best detection.
+- Existing `GameAudioTests` cover classic gameplay audio.
 
-`stopAll` immediately stops retained one-shots, warning and music. `stopMusic` clears the current music identity and also stops the warning when a music player is present.
-
-## Troubleshooting and changes
-
-For silence, check volume keys, runtime enable state, exact WAV resource name, loaded scene lifecycle and platform audio behavior. For repeated clicks, verify that a custom button is not playing `.uiClick` in addition to `ClickButton`. For runaway tempo, pass an absolute target rate rather than repeatedly adding a delta.
-
-Add a new effect to `SoundEffect`, bundle its WAV, choose the owning event/interaction, and extend recorder-based tests if its timing or event mapping matters. Do not put `AVAudioPlayer` in a pure game-rules type.
-
-## Source map and tests
-
-- [Playback and lifecycle](../../PlayFeat/Audio/AudioManager.swift), [effects catalog](../../PlayFeat/Audio/SoundEffects.swift)
-- [Scene protocol](../../PlayFeat/Audio/SoundPlaying.swift), [classic event listener](../../PlayFeat/Audio/GameAudio.swift)
-- [Button sound wrapper](../../PlayFeat/UI/Components/Button/ClickButton.swift)
-- [Home music owner](../../PlayFeat/UI/Components/PlanetSelect/PlanetScreen.swift), [kitchen owner](../../PlayFeat/UI/Screens/KitchenView.swift)
-- [Audio event tests](../../Testing/PlayFeatTests/Audio/GameAudioTests.swift), [test recorder](../../Testing/PlayFeatTests/Audio/SoundRecorder.swift)
-
-Related: [lifecycle](01-architecture-and-app-lifecycle.md), [settings](11-settings-and-localization.md), [classic events](15-classic-game-mode.md). [Back to index](README.md).
+A real-camera playtest is still needed to tune tracking tolerance and audition
+booth-speaker balance. Simulator tests do not establish that a player can hold
+the calibration pose reliably in exhibition lighting.

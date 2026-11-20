@@ -66,18 +66,20 @@ struct LevelReportView: View {
     }
 
     private var buttons: [ReportButton] {
-        let back = ReportButton(title: "Back", icon: "HomeIcon", palette: .blue, label: .white, action: onBack)
+        let back = ReportButton(title: "Back", icon: "HomeIcon", palette: .blue, label: .white, action: onBack, sound: .back)
         guard report.stars == 0 else { return [back, .next(onNext)] }
         return [back, .init(title: "Retry", icon: "RestartIcon", palette: .pink, label: .electricPink, action: onRetry)]
     }
 
     /// Lights the earned stars one at a time, each with a chime.
     private func lightStars() async {
+        audio.play(.storyReport)
         do {
             try await Task.sleep(for: Self.firstStarDelay)
+            if report.stars == 0 { audio.play(.noStar) }
             for _ in 0..<report.stars {
                 litStars += 1
-                audio.play(.addPoint)
+                audio.play(.star(litStars))
                 try await Task.sleep(for: Self.starInterval)
             }
         } catch {

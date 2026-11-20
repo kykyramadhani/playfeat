@@ -46,6 +46,16 @@ struct KitchenView: View {
     /// It went as far as the background: coming back plays a fresh 3-2-1.
     @State private var needsGetReadyOnReturn = false
     @State private var resumeCountdownRequest = 0
+    @State private var marathonNewBest = false
+    @State private var countdownGeneration = 0
+
+    private var gameplayMusic: String { marathon == nil ? MusicTrack.story : MusicTrack.buffet }
+
+    private var musicRate: Float {
+        guard let marathon else { return 1 }
+        let spacing = marathon.day.customerSpacing ?? MarathonFlow.startSpacing
+        return min(1.5, max(1, Float(sqrt(MarathonFlow.startSpacing / spacing))))
+    }
 
     init(sceneManager: SceneManager, level: LevelData) {
         self.sceneManager = sceneManager
@@ -90,6 +100,7 @@ struct KitchenView: View {
                 SeatCalibrationView(handPoseManager: handPoseManager) {
                     handPoseManager.lockOntoPlayer()
                     hasCalibrated = true
+                    audio.play(.handFound)
                 }
                 .designScaled()
             }
@@ -104,15 +115,21 @@ struct KitchenView: View {
         }
         .onAppear(perform: setUp)
         .onDisappear(perform: tearDown)
+        .onChange(of: day.isRunning) { _, running in
+            if !running { audio.stopKitchenLoops() }
+        }
+        .onChange(of: day.timeLeft <= 0) { _, ended in
+            if ended, marathon == nil { audio.play(.dayEnd) }
+        }
         .onChange(of: day.isOver) { _, isOver in
             if isOver { endDay() }
         }
         .onChange(of: day.isRoundOver) { _, isRoundOver in
             if isRoundOver { startBreak() }
         }
-        .onChange(of: day.ordersDelivered) { marathon?.refreshTools() }
-        .onChange(of: marathon?.lostCustomers) { previous, current in
-            if (current ?? 0) > (previous ?? 0) { audio.play(.loseHeart) }
+        .onChange(of: day.ordersDelivered) {
+            marathon?.refreshTools()
+            audio.setMusicRate(musicRate)
         }
         .onChange(of: isClockTicking) { _, isTicking in
             if isTicking { audio.startClockWarning() } else { audio.stopClockWarning() }
@@ -188,16 +205,15 @@ struct KitchenView: View {
         }
         // Runs again as each introduction closes; counts down once none are left.
         .task(id: introductions.count) {
-            guard introductions.isEmpty, await playGetReadyCountdown() else { return }
-            day.start()
-            audio.startMusic()
+            guard introductions.isEmpty, await playGetReadyCountdown(), scenePhase == .active else { return }
+            startPlaying()
         }
         .animation(.easeOut(duration: 0.2), value: introductions.count)
         .task(id: resumeCountdownRequest) {
             guard resumeCountdownRequest > 0,
                   await playGetReadyCountdown(),
-                  scenePhase == .active else { return }
-            day.start()
+                  scenePhase == .active, !isPaused else { return }
+            startPlaying()
         }
         .designScaled()
     }
@@ -229,8 +245,9 @@ struct KitchenView: View {
     /// Closes everything this day opened. NEXT and RETRY wait for this (the
     /// handover in SceneManager), so the next day starts from nothing.
     private func tearDown() {
-        audio.stopMusic()
+        audio.stopMusic(ifPlaying: gameplayMusic)
         audio.stopClockWarning()
+        audio.stopKitchenLoops()
         handPoseManager.releasePlayer()
         handPoseManager.stop()
         UIApplication.shared.isIdleTimerDisabled = false
@@ -239,8 +256,10 @@ struct KitchenView: View {
 
     /// Plays the 3-2-1-GO! beat. False if it was cut short.
     private func playGetReadyCountdown() async -> Bool {
+        let generation = countdownGeneration
         audio.play(.countdown)
         for step in stride(from: 3, through: 0, by: -1) {
+            guard generation == countdownGeneration, scenePhase == .active else { return false }
             countdown = step
             do {
                 try await Task.sleep(for: .seconds(1))
@@ -248,18 +267,22 @@ struct KitchenView: View {
                 return false
             }
         }
+        guard generation == countdownGeneration, scenePhase == .active else { return false }
         countdown = -1
         return true
     }
 
     /// Both reports keep the finished kitchen visible. Income is banked only once.
     private func endDay() {
-        guard sceneManager.levelReport == nil, marathonStep != .report else { return }
+        guard sceneManager.screen == .kitchen(day.level),
+              sceneManager.levelReport == nil, marathonStep != .report else { return }
         day.pause()
-        audio.stopMusic()
+        audio.stopMusic(ifPlaying: gameplayMusic)
+        audio.stopKitchenLoops()
         handPoseManager.stop()
         UIApplication.shared.isIdleTimerDisabled = false
-        if marathon != nil {
+        if let marathon {
+            marathonNewBest = GameStorage.recordMarathon(score: marathon.points, on: marathon.planet.id)
             withAnimation(.easeOut(duration: 0.3)) { marathonStep = .report }
         } else {
             let previousBest = GameStorage.bestStars(forLevel: day.level.id)
@@ -292,12 +315,15 @@ struct KitchenView: View {
     /// The clock ticks through a marathon round's last seconds, only while
     /// play is running: never under the pause popup or once the round is up.
     private var isClockTicking: Bool {
-        (marathon?.isRoundEnding ?? false) && day.isRunning
+        day.timeLeft > 0 && day.timeLeft <= MarathonSession.roundEndingWarningSec && day.isRunning
     }
 
     /// A round's time is up: play freezes and the break's cards come up.
     private func startBreak() {
         guard let marathon, !day.isOver else { return }
+        day.pause()
+        audio.stopClockWarning()
+        audio.stopKitchenLoops()
         marathon.startBreak()
         withAnimation(.easeOut(duration: 0.3)) { marathonStep = .upgrades }
     }
@@ -309,7 +335,12 @@ struct KitchenView: View {
         guard let marathon else { return }
         if let card {
             // The overlay only lets an affordable card from the offer be picked.
-            try? marathon.buy(card)
+            do {
+                try marathon.buy(card)
+                audio.play(.coinSpentBuffet)
+            } catch {
+                // A stale or unaffordable selection makes no purchase sound.
+            }
         }
         applyUpgrades(of: marathon)
         day.pause()
@@ -331,18 +362,21 @@ struct KitchenView: View {
         case .upgrades:
             RoundCompleteOverlay(session: marathon, onContinue: endBreak(buying:))
         case .report:
-            MarathonReportView(session: marathon, onNext: sceneManager.goToPlanetSelect)
+            MarathonReportView(isNewBest: marathonNewBest, session: marathon, onNext: sceneManager.goToPlanetSelect)
         }
     }
 
     private func pauseDay() {
         day.pause()
         isPaused = true
+        audio.stopClockWarning()
+        audio.stopKitchenLoops()
+        audio.fadeOutMusic()
     }
 
     private func resumeDay() {
         isPaused = false
-        day.start()
+        startPlaying()
     }
 
     /// Starts this level, or the whole marathon, over from its beginning.
@@ -367,16 +401,31 @@ struct KitchenView: View {
                 needsGetReadyOnReturn = false
                 resumeCountdownRequest += 1
             } else {
-                day.start()
+                startPlaying()
             }
         case .background:
             // `.inactive` always comes first and has already paused the day.
             needsGetReadyOnReturn = isInterrupted
         default:
+            if countdown >= 0, hasCalibrated, introductions.isEmpty {
+                countdownGeneration += 1
+                isInterrupted = true
+                needsGetReadyOnReturn = true
+            }
             if day.isRunning {
                 isInterrupted = true
                 day.pause()
+                audio.stopKitchenLoops()
             }
         }
+    }
+
+    private func startPlaying() {
+        guard sceneManager.screen == .kitchen(day.level),
+              !isPaused, scenePhase == .active else { return }
+        day.start()
+        audio.startMusic(gameplayMusic)
+        audio.setMusicRate(musicRate)
+        audio.fadeInMusic()
     }
 }
