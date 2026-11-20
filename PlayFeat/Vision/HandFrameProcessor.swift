@@ -92,14 +92,17 @@ nonisolated final class HandFrameProcessor: @unchecked Sendable {
         selector.zone = zone
     }
 
-    /// From now on only `body`'s owner is the player, followed as they move.
+    /// From now on only `body`'s owner is the player, followed as they move,
+    /// and each of their hands keeps the side it was calibrated with.
     func lockOntoPlayer(_ body: HumanBodyPoseManager.BodyCandidate) {
         selector.lock(onto: body)
+        identityTracker.keepsHandSides = true
     }
 
     /// Forgets the locked player and the zone, ready for the next calibration.
     func releasePlayer() {
         selector.reset()
+        identityTracker.keepsHandSides = false
     }
 
     // MARK: - Suspension (video queue only)
