@@ -95,6 +95,24 @@ struct KitchenStationTests {
         #expect(flatbread.placement == nil)
     }
 
+    /// Taken off half-baked and put back, a flatbread finishes baking in the
+    /// time it had left rather than starting over.
+    @Test func aHalfBakedFlatbreadPutBackFinishesFromWhereItWas() throws {
+        let (scene, day) = try makeScene()
+        day.start()
+        day.tick(at: 0)
+        let flatbread = letGo(Menu.rawFlatbread, over: KitchenLayout.grill, in: scene)
+        // Frame by frame: the day's clock credits at most a short step per tick.
+        for frame in 1...40 { day.tick(at: Double(frame) * 0.1) }
+        scene.unpark(flatbread)
+
+        flatbread.position = scene.layout.sceneRect(KitchenLayout.grill).center
+        scene.settle(flatbread)
+        scene.updateCookers(now: day.elapsed + 2)
+
+        #expect(flatbread.ingredient == Menu.bakedFlatbread)
+    }
+
     // MARK: - Plate
 
     @Test func breadAndPepperOnThePlateBecomeOneDish() throws {

@@ -200,7 +200,12 @@ struct GameplayView: View {
                 }
 
                 if canStop {
-                    StopButtonLayer(onStop: quitGame)
+                    TapToRevealLayer {
+                        // Bottom-left, clear of the HUD row across the top.
+                        ButtonComponent(name: "Stop", icon: "xmark", action: quitGame, buttonStyle: .primary)
+                            .padding(40)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                    }
                 }
             }
         }

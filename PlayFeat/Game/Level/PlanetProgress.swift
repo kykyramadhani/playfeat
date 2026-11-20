@@ -9,7 +9,7 @@
 //  flies on with 15 of them and every level played.
 //
 
-nonisolated struct PlanetProgress {
+nonisolated struct PlanetProgress: Equatable {
     /// Best stars per level, in play order.
     let bestStars: [Int]
 

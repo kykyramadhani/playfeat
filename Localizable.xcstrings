@@ -1146,6 +1146,17 @@
         }
       }
     },
+    "Pause" : {
+      "comment" : "Round button that pauses a kitchen day.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeda"
+          }
+        }
+      }
+    },
     "Pepper Flatbread" : {
       "comment" : "Name of the pepper flatbread dish.",
       "localizations" : {

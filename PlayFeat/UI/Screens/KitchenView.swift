@@ -50,6 +50,7 @@ struct KitchenView: View {
     init(sceneManager: SceneManager, level: LevelData) {
         self.sceneManager = sceneManager
         marathon = sceneManager.marathon
+        
         let day = sceneManager.marathon?.day ?? KitchenDay(
             storyLevel: level,
             positionTypes: KitchenLayout.positionTypes,
@@ -59,10 +60,12 @@ struct KitchenView: View {
             )
         )
         _day = State(initialValue: day)
+        
         let seen = GameStorage.seenIntroductions
         _introductions = State(initialValue: KitchenIntroduction.introduced(byLevel: level.id).filter {
             !seen.contains($0.id)
         })
+        
         #if DEBUG
         _hasCalibrated = State(initialValue: DebugLaunch.skipSeatCheck)
         #endif
@@ -140,7 +143,8 @@ struct KitchenView: View {
             if let introduction = introductions.first {
                 IntroductionPopup(introduction: introduction) {
                     GameStorage.markIntroductionSeen(introduction.id)
-                    introductions.removeFirst()
+                    // By id: a popup still fading out can be tapped again.
+                    introductions.removeAll { $0.id == introduction.id }
                 }
                 .id(introduction.id)
                 .transition(.opacity)
@@ -151,8 +155,9 @@ struct KitchenView: View {
                 CameraPermissionDeniedOverlay()
             }
 
-            if countdown < 0, !day.isOver, marathonStep == nil {
-                StopButtonLayer(onStop: pauseDay)
+            // Gone while paused, so it comes back hidden after RESUME.
+            if countdown < 0, !day.isOver, marathonStep == nil, !isPaused {
+                pauseButtonLayer
             }
 
             if isPaused {
@@ -185,6 +190,17 @@ struct KitchenView: View {
         .designScaled()
     }
 
+    /// Figma "IN GAME if press screen": top right, clear of the HUD along
+    /// the bottom.
+    private var pauseButtonLayer: some View {
+        TapToRevealLayer {
+            PauseButton(action: pauseDay)
+                .padding(.top, 38)
+                .padding(.trailing, 35)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+        }
+    }
+
     // MARK: - Lifecycle
 
     private func setUp() {
@@ -198,11 +214,14 @@ struct KitchenView: View {
         UIApplication.shared.isIdleTimerDisabled = true
     }
 
+    /// Closes everything this day opened. NEXT and RETRY wait for this (the
+    /// handover in SceneManager), so the next day starts from nothing.
     private func tearDown() {
+        audio.stopMusic()
         handPoseManager.releasePlayer()
         handPoseManager.stop()
         UIApplication.shared.isIdleTimerDisabled = false
-        audio.stopMusic()
+        sceneManager.kitchenDidClose()
     }
 
     /// Plays the 3-2-1-GO! beat. False if it was cut short.

@@ -21,7 +21,7 @@ extension KitchenScene {
     func customerSeat(around node: KitchenBubbleNode) -> Int? {
         guard let day, KitchenMenu.recipes[node.ingredient] != nil else { return nil }
         let reached = KitchenLayout.seats.indices.filter { seat in
-            day.isOccupied(seat) && layout.sceneRect(KitchenLayout.seats[seat].serveArea).contains(node.position)
+            day.isOccupied(seat) && layout.sceneRect(layout.seat(at: seat).serveArea).contains(node.position)
         }
         return reached.first { day.wants(node.ingredient, at: $0) } ?? reached.first
     }
@@ -31,7 +31,7 @@ extension KitchenScene {
     func seat(wanting dish: String, around point: CGPoint, in day: KitchenDay) -> Int? {
         KitchenLayout.seats.indices.first { seat in
             day.wants(dish, at: seat)
-                && layout.sceneRect(KitchenLayout.seats[seat].serveArea).contains(point)
+                && layout.sceneRect(layout.seat(at: seat).serveArea).contains(point)
         }
     }
 
@@ -42,7 +42,7 @@ extension KitchenScene {
         let reach = layout.length(KitchenLayout.serveMagnetReach)
         return KitchenLayout.seats.indices.first { seat in
             day.wants(node.ingredient, at: seat)
-                && layout.sceneRect(KitchenLayout.seats[seat].serveArea)
+                && layout.sceneRect(layout.seat(at: seat).serveArea)
                     .insetBy(dx: -reach, dy: -reach)
                     .contains(node.position)
         }
@@ -56,7 +56,7 @@ extension KitchenScene {
             handOver(node, to: seat)
         } else {
             audio?.play(.wrongIngredient)
-            showCross(at: layout.sceneRect(KitchenLayout.seats[seat].orderSheet).center)
+            showCross(at: layout.sceneRect(layout.seat(at: seat).orderSheet).center)
             remove(node)
         }
     }
@@ -66,7 +66,7 @@ extension KitchenScene {
     private func handOver(_ node: KitchenBubbleNode, to seat: Int) {
         bubbles.removeAll { $0 === node }
         node.removeAllActions()
-        let alien = layout.sceneRect(KitchenLayout.seats[seat].alien).center
+        let alien = layout.sceneRect(layout.seat(at: seat).alien).center
         let pullTime = KitchenRules.handOverSec * 0.75
         let vanishTime = KitchenRules.handOverSec - pullTime
         let pull = SKAction.move(to: alien, duration: pullTime)

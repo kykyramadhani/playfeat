@@ -6,8 +6,9 @@
 //  A kitchen tool that cooks, as in the prototype: the grill (a flatbread on
 //  Planet 1, a Lantern Clam on Planet 2) and the pot (Tide Noodles). A raw
 //  item cooks in `cookSec`; once done it keeps cooking, starts glowing as a
-//  warning after a while and then is ruined. A done item can be put back on
-//  and carries on from where it was. Putting an item on a taken slot
+//  warning after a while and then is ruined. An item taken off keeps its own
+//  cooking time, raw or done, and carries on from it when put back on (on
+//  any slot of the tool). Putting an item on a taken slot
 //  replaces what was there. One slot to start; the marathon can add a
 //  second. Timed in play time, so a pause stops cooking.
 //
@@ -148,10 +149,15 @@ nonisolated struct CookingTool: Equatable {
         }
     }
 
-    /// How long `item` has cooked, for putting it on the tool: none if raw,
-    /// just done if it comes off nowhere else.
+    /// How long `item` has cooked, for putting it on the tool: the time it
+    /// `remembered` from its last time on, so a half-cooked item carries on
+    /// rather than starting over. Without one, a raw item starts from nothing
+    /// and a done one from just done.
     func cookedBefore(_ item: String, remembered: TimeInterval?) -> TimeInterval {
-        recipe(of: item)?.raw == item ? 0 : max(remembered ?? cookSec, cookSec)
+        let isRaw = recipe(of: item)?.raw == item
+        guard let remembered else { return isRaw ? 0 : cookSec }
+        // A done item is never less than done, even if the tool got faster.
+        return isRaw ? remembered : max(remembered, cookSec)
     }
 
     private func recipe(of item: String) -> CookingRecipe? {

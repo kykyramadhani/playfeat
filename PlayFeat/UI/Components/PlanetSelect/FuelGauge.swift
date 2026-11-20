@@ -14,6 +14,10 @@ struct FuelGauge: View {
     let filledBars: Int
 
     static let barCount = 10
+    /// Where the star on top of the gauge is drawn, in gauge points: earned
+    /// stars fly into it.
+    static let starCenter = CGPoint(x: 19, y: 19)
+    static let starSize: CGFloat = 31
     /// Bottom bar to top: each sits 12 points higher and a hair further left,
     /// following the frame's slant.
     private static let barStep = CGSize(width: -0.28, height: -12.02)
@@ -25,9 +29,9 @@ struct FuelGauge: View {
                 .resizable()
             Image("FuelGaugeStar")
                 .resizable()
-                .frame(width: 31, height: 31)
+                .frame(width: Self.starSize, height: Self.starSize)
                 .rotationEffect(.degrees(-3.92))
-                .position(x: 19, y: 19)
+                .position(Self.starCenter)
             ForEach(0..<Self.barCount, id: \.self) { index in
                 bar(filled: index < filledBars)
                     .offset(

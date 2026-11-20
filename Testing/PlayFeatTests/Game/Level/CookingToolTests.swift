@@ -65,6 +65,32 @@ struct CookingToolTests {
         #expect(grill.doneness(onSlot: 0, at: 1) == .overcooking)
     }
 
+    /// A flatbread taken off half-baked keeps its time: put back on, it
+    /// finishes baking in the seconds it had left, not from the start.
+    @Test func aHalfBakedFlatbreadPutBackCarriesOn() {
+        var grill = CookingTool.flatbreadGrill()
+
+        let cookedBefore = grill.cookedBefore(Menu.rawFlatbread, remembered: 4)
+        grill.place(Menu.rawFlatbread, onSlot: 0, at: 100, cookedBefore: cookedBefore)
+
+        #expect(grill.item(onSlot: 0, at: 101.9) == Menu.rawFlatbread)
+        #expect(grill.item(onSlot: 0, at: 102) == Menu.bakedFlatbread)
+    }
+
+    /// One that has never been on the grill starts from raw.
+    @Test func aFreshRawFlatbreadStartsFromNothing() {
+        let grill = CookingTool.flatbreadGrill()
+
+        #expect(grill.cookedBefore(Menu.rawFlatbread, remembered: nil) == 0)
+    }
+
+    /// A baked one with no time of its own counts as just baked.
+    @Test func aBakedFlatbreadWithNoTimeCountsAsJustBaked() {
+        let grill = CookingTool.flatbreadGrill()
+
+        #expect(grill.cookedBefore(Menu.bakedFlatbread, remembered: nil) == grill.cookSec)
+    }
+
     @Test func clearingASlotEmptiesIt() {
         var grill = CookingTool.flatbreadGrill()
         grill.place(Menu.rawFlatbread, onSlot: 0, at: 0, cookedBefore: 0)
@@ -101,6 +127,27 @@ struct CookingToolTests {
         #expect(pot.item(onSlot: 0, at: 6) == Menu.boiledNoodles)
         #expect(pot.doneness(onSlot: 0, at: 12) == .overcooking)
         #expect(pot.item(onSlot: 0, at: 16) == Menu.mushyNoodles)
+    }
+
+    /// Noodles lifted out half-boiled finish boiling when put back.
+    @Test func halfBoiledNoodlesPutBackCarryOn() {
+        var pot = CookingTool.noodlePot()
+
+        let cookedBefore = pot.cookedBefore(Menu.rawNoodles, remembered: 5)
+        pot.place(Menu.rawNoodles, onSlot: 0, at: 50, cookedBefore: cookedBefore)
+
+        #expect(pot.item(onSlot: 0, at: 51) == Menu.boiledNoodles)
+    }
+
+    /// A clam taken off the grill half-opened carries on too.
+    @Test func aHalfGrilledClamPutBackCarriesOn() {
+        var grill = CookingTool(kind: .grill, recipes: [.clam], timing: .underwaterKitchen)
+
+        let cookedBefore = grill.cookedBefore(Menu.rawClam, remembered: 3)
+        grill.place(Menu.rawClam, onSlot: 0, at: 20, cookedBefore: cookedBefore)
+
+        #expect(grill.item(onSlot: 0, at: 22.9) == Menu.rawClam)
+        #expect(grill.item(onSlot: 0, at: 23) == Menu.grilledClam)
     }
 
     @Test func thePotTakesNoodlesButNotAClam() {

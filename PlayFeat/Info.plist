@@ -9,6 +9,8 @@
 		<string>en</string>
 		<string>id</string>
 	</array>
+	<key>NSCameraReactionEffectGesturesEnabledDefault</key>
+	<false/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>AtkinsonHyperlegible-Regular.ttf</string>

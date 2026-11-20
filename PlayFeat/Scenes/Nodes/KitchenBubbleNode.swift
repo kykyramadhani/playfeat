@@ -40,8 +40,8 @@ final class KitchenBubbleNode: SKNode {
     var fallingSince: TimeInterval?
     /// The lane a bubble came in on; nil for anything that didn't.
     var lane: Int?
-    /// How long a flatbread has cooked on the grill, so one put back on
-    /// carries on from there.
+    /// How long this item has cooked on a cooking tool (grill, pot), raw or
+    /// done, so one taken off and put back on carries on from there.
     var cookedSeconds: TimeInterval?
     /// Where it has been put down, if anywhere. Put-down items show as bare food.
     var placement: Placement? {

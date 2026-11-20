@@ -37,21 +37,17 @@ struct LaunchView: View {
 
                 VStack(spacing: 40) {
                     LoadingBar(progress: progress)
-                    startButton
                 }
                 .frame(width: 711)
             }
         }
-        .task { await fillLoadingBar() }
+        .task {
+            await fillLoadingBar()
+            onStart()
+        }
         .designScaled()
     }
-
-    private var startButton: some View {
-        RaisedTextButton(title: "Start", palette: isLoaded ? .start : .startDisabled, action: onStart)
-            .fixedSize(horizontal: true, vertical: false)
-            .disabled(!isLoaded)
-    }
-
+    
     /// Waits out the fill itself: an animation completion handler fired at
     /// once here, while the view was still behind the splash.
     private func fillLoadingBar() async {

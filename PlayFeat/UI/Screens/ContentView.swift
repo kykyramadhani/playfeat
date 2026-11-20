@@ -112,7 +112,10 @@ struct ContentView: View {
             .transition(.opacity)
         case .kitchen(let level):
             KitchenView(sceneManager: sceneManager, level: level)
-                .id(sceneManager.kitchenVisit)
+                .transition(.opacity)
+        case .kitchenHandover:
+            Color.black
+                .ignoresSafeArea()
                 .transition(.opacity)
         case .postGame(let result):
             PostGameView(result: result, sceneManager: sceneManager)

@@ -106,6 +106,16 @@ struct ArtAssetTests {
         #expect(UIImage(named: backdrop.galaxyImageName) != nil)
     }
 
+    /// The kitchen's truck is drawn as layers cut into bands on the art's own
+    /// 1366×1024 grid; a missing or re-cropped layer leaves a hole in the
+    /// walls or a counter out of line with the props on it.
+    @Test(arguments: ["TruckWall", "TruckCounter", "TruckChains"])
+    func everyTruckLayerExistsOnTheArtsCanvas(layer: String) throws {
+        let image = try #require(UIImage(named: layer), "missing truck layer '\(layer)'")
+
+        #expect(image.size.width / image.size.height == KitchenLayout.artSize.width / KitchenLayout.artSize.height)
+    }
+
     /// The galaxy map draws every planet at one size, so their pictures must
     /// share one canvas; a planet cropped tighter would look bigger.
     @Test func everyGalaxyPlanetSharesOneCanvas() {

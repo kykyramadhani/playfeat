@@ -4,12 +4,14 @@
 //  Created by kyky on 12/11/26.
 //
 //  Everything behind the kitchen's bubbles, back to front: the planet through
-//  the window, the customers leaning in, the counter, the props on it, and
-//  the customers' order sheets.
+//  the window, the customers leaning in, the truck (walls, counter, chains),
+//  the props on the counter, and the customers' order sheets.
 //
-//  Laid out on the 1366×1024 art in art points and fitted to the screen as
-//  one picture, the same mapping KitchenLayout gives the scene. On a screen
-//  wider than the art, the truck's walls are stretched out to the edges.
+//  The planet fills the screen by its layers' own fit rules, and the truck's
+//  walls stick to the screen's edges (KitchenLayout.truckBands), so any
+//  screen width shows a whole truck. Customers and props are laid out on the
+//  1366×1024 art in art points and fitted to the screen as one picture, the
+//  same mapping KitchenLayout gives the scene.
 //
 
 import SwiftUI
@@ -17,23 +19,24 @@ import SwiftUI
 struct KitchenBackdrop: View {
     let day: KitchenDay
 
+    /// The truck's layers, back to front.
+    private static let truckLayers = ["TruckWall", "TruckCounter", "TruckChains"]
+
     var body: some View {
         GeometryReader { proxy in
             let layout = KitchenLayout(screenSize: proxy.size)
 
             ZStack(alignment: .topLeading) {
                 LayeredPlanetBackdrop(backdrop: planet.backdrop)
-                KitchenCustomers(day: day, part: .aliens)
-                // Figma cuts the counter one point short at the bottom.
-                Image("KitchenCounter").resizable()
-                    .frame(width: KitchenLayout.artSize.width, height: KitchenLayout.artSize.height - 1)
-                props
-                KitchenCustomers(day: day, part: .orderSheets)
+                onArt(layout) { KitchenCustomers(day: day, part: .aliens, layout: layout) }
+                ForEach(Self.truckLayers, id: \.self) { layer in
+                    TruckLayer(imageName: layer, layout: layout)
+                }
+                onArt(layout) {
+                    props
+                    KitchenCustomers(day: day, part: .orderSheets, layout: layout)
+                }
             }
-            .frame(width: KitchenLayout.artSize.width, height: KitchenLayout.artSize.height)
-            .scaleEffect(layout.scale)
-            .frame(width: proxy.size.width, height: proxy.size.height)
-            .overlay { TruckWallExtension(layout: layout) }
             .clipped()
         }
         .ignoresSafeArea()
@@ -41,6 +44,14 @@ struct KitchenBackdrop: View {
     }
 
     private var planet: Planet { PlanetCatalog.planet(day.level.planet) }
+
+    /// Lays `content` out on the art, in art points, and fits it to the screen.
+    private func onArt(_ layout: KitchenLayout, @ViewBuilder content: () -> some View) -> some View {
+        ZStack(alignment: .topLeading) { content() }
+            .frame(width: KitchenLayout.artSize.width, height: KitchenLayout.artSize.height, alignment: .topLeading)
+            .scaleEffect(layout.scale)
+            .frame(width: layout.screenSize.width, height: layout.screenSize.height)
+    }
 
     private var props: some View {
         ZStack(alignment: .topLeading) {
@@ -57,40 +68,26 @@ struct KitchenBackdrop: View {
     }
 }
 
-/// Fills the margins beside the art on a wide screen by stretching the
-/// outermost strip of the counter art (truck wall above, counter below) out
-/// to the screen's edges.
-/// ponytail: stretched edges until the artists draw a wider truck.
-private struct TruckWallExtension: View {
-    /// How much of the art's outer edge is stretched, in art points: inside
-    /// the wall's plain paint, clear of its shaded inner edge.
-    private static let edgeStripWidth: CGFloat = 24
-    /// Screen points each wall reaches over the art's edge, hiding the
-    /// half-drawn edge pixels the planet would otherwise show through.
-    private static let seamOverlap: CGFloat = 2
+/// One truck layer, cut into KitchenLayout's bands: the outer bands at the
+/// screen's edges as drawn, the plain middle widened between them.
+private struct TruckLayer: View {
+    /// Each band is clipped this far past its sides, so neighbouring bands
+    /// overlap rather than leave a hairline seam where they meet.
+    private static let seamOverlap: CGFloat = 1
 
+    let imageName: String
     let layout: KitchenLayout
 
     var body: some View {
-        HStack(spacing: 0) {
-            wall(keeping: .topLeading)
-            Spacer(minLength: 0)
-            wall(keeping: .topTrailing)
+        Canvas { context, _ in
+            let image = context.resolve(Image(imageName))
+            for band in layout.truckBands {
+                context.drawLayer { bandContext in
+                    bandContext.clip(to: Path(band.screenRect.insetBy(dx: -Self.seamOverlap, dy: 0)))
+                    bandContext.draw(image, in: band.layerRect)
+                }
+            }
         }
-    }
-
-    /// The counter art widened until its edge strip spans the margin, cut to
-    /// the margin at the `edge` side.
-    private func wall(keeping edge: Alignment) -> some View {
-        let width = layout.sideMargin + Self.seamOverlap
-        let stretch = width / Self.edgeStripWidth
-        return Image("KitchenCounter")
-            .resizable()
-            .frame(width: KitchenLayout.artSize.width * stretch,
-                   height: (KitchenLayout.artSize.height - 1) * layout.scale)
-            .offset(y: layout.viewPoint(.zero).y)
-            .frame(width: width, height: layout.screenSize.height, alignment: edge)
-            .clipped()
     }
 }
 
@@ -107,6 +104,7 @@ private struct KitchenCustomers: View {
 
     let day: KitchenDay
     let part: Part
+    let layout: KitchenLayout
 
     private var shown: [SeatedCustomer] {
         part == .aliens ? day.aliensOnScreen : day.orderSheetsOnScreen
@@ -115,12 +113,12 @@ private struct KitchenCustomers: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             ForEach(shown, id: \.seat) { customer in
-                let seat = KitchenLayout.seats[customer.seat]
+                let seat = layout.seat(at: customer.seat)
                 let patience = day.patienceShown(for: customer)
                 switch part {
                 case .aliens:
                     SeatedAlien(imageName: alienImage(of: customer, patienceLeft: patience), pose: seat.alienPose)
-                        .transition(.offset(seat.offstageOffset))
+                        .transition(.offset(KitchenLayout.offstageOffset(ofSeatAt: customer.seat)))
                 case .orderSheets:
                     OrderSheet(dish: customer.dish, patience: patience)
                         .placed(in: seat.orderSheet)

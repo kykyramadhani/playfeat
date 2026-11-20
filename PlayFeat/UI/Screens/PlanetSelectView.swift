@@ -12,6 +12,8 @@
 //  locked marathon or the fuel gauge explains what's needed.
 //
 //  Returning from a finished story day refreshes the earned stars and fuel.
+//  Stars the day newly earned fly from their level card into the fuel
+//  gauge, which fills as each one lands (`FuelStarFlights`).
 //
 //  Each piece is pinned to the screen edge it hugs in the Figma frame, so a
 //  wider screen spreads the layout instead of stretching it.
@@ -29,10 +31,23 @@ struct PlanetSelectView: View {
     @State private var showSpoilerWarning = false
     @State private var showShop = false
     @State private var notice: PlanetNotice?
+    /// Built once, when the board opens, from the stars days left for it.
+    @State private var starFlights: FuelFlightPlan
+    /// What the fuel gauge shows: behind `progress` until the new stars land.
+    @State private var fuel: PlanetProgress
 
     init(sceneManager: SceneManager) {
         self.sceneManager = sceneManager
-        _progress = State(initialValue: GameStorage.progress(on: PlanetCatalog.planet(sceneManager.planet)))
+        let planet = PlanetCatalog.planet(sceneManager.planet)
+        let progress = GameStorage.progress(on: planet)
+        let starFlights = FuelFlightPlan(
+            progress: progress,
+            levelIDs: planet.levelIDs,
+            deliveries: sceneManager.starDeliveries
+        )
+        _progress = State(initialValue: progress)
+        _starFlights = State(initialValue: starFlights)
+        _fuel = State(initialValue: starFlights.progressBefore)
     }
 
     /// The planet the player has landed on.
@@ -44,6 +59,7 @@ struct PlanetSelectView: View {
                 .overlay(alignment: .topLeading) { spaceship.padding(.leading, -6).padding(.top, 191) }
                 .overlay(alignment: .bottomLeading) { backToGalaxyButton.padding(.leading, 48).padding(.bottom, 44) }
                 .overlay(alignment: .topTrailing) { levelBoard.padding(.trailing, 46).padding(.top, 92) }
+                .fuelStarFlights(starFlights, fuel: $fuel)
         }
         .overlay { levelPopup }
         .overlay {
@@ -71,6 +87,7 @@ struct PlanetSelectView: View {
             }
         }
         .onAppear(perform: loadProgress)
+        .onAppear(perform: takeStarDeliveries)
         .animation(.easeOut(duration: 0.2), value: selectedLevel)
         .animation(.easeOut(duration: 0.2), value: showRecipeBook)
         .animation(.easeOut(duration: 0.2), value: showShop)
@@ -89,7 +106,13 @@ struct PlanetSelectView: View {
             .accessibilityHidden(true)
             .overlay(alignment: .topLeading) {
                 ClickButton(action: { notice = .gas }) {
-                    FuelGauge(filledBars: progress.fuelBars(outOf: FuelGauge.barCount))
+                    FuelGauge(filledBars: fuel.fuelBars(outOf: FuelGauge.barCount))
+                        .phaseAnimator([false, true], trigger: fuel) { gauge, isTopped in
+                            gauge.scaleEffect(isTopped ? 1.15 : 1)
+                        }
+                        .anchorPreference(key: FuelFlightAnchors.self, value: .bounds) {
+                            FuelFlightAnchors.Value(gauge: $0)
+                        }
                 }
                 .buttonStyle(.plain)
                 .padding(.leading, 242.5)
@@ -170,6 +193,9 @@ struct PlanetSelectView: View {
 
         ClickButton(action: { openLevel(at: index, isLocked: card.isLocked) }) { card }
             .buttonStyle(.plain)
+            .anchorPreference(key: FuelFlightAnchors.self, value: .bounds) {
+                FuelFlightAnchors.Value(cards: [index: $0])
+            }
     }
 
     private func openLevel(at index: Int, isLocked: Bool) {
@@ -241,6 +267,12 @@ struct PlanetSelectView: View {
     /// Re-read on every visit so completed days update the level stars and fuel.
     private func loadProgress() {
         progress = GameStorage.progress(on: planet)
+    }
+
+    /// The flights are already planned, so the stars won't fly again on the
+    /// next visit.
+    private func takeStarDeliveries() {
+        sceneManager.markStarsDelivered(on: planet.levelIDs)
     }
 }
 
