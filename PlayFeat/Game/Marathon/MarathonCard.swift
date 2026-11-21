@@ -91,6 +91,7 @@ nonisolated enum MarathonCard: String, CaseIterable, Hashable {
             guard setOffers.indices.contains(number - 1) else {
                 return Array(fallback.filter(canAdd).prefix(cardsPerBreak))
             }
+            
             let hand = setOffers[number - 1]
             for card in hand {
                 if canAdd(card) {

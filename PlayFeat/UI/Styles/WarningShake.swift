@@ -5,20 +5,22 @@
 //
 //  A quick wiggle and pop that says "hurry": each time `beat` changes the
 //  view swings side to side and swells a little, then settles. A marathon
-//  round's clock beats once a second in its last seconds.
+//  round's clock beats once a second in its last seconds, and stops beating
+//  (nil) when time runs out, which puts it straight back level.
 //
 
 import SwiftUI
 
 extension View {
-    /// Wiggles this view each time `beat` changes, unless Reduce Motion is on.
-    func warningShake(on beat: Int) -> some View {
+    /// Wiggles this view each time `beat` changes, unless Reduce Motion is
+    /// on. While `beat` is nil the view is drawn level, even mid-wiggle.
+    func warningShake(on beat: Int?) -> some View {
         modifier(WarningShake(beat: beat))
     }
 }
 
 private struct WarningShake: ViewModifier {
-    let beat: Int
+    let beat: Int?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -27,6 +29,9 @@ private struct WarningShake: ViewModifier {
             content
         } else {
             content.keyframeAnimator(initialValue: Pose(), trigger: beat) { view, pose in
+                // Kept in place rather than removed when the beat stops, so
+                // the first beat still wiggles; it is only drawn level.
+                let pose = beat == nil ? Pose() : pose
                 view
                     .rotationEffect(.degrees(pose.degrees))
                     .scaleEffect(pose.scale)
