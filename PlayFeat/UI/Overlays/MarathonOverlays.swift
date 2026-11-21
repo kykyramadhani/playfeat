@@ -108,7 +108,7 @@ private struct MarathonCoinsPill: View {
                 .overlay(RoundedRectangle(cornerRadius: 21.8).strokeBorder(.white.opacity(0.5), lineWidth: 1.3))
                 .shadow(color: .black.opacity(0.2), radius: 0, y: 1.4)
                 .offset(x: 34.9, y: 10.6)
-            Image("HUDCoinsIcon")
+            Image("MarathonCoinIcon")
                 .resizable()
                 .frame(width: 73, height: 69)
         }
