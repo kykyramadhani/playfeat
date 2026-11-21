@@ -52,7 +52,7 @@ struct KitchenView: View {
         marathon = sceneManager.marathon
         let day = sceneManager.marathon?.day ?? KitchenDay(
             storyLevel: level,
-            positionTypes: KitchenLayout.positionTypes,
+            openSeats: KitchenLayout.openSeats(on: level),
             pricing: GameStorage.dishPricing,
             tools: KitchenTools(
                 for: level, ownedPlates: GameStorage.kitchenPlates, ownedGlasses: GameStorage.kitchenGlasses
@@ -131,6 +131,7 @@ struct KitchenView: View {
     private var dayOverlays: some View {
         ZStack {
             KitchenHUD(day: day, marathonCoins: marathon?.coins)
+            if let marathon { MarathonHUD(session: marathon) }
 
             if countdown >= 0, introductions.isEmpty {
                 GetReadyOverlay(count: countdown)
@@ -228,6 +229,7 @@ struct KitchenView: View {
         handPoseManager.stop()
         UIApplication.shared.isIdleTimerDisabled = false
         if marathon != nil {
+            audio.play(.runOver)
             withAnimation(.easeOut(duration: 0.3)) { marathonStep = .report }
         } else {
             let previousBest = GameStorage.bestStars(forLevel: day.level.id)
@@ -289,7 +291,11 @@ struct KitchenView: View {
         case .upgrades:
             RoundCompleteOverlay(session: marathon, onContinue: endBreak(buying:))
         case .report:
-            MarathonReportView(session: marathon, onNext: sceneManager.goToPlanetSelect)
+            MarathonReportView(
+                session: marathon,
+                onBack: sceneManager.goToMarathon,
+                onRestart: { sceneManager.startMarathon(on: marathon.planet.id) }
+            )
         }
     }
 

@@ -194,7 +194,7 @@ struct SceneManagerTests {
     private func makeReport(for level: LevelData) -> LevelReport {
         let day = KitchenDay(
             storyLevel: level,
-            positionTypes: KitchenLayout.positionTypes,
+            openSeats: KitchenLayout.openSeats(on: level),
             tools: KitchenTools(for: level, ownedPlates: 1, ownedGlasses: 1)
         )
         return LevelReport(day: day, previousBestStars: 0)

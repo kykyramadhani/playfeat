@@ -24,6 +24,13 @@ struct KitchenDayTests {
         }
     }
 
+    /// Serves `dish` to whoever ordered it, wherever they stand.
+    @discardableResult
+    private func serve(_ dish: String, in day: KitchenDay) -> Bool {
+        guard let seat = day.presentCustomers.first(where: { $0.dish == dish })?.seat else { return false }
+        return day.serve(dish, at: seat)
+    }
+
     // MARK: - Clock
 
     @Test func theClockOnlyRunsOnceTheDayHasStarted() {
@@ -75,7 +82,7 @@ struct KitchenDayTests {
     @Test func aServedCustomersSpotRefillsAfterTheDelay() {
         let day = makeDay()
         run(day, to: 1)
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        serve(KitchenMenu.pepperFlatbread, in: day)
 
         run(day, to: 2.8, from: 1.2)
         #expect(day.presentCustomers.isEmpty)
@@ -100,7 +107,7 @@ struct KitchenDayTests {
         #expect(day.timeLeft == 0)
         #expect(!day.isOver)
 
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        serve(KitchenMenu.pepperFlatbread, in: day)
         run(day, to: 95, from: 91.2)
 
         #expect(day.presentCustomers.isEmpty)
@@ -114,18 +121,33 @@ struct KitchenDayTests {
     @Test func aServedCustomerLeavesTheirSheetFirstThenTheScreen() {
         let day = makeDay()
         run(day, to: 1)
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        let customer = day.presentCustomers[0]
+        serve(KitchenMenu.pepperFlatbread, in: day)
 
         #expect(day.presentCustomers.isEmpty)
-        #expect(day.aliensOnScreen.map(\.seat) == [0])
-        #expect(day.orderSheetsOnScreen.map(\.seat) == [0])
+        #expect(day.aliensOnScreen == [customer])
+        #expect(day.orderSheetsOnScreen == [customer])
+        #expect(day.isServed(customer))
 
         run(day, to: 2.2, from: 1.2)
         #expect(day.orderSheetsOnScreen.isEmpty)
-        #expect(day.aliensOnScreen.map(\.seat) == [0])
+        #expect(day.aliensOnScreen == [customer])
 
         run(day, to: 2.6, from: 2.4)
         #expect(day.aliensOnScreen.isEmpty)
+    }
+
+    /// The first customer already waits at the opening bell, but nobody
+    /// shows at the counter until the countdown is over and the day starts.
+    @Test func nobodyShowsUntilTheCountdownIsOver() {
+        let day = makeDay()
+        #expect(!day.presentCustomers.isEmpty)
+        #expect(day.aliensOnScreen.isEmpty)
+        #expect(day.orderSheetsOnScreen.isEmpty)
+
+        day.start()
+
+        #expect(day.aliensOnScreen == day.presentCustomers)
     }
 
     @Test func aServedCustomersFaceStaysAsItWasWhenServed() {
@@ -133,7 +155,7 @@ struct KitchenDayTests {
         run(day, to: 1)
         let customer = day.presentCustomers[0]
         let patienceWhenServed = customer.patienceLeft(at: day.elapsed)
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        serve(KitchenMenu.pepperFlatbread, in: day)
 
         run(day, to: 2, from: 1.2)
 
@@ -147,9 +169,19 @@ struct KitchenDayTests {
         let day = makeDay()
         run(day, to: 1)
 
-        #expect(day.serve(KitchenMenu.pepperFlatbread, at: 0))
+        #expect(serve(KitchenMenu.pepperFlatbread, in: day))
         #expect(day.points == 20)
         #expect(day.presentCustomers.isEmpty)
+    }
+
+    /// The marathon report's average wait: how long each served customer stood at the counter.
+    @Test func theAverageWaitCountsFromWhenACustomerStoodAtTheCounter() {
+        let day = makeDay()
+        run(day, to: 5)
+
+        serve(KitchenMenu.pepperFlatbread, in: day)
+
+        #expect(abs(day.averageWaitSec - day.elapsed) < 0.001)
     }
 
     /// Over half the patience left is the green zone's 5-point tip.
@@ -157,7 +189,7 @@ struct KitchenDayTests {
         let day = makeDay()
         run(day, to: 5)
 
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        serve(KitchenMenu.pepperFlatbread, in: day)
 
         #expect(day.tips == 5)
         #expect(day.total == 25)
@@ -168,7 +200,7 @@ struct KitchenDayTests {
         let day = makeDay()
         run(day, to: 30)
 
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        serve(KitchenMenu.pepperFlatbread, in: day)
 
         #expect(day.tips == 2)
     }
@@ -177,7 +209,7 @@ struct KitchenDayTests {
         let day = makeDay(makeLevel(firstOrder: KitchenMenu.slimyTentacles, angryAt: [1]))
         run(day, to: 1)
 
-        _ = day.serve(KitchenMenu.slimyTentacles, at: 2)
+        serve(KitchenMenu.slimyTentacles, in: day)
 
         #expect(day.tips == 10)
     }
@@ -186,7 +218,7 @@ struct KitchenDayTests {
         let day = makeDay()
         run(day, to: 1)
 
-        #expect(!day.serve(KitchenMenu.mushroomFlatbread, at: 0))
+        #expect(!day.serve(KitchenMenu.mushroomFlatbread, at: day.presentCustomers[0].seat))
         #expect(day.points == 0)
     }
 
@@ -203,7 +235,7 @@ struct KitchenDayTests {
     @Test func aLostCustomerAfterAServeTakesTheirTenPoints() {
         let day = makeDay(makeLevel(patienceSec: 5))
         run(day, to: 1)
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        serve(KitchenMenu.pepperFlatbread, in: day)
 
         run(day, to: 9, from: 1.2)
 
@@ -215,7 +247,7 @@ struct KitchenDayTests {
     @Test func starsCountFromTheTotal() {
         let day = makeDay()
         run(day, to: 1)
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        serve(KitchenMenu.pepperFlatbread, in: day)
 
         // 20 points + 5 tip = 25: one star of [20, 40, 60].
         #expect(day.stars == 1)

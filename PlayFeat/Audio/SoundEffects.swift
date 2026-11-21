@@ -24,4 +24,5 @@ enum SoundEffect: String, CaseIterable {
     case uiClick         = "ui_click"           // menu button pressed
     case wrongIngredient = "wrong_ingredients"  // a wrong ingredient placed on the plate
     case scuffleCloud    = "scuffle_cloud"      // the puff of smoke when a dish is finished
+    case runOver         = "fall3"              // a marathon run ends (the playtest's run-over sound)
 }

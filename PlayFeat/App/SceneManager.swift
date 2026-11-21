@@ -84,7 +84,9 @@ final class SceneManager {
     /// Starts a fresh marathon run on `planet`, one continuous day of rounds
     /// and breaks.
     func startMarathon(on planet: Planet.ID) {
-        let marathon = MarathonSession(planet: PlanetCatalog.planet(planet), positionTypes: KitchenLayout.positionTypes)
+        let marathon = MarathonSession(
+            planet: PlanetCatalog.planet(planet), openSeats: Array(KitchenLayout.seats.indices)
+        )
         self.marathon = marathon
         enterKitchen(marathon.day.level)
     }

@@ -120,11 +120,11 @@ final class KitchenBubbleNode: SKNode {
         }
     }
 
-    /// A picture of the whole glass, untrimmed so its mug stays centred, at
-    /// the scale that makes its mug as wide as the counter glass's.
+    /// A picture of the whole glass, untrimmed so its mug lies exactly over
+    /// the counter glass.
     private func glassSprite(_ name: String) -> SKSpriteNode {
         let texture = SKTexture(imageNamed: name)
-        let artPointsPerPixel = KitchenLayout.glassMugWidth / KitchenArt.glassMugPixels
+        let artPointsPerPixel = 1 / KitchenArt.glassPixelsPerArtPoint
         let scenePerArtPoint = radius / KitchenScene.bubbleArtRadius
         let sprite = SKSpriteNode(texture: texture)
         sprite.size = CGSize(

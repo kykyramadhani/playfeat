@@ -29,6 +29,9 @@ final class KitchenDay {
     /// Off during the countdown and while paused: the clock holds and hands
     /// can't touch anything.
     private(set) var isRunning = false
+    /// Whether the opening countdown is over; until then the counter's
+    /// places are empty on screen, though the first customers already wait.
+    private(set) var hasOpened = false
     private(set) var ordersDelivered = 0
     /// Points the served dishes have earned.
     private(set) var dishEarnings = 0
@@ -36,6 +39,8 @@ final class KitchenDay {
     /// Points the missed orders actually took off: the score never drops below zero.
     private(set) var pointsLost = 0
     private(set) var tips = 0
+    /// Seconds the served customers waited at the counter, all told.
+    private(set) var servedWaitSec: TimeInterval = 0
     /// The most recent customer's tip, shown beside the marathon's coins.
     private(set) var lastTip = 0
     private(set) var counter: Counter
@@ -45,19 +50,21 @@ final class KitchenDay {
     @ObservationIgnored private var flow: any CustomerFlow
     @ObservationIgnored private var clock: PlayClock?
 
-    /// - Parameter positionTypes: the counter's positions and who each takes.
+    /// - Parameters:
+    ///   - openSeats: the positions customers may take, picked at random by `random`.
     init(
         level: LevelData,
         flow: any CustomerFlow,
-        positionTypes: [CustomerType],
+        openSeats: [Int],
         pricing: DishPricing = .unupgraded,
-        tools: KitchenTools
+        tools: KitchenTools,
+        random: any RandomNumberGenerator = SystemRandomNumberGenerator()
     ) {
         self.level = level
         self.flow = flow
         self.pricing = pricing
         self.tools = tools
-        counter = Counter(positionTypes: positionTypes)
+        counter = Counter(openSeats: openSeats, random: random)
         // Whoever steps up at the opening bell waits through the countdown.
         advance(to: 0)
     }
@@ -65,18 +72,23 @@ final class KitchenDay {
     /// A story day of `level`, its customers stepping up as the level says.
     convenience init(
         storyLevel level: LevelData,
-        positionTypes: [CustomerType],
+        openSeats: [Int],
         pricing: DishPricing = .unupgraded,
         tools: KitchenTools,
         random: any RandomNumberGenerator = SystemRandomNumberGenerator()
     ) {
         self.init(
             level: level, flow: RefillFlow(level: level, random: random),
-            positionTypes: positionTypes, pricing: pricing, tools: tools
+            openSeats: openSeats, pricing: pricing, tools: tools, random: random
         )
     }
 
     // MARK: - Score
+
+    /// How long a served customer waited at the counter, on average.
+    var averageWaitSec: TimeInterval {
+        ordersDelivered > 0 ? servedWaitSec / Double(ordersDelivered) : 0
+    }
 
     /// Dish points less what missed orders took off.
     var points: Int { dishEarnings - pointsLost }
@@ -100,12 +112,19 @@ final class KitchenDay {
     /// The aliens to draw: everyone at the counter, plus whoever was just
     /// served until the dish is in and a beat has passed.
     var aliensOnScreen: [SeatedCustomer] {
-        presentCustomers + departing(for: KitchenRules.handOverSec + KitchenRules.pauseBeforeLeavingSec)
+        guard hasOpened else { return [] }
+        return presentCustomers + departing(for: KitchenRules.handOverSec + KitchenRules.pauseBeforeLeavingSec)
     }
 
     /// The order sheets to draw: a served customer's goes once the dish is in.
     var orderSheetsOnScreen: [SeatedCustomer] {
-        presentCustomers + departing(for: KitchenRules.handOverSec)
+        guard hasOpened else { return [] }
+        return presentCustomers + departing(for: KitchenRules.handOverSec)
+    }
+
+    /// Whether `customer` has been served and is on their way out.
+    func isServed(_ customer: SeatedCustomer) -> Bool {
+        departures.contains { $0.customer == customer }
     }
 
     /// How patient `customer` looks; a served customer's face stays as it was.
@@ -119,7 +138,10 @@ final class KitchenDay {
     /// Seconds between marathon customers; nil on a story day.
     var customerSpacing: TimeInterval? { flow.customerSpacing }
 
-    func start() { isRunning = true }
+    func start() {
+        isRunning = true
+        hasOpened = true
+    }
     func pause() { isRunning = false }
 
     /// Credits play time up to `wallTime` while running; otherwise just
@@ -145,6 +167,7 @@ final class KitchenDay {
     func serve(_ dish: String, at seat: Int) -> Bool {
         guard wants(dish, at: seat), let customer = counter.serve(seat: seat) else { return false }
         ordersDelivered += 1
+        servedWaitSec += elapsed - customer.seatedAt
         dishEarnings += pricing.pay(for: dish)
         lastTip = flow.tip(from: customer, at: elapsed)
         tips += lastTip
@@ -156,12 +179,12 @@ final class KitchenDay {
 
     /// Whether the customer at `seat`, if any, ordered `dish`.
     func wants(_ dish: String, at seat: Int) -> Bool {
-        counter.seats.indices.contains(seat) && counter.seats[seat]?.dish == dish
+        counter.seats[seat]?.dish == dish
     }
 
     /// Whether anyone stands at `seat`.
     func isOccupied(_ seat: Int) -> Bool {
-        counter.seats.indices.contains(seat) && counter.seats[seat] != nil
+        counter.seats[seat] != nil
     }
 
     // MARK: - Customers

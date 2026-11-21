@@ -97,9 +97,10 @@ private struct TruckWallExtension: View {
 /// The aliens and their order sheets. Split from the static art so only
 /// these redraw as patience drains each frame. An alien slides in from its
 /// side of the screen and back out the same way, its face souring as its
-/// patience runs low. Its order sheet fades in; once a served dish is in
-/// the alien, the sheet vanishes at once and then the alien slides off
-/// (KitchenDay keeps a served customer on screen until then).
+/// patience runs low. Its order sheet fades in. Serving pops a check mark
+/// onto the sheet; once the dish is in the alien, the sheet vanishes at once
+/// and then the alien slides off (KitchenDay keeps a served customer on
+/// screen until then). Nobody shows until the opening countdown is over.
 private struct KitchenCustomers: View {
     enum Part { case aliens, orderSheets }
 
@@ -122,14 +123,18 @@ private struct KitchenCustomers: View {
                     SeatedAlien(imageName: alienImage(of: customer, patienceLeft: patience), pose: seat.alienPose)
                         .transition(.offset(seat.offstageOffset))
                 case .orderSheets:
-                    OrderSheet(dish: customer.dish, patience: patience)
-                        .placed(in: seat.orderSheet)
-                        .transition(.asymmetric(insertion: .opacity, removal: .identity))
+                    OrderSheet(
+                        dish: customer.dish, patience: patience,
+                        isMirrored: seat.orderSheetPointsRight, isServed: day.isServed(customer)
+                    )
+                    .placed(in: seat.orderSheet)
+                    .transition(.asymmetric(insertion: .opacity, removal: .identity))
                 }
             }
         }
         .frame(width: KitchenLayout.artSize.width, height: KitchenLayout.artSize.height, alignment: .topLeading)
         .animation(Self.slide, value: shown.map(\.seat))
+        .animation(.spring(duration: 0.3, bounce: 0.4), value: day.ordersDelivered)
     }
 
     /// The planet's alien for this customer, in the mood its patience is in.

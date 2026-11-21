@@ -26,9 +26,9 @@ nonisolated struct PlanetKitchen {
     let dessert: String
     /// What an angry alien always orders.
     let angryOrder: String
-    /// Who sits in the regular seats.
+    /// Who comes in as a regular customer.
     let regularAlien: AlienSpecies
-    /// Who sits in the angry seat.
+    /// Who comes in as an angry customer.
     let angryAlien: AlienSpecies
 
     /// The alien drawn for a customer of `type`.

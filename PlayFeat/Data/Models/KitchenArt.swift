@@ -39,13 +39,14 @@ nonisolated enum KitchenArt {
         art.flatMap { upgraded.contains($0.upgradedBy) ? $0.image : nil }
     }
 
-    /// Pictures of the whole glass with something in it. Each is cut so its
-    /// mug sits in the middle, `glassMugPixels` wide, so the scene can draw
-    /// any of them straight over the counter's empty glass.
+    /// Pictures of the whole glass with something in it. All share one
+    /// canvas centred on the counter's empty glass ("KitchenGlass"), with
+    /// `glassPixelsPerArtPoint` pixels per art point, so drawn at a glass
+    /// spot's centre the mug lies exactly over the empty glass.
     static let glassStateImages: Set<String> = [
         "TentacleGlass", "SlimeGlass", "SlimyTentaclesGlass", "PremiumTentacleGlass", "PremiumSlimyTentaclesGlass",
     ]
-    static let glassMugPixels: CGFloat = 346
+    static let glassPixelsPerArtPoint: CGFloat = 3
 
     private static let images: [String: String] = [
         KitchenMenu.rawFlatbread: "FlatbreadRaw",

@@ -56,7 +56,7 @@ nonisolated func makeLevel(
 func makeDay(_ level: LevelData = makeLevel(), plates: Int = 1, glasses: Int = 1) -> KitchenDay {
     KitchenDay(
         storyLevel: level,
-        positionTypes: KitchenLayout.positionTypes,
+        openSeats: KitchenLayout.openSeats(on: level),
         tools: KitchenTools(for: level, ownedPlates: plates, ownedGlasses: glasses),
         random: SeededGenerator(state: 1)
     )

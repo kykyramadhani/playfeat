@@ -80,9 +80,29 @@ struct KitchenLayoutTests {
         #expect(KitchenLayout.glasses(0).isEmpty)
     }
 
-    /// The two green aliens take regular customers; the red one is the angry alien's.
-    @Test func theRedAliensPositionIsTheAngryCustomers() {
-        #expect(KitchenLayout.positionTypes == [.regular, .regular, .angry])
+    /// The first level keeps its customers to the left wall while the player learns.
+    @Test func theFirstLevelsCustomersOnlyComeFromTheLeft() throws {
+        let level = try LevelLoader.load("1-1")
+        let seats = KitchenLayout.openSeats(on: level)
+
+        #expect(!seats.isEmpty)
+        #expect(seats.allSatisfy { KitchenLayout.seats[$0].entersFrom == .left })
+    }
+
+    /// Later levels open every edge: left, top and right.
+    @Test func laterLevelsOpenEverySide() throws {
+        let level = try LevelLoader.load("1-2")
+        let sides = Set(KitchenLayout.openSeats(on: level).map { KitchenLayout.seats[$0].entersFrom })
+
+        #expect(sides == Set(CustomerSide.allCases))
+    }
+
+    /// An alien coming in from the right slides off past the right edge.
+    @Test func aRightSideAlienLeavesPastTheRightEdge() throws {
+        let seat = try #require(KitchenLayout.seats.first { $0.entersFrom == .right })
+        let drawn = seat.alienPose.drawnBounds.offsetBy(dx: seat.offstageOffset.width, dy: seat.offstageOffset.height)
+
+        #expect(drawn.minX >= KitchenLayout.artSize.width)
     }
 
     @Test func twoGrillSlotsSitEitherSideOfTheRing() {
