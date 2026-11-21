@@ -29,7 +29,7 @@ struct GameStorage {
         }
     }
 
-    static func bestStarsKey(forLevel levelID: String) -> String { "bestStars_\(levelID)" }
+    nonisolated static func bestStarsKey(forLevel levelID: String) -> String { "bestStars_\(levelID)" }
 
     /// A planet's progress from the best stars saved for its levels.
     static func progress(on planet: Planet) -> PlanetProgress {

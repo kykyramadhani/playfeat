@@ -9,7 +9,7 @@ struct KitchenTutorialTests {
         let defaults = try makeDefaults()
         let level = try LevelLoader.load("1-1")
         let (scene, day) = makeKitchenScene(level: level)
-        let tutorial = KitchenTutorial(isBuffet: false, progress: TutorialProgress(in: defaults))
+        let tutorial = KitchenTutorial(levelID: level.id, isBuffet: false, progress: TutorialProgress(in: defaults))
         scene.installTutorial(tutorial)
         day.start()
 
@@ -49,7 +49,7 @@ struct KitchenTutorialTests {
         #expect(tutorial.cue(in: scene, day: day) == nil)
 
         let (retry, retryDay) = makeKitchenScene(level: level)
-        let resumed = KitchenTutorial(isBuffet: false, progress: TutorialProgress(in: defaults))
+        let resumed = KitchenTutorial(levelID: level.id, isBuffet: false, progress: TutorialProgress(in: defaults))
         retryDay.start()
         _ = add(KitchenMenu.rawFlatbread, at: CGPoint(x: 570, y: 710), in: retry)
         #expect(resumed.progress.hasServed(KitchenMenu.pepperFlatbread))
@@ -59,7 +59,7 @@ struct KitchenTutorialTests {
     @Test func rawNoodleRefusalTeachesThePotWithoutCompletingTheBoilOrBowlSteps() throws {
         let defaults = try makeDefaults()
         let (scene, day) = makeKitchenScene(level: try LevelLoader.load("2-1"))
-        let tutorial = KitchenTutorial(isBuffet: false, progress: TutorialProgress(in: defaults))
+        let tutorial = KitchenTutorial(levelID: day.level.id, isBuffet: false, progress: TutorialProgress(in: defaults))
         scene.installTutorial(tutorial)
         day.start()
         let raw = add(KitchenMenu.rawNoodles, at: CGPoint(x: 580, y: 680), in: scene)
@@ -83,7 +83,7 @@ struct KitchenTutorialTests {
     @Test func burntFoodMustBeReleasedByThePlayerAndDisappear() throws {
         let defaults = try makeDefaults()
         let (scene, day) = makeKitchenScene(level: try LevelLoader.load("1-2"))
-        let tutorial = KitchenTutorial(isBuffet: false, progress: TutorialProgress(in: defaults))
+        let tutorial = KitchenTutorial(levelID: day.level.id, isBuffet: false, progress: TutorialProgress(in: defaults))
         scene.installTutorial(tutorial)
         day.start()
 
@@ -98,6 +98,39 @@ struct KitchenTutorialTests {
         #expect(!tutorial.progress.hasLearned(.discardBurnt))
         scene.remove(second)
         #expect(tutorial.progress.hasLearned(.discardBurnt))
+    }
+
+    @Test func alwaysShowReplaysCompletedLessonsAndTracksProgressForTheCurrentAttempt() throws {
+        let defaults = try makeDefaults()
+        let level = try LevelLoader.load("1-1")
+        defaults.set(1, forKey: GameStorage.bestStarsKey(forLevel: level.id))
+        var progress = TutorialProgress(in: defaults)
+        progress.learn(.grillBread)
+
+        let (scene, day) = makeKitchenScene(level: level)
+        let tutorial = KitchenTutorial(levelID: level.id, isBuffet: false, progress: TutorialProgress(in: defaults))
+        scene.installTutorial(tutorial)
+        day.start()
+        let bread = add(KitchenMenu.rawFlatbread, at: CGPoint(x: 570, y: 710), in: scene)
+        #expect(tutorial.cue(in: scene, day: day) == nil)
+
+        tutorial.alwaysShow = true
+        #expect(tutorial.cue(in: scene, day: day)?.lesson == .grillBread)
+        drop(bread, on: .cooker(.grill, slot: 0), in: scene)
+        scene.updateCookers(now: 6)
+        #expect(tutorial.cue(in: scene, day: day)?.lesson == .plateBread)
+
+        tutorial.alwaysShow = false
+        #expect(tutorial.cue(in: scene, day: day) == nil)
+        tutorial.alwaysShow = true
+        #expect(tutorial.cue(in: scene, day: day)?.lesson == .plateBread)
+
+        let (retry, retryDay) = makeKitchenScene(level: level)
+        let fresh = KitchenTutorial(levelID: level.id, isBuffet: false, alwaysShow: true,
+                                    progress: TutorialProgress(in: defaults))
+        retryDay.start()
+        _ = add(KitchenMenu.rawFlatbread, at: CGPoint(x: 570, y: 710), in: retry)
+        #expect(fresh.cue(in: retry, day: retryDay)?.lesson == .grillBread)
     }
 
     @Test func visitorResetKeepsProgressAndLearnedDishesAreSharedBetweenModes() throws {
@@ -121,10 +154,15 @@ struct KitchenTutorialTests {
         TutorialProgress.reset(in: defaults)
         // An older snapshot must not resurrect the lessons it already loaded.
         story.learn(.extraPlate)
-        let visitor = TutorialProgress(in: defaults)
+        var visitor = TutorialProgress(in: defaults)
         #expect(!visitor.hasServed(KitchenMenu.mushroomFlatbread))
         #expect(!visitor.hasLearned(.addPepper))
         #expect(!visitor.hasSeenBuffetSpoiler(on: .k2332b))
+        #expect(!visitor.hasClearedLevel("1-1"))
+        visitor.clearLevel("1-1", stars: 0)
+        #expect(!visitor.hasClearedLevel("1-1"))
+        visitor.clearLevel("1-1", stars: 1)
+        #expect(TutorialProgress(in: defaults).hasClearedLevel("1-1"))
         #expect(defaults.stringArray(forKey: GameStorage.seenIntroductionsKey) == recipeIDs)
         #expect(defaults.integer(forKey: GameStorage.coinKey) == 8)
         #expect(defaults.integer(forKey: GameStorage.bestStarsKey(forLevel: "1-1")) == 2)

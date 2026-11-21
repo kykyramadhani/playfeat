@@ -52,7 +52,7 @@ For a story visit the screen loads owned tool counts and upgraded ingredient pri
 
 Story visits start the countdown after calibration. Buffet opens a short rules card before the countdown on each run. Players can tap or pinch Continue to dismiss it early.
 
-Kitchen guides highlight live ingredients, tools, and customers. Accepted drops and serves advance the matching steps in the guide, and hints persist across visits. Story levels still unlock their associated recipe-book pages when play begins. Long-press the settings gear on the planet board and select **New Visitor** to reset tutorial progress while keeping recipe unlocks, scores, and purchases.
+Kitchen guides highlight live ingredients, tools, and customers. Accepted drops and serves advance the matching steps, and hints persist across visits. In the default mode, clearing a story level with at least one star hides its guides on later attempts. **Always Show Tutorial** in Settings makes guides available again at the start of each attempt. Story levels still unlock their associated recipe-book pages when play begins. Long-press the settings gear on the planet board and select **New Visitor** to reset tutorial progress while keeping recipe unlocks, scores, and purchases.
 
 ## Pause, restart and background return
 

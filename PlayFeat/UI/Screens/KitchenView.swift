@@ -29,6 +29,7 @@ struct KitchenView: View {
     /// Forwarded by PlayFeatApp (PhoneSafeSides hosts the app separately).
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(TutorialProgress.alwaysShowKey) private var alwaysShowTutorial = false
 
     @Bindable var sceneManager: SceneManager
 
@@ -122,6 +123,7 @@ struct KitchenView: View {
         .onAppear(perform: setUp)
         .onDisappear(perform: tearDown)
         .onChange(of: reduceMotion) { _, enabled in scene.tutorial?.reduceMotion = enabled }
+        .onChange(of: alwaysShowTutorial) { _, enabled in scene.tutorial?.alwaysShow = enabled }
         .onChange(of: day.isRunning) { _, running in
             if !running { audio.stopKitchenLoops() }
         }
@@ -235,7 +237,7 @@ struct KitchenView: View {
         let supply: any BubbleSupply = marathon.map { MarathonBubbleSupply(starters: $0.planet.buffet.starters) }
             ?? StoryBubbleSupply(level: day.level)
         scene.prepare(for: day, bubbleSupply: supply)
-        let tutorial = KitchenTutorial(isBuffet: marathon != nil)
+        let tutorial = KitchenTutorial(levelID: day.level.id, isBuffet: marathon != nil, alwaysShow: alwaysShowTutorial)
         tutorial.reduceMotion = reduceMotion
         scene.installTutorial(tutorial)
         if let marathon { applyUpgrades(of: marathon) }
@@ -301,6 +303,7 @@ struct KitchenView: View {
         } else {
             let previousBest = GameStorage.bestStars(forLevel: day.level.id)
             GameStorage.recordDay(onLevel: day.level.id, stars: day.stars, income: day.total)
+            scene.tutorial?.finishLevel(day.level.id, stars: day.stars)
             withAnimation(.easeOut(duration: 0.3)) {
                 sceneManager.showReport(LevelReport(day: day, previousBestStars: previousBest))
             }

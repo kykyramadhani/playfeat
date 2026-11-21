@@ -3,8 +3,8 @@
 //  GetCooking
 //
 //  The in-game settings popup: sound-effects and music volume, language, and
-//  hand mode (with which hand, once one-hand mode is on), plus the pickup
-//  gesture. Drawn in the Sunrise popup frame over whatever screen opened it.
+//  hand mode (with which hand, once one-hand mode is on), the pickup
+//  gesture and tutorial replay. Drawn in the Sunrise popup frame.
 //
 //  Volumes are stored in UserDefaults under the keys AudioManager reads at
 //  launch, and pushed live into AudioManager as the sliders move. Picking a
@@ -29,6 +29,7 @@ struct SettingsView: View {
     @AppStorage(HandInputModeSetting.isOneHandKey) private var isOneHand = false
     @AppStorage(HandInputModeSetting.preferredHandKey) private var preferredHand: HandSide = .right
     @AppStorage(GripGesture.storageKey) private var grip = GripGesture.defaultGesture
+    @AppStorage(TutorialProgress.alwaysShowKey) private var alwaysShowTutorial = false
 
     /// The label gets everything left of the control, so longer labels and
     /// translations fit on one line.
@@ -37,7 +38,7 @@ struct SettingsView: View {
 
     var body: some View {
         SunrisePopupOverlay(title: Text("Settings"), onClose: onClose) {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 18) {
                 settingRow("Sound Effects", height: VolumeSlider.height) {
                     VolumeSlider(value: $sfxVolume, onEditingEnded: { _ in
                         // A quick tick so the player hears the new level.
@@ -63,9 +64,15 @@ struct SettingsView: View {
                         )
                     )
                 }
+                settingRow("Always Show Tutorial", height: SegmentedPill.Size.regular.buttonSize.height) {
+                    SegmentedPill(leftTitle: Text("OFF"), rightTitle: Text("ON"), isRightSelected: $alwaysShowTutorial)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel(Text("Always Show Tutorial"))
+                        .accessibilityIdentifier("always-show-tutorial")
+                }
             }
             .padding(.leading, 51)
-            .padding(.top, 55)
+            .padding(.top, 35)
             .frame(maxWidth: .infinity, alignment: .leading)
             .sunrisePanel()
         }
@@ -95,7 +102,7 @@ struct SettingsView: View {
 
     /// OFF / ON, and once one-hand mode is on, which hand plays.
     private var handModeChoice: some View {
-        VStack(alignment: .trailing, spacing: 32) {
+        VStack(alignment: .trailing, spacing: 24) {
             SegmentedPill(leftTitle: Text("OFF"), rightTitle: Text("ON"), isRightSelected: $isOneHand)
             if isOneHand {
                 SegmentedPill(

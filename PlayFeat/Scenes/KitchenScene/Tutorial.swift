@@ -8,6 +8,7 @@ final class KitchenTutorial: SKNode {
 
     private(set) var progress: TutorialProgress
     private let isBuffet: Bool
+    private let clearedBeforeVisit: Bool
     private let artwork = TutorialHandGuide()
     private let tags = SKNode()
     private let feedback = SKNode()
@@ -23,10 +24,18 @@ final class KitchenTutorial: SKNode {
     private var dust: [SKShapeNode] = []
     private var feedbackIcon: SKSpriteNode?
     var reduceMotion = false
+    var alwaysShow: Bool {
+        get { progress.repeatsLessons }
+        set { progress.repeatsLessons = newValue }
+    }
 
-    init(isBuffet: Bool, progress: TutorialProgress = TutorialProgress()) {
+    private var showsHints: Bool { alwaysShow || !clearedBeforeVisit }
+
+    init(levelID: String, isBuffet: Bool, alwaysShow: Bool = false, progress: TutorialProgress = TutorialProgress()) {
         self.isBuffet = isBuffet
+        clearedBeforeVisit = !isBuffet && progress.hasClearedLevel(levelID)
         self.progress = progress
+        self.progress.repeatsLessons = alwaysShow
         super.init()
         artwork.zPosition = KitchenScene.handZ - 1
         tags.zPosition = KitchenScene.handZ - 2
@@ -39,6 +48,10 @@ final class KitchenTutorial: SKNode {
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func finishLevel(_ levelID: String, stars: Int) {
+        progress.clearLevel(levelID, stars: stars)
+    }
 
     func placed(_ item: String, on station: KitchenBubbleNode.Placement, levelID: String) {
         switch (item, station) {
@@ -83,7 +96,7 @@ final class KitchenTutorial: SKNode {
     func discardedBurntBread() { progress.learn(.discardBurnt) }
 
     func refused(_ item: String, at station: KitchenBubbleNode.Placement, in scene: KitchenScene) {
-        guard let day = scene.day, day.isRunning, day.level.id == "2-1",
+        guard showsHints, let day = scene.day, day.isRunning, day.level.id == "2-1",
               item == KitchenMenu.rawNoodles, case .plate = station,
               !progress.hasLearned(.rawNoodleRefusal) else { return }
         progress.learn(.rawNoodleRefusal)
@@ -93,7 +106,7 @@ final class KitchenTutorial: SKNode {
     }
 
     func update(in scene: KitchenScene) {
-        guard let day = scene.day, day.isRunning, !day.isOver, !day.isRoundOver else {
+        guard showsHints, let day = scene.day, day.isRunning, !day.isOver, !day.isRoundOver else {
             artwork.isHidden = true
             tags.isHidden = true
             feedback.isHidden = true
@@ -117,6 +130,7 @@ final class KitchenTutorial: SKNode {
     /// Resolve live targets each frame, including a replacement bubble after a
     /// miss. Prefer the next usable step when food has already moved ahead.
     func cue(in scene: KitchenScene, day: KitchenDay) -> Cue? {
+        guard showsHints else { return nil }
         let level = day.level.id
         if level == "1-1",
            let customer = day.presentCustomers.first(where: { $0.dish == KitchenMenu.pepperFlatbread }) {

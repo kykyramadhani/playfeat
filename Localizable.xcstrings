@@ -171,6 +171,16 @@
         }
       }
     },
+    "Always Show Tutorial" : {
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selalu Tampilkan Tutorial"
+          }
+        }
+      }
+    },
     "Average Dishes / Round" : {
       "comment" : "Marathon report recap row.",
       "localizations" : {
