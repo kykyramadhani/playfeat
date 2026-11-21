@@ -104,10 +104,10 @@ nonisolated extension KitchenLayout {
         /// The order sheet stands left of the alien, so its tail points right.
         let orderSheetPointsRight: Bool
 
-        /// Where a dish is handed over: one invisible box around the alien
-        /// and its order sheet, so the player only has to get the dish near
-        /// the customer, not onto the drawing itself.
-        var serveArea: CGRect { alien.union(orderSheet) }
+        /// Where a dish is handed over: the alien itself. The order sheet is
+        /// left out on purpose: it reaches over the counter, and a dish
+        /// carried past it on the way to a plate was being served by mistake.
+        var serveArea: CGRect { alien }
 
         /// This seat moved `distance` art points to the right (left if
         /// negative), its alien and order sheet together.
@@ -157,7 +157,7 @@ nonisolated extension KitchenLayout {
 
     /// How far outside a customer's serve area a carried dish they ordered
     /// is pulled in, as if by a magnet.
-    static let serveMagnetReach: CGFloat = 60
+    static let serveMagnetReach: CGFloat = 30
 }
 
 extension CGRect {

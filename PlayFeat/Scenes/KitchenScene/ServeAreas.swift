@@ -4,7 +4,7 @@
 //  Created by kyky on 13/11/26.
 //
 //  Handing a finished dish to a customer. Each position has an invisible
-//  serve area around the alien and its order sheet. A customer pulls in the
+//  serve area over the alien. A customer pulls in the
 //  dish they ordered as soon as it is carried near, like a magnet, without
 //  the hand having to open. Any other dish let go in there, or anything
 //  lifted off a plate or glass (a flatbread missing its topping), is turned

@@ -85,7 +85,7 @@ Generally, glow time is `bakeSec + 8 × multiplier` and burn time is `bakeSec + 
 
 ## Serving
 
-Customers have serve rectangles around their alien/order sheet. A carried dish can be magnetically pulled into a matching customer's expanded reach. Releasing in overlapping areas prefers a customer requesting that dish. A successful handover updates `KitchenDay`, removes the node from active scene bookkeeping, animates it into the order sheet and plays the order sound.
+Customers have serve rectangles over the alien only (not its order sheet, which reaches over the counter). A carried dish can be magnetically pulled into a matching customer's expanded reach. Releasing in overlapping areas prefers a customer requesting that dish. A successful handover updates `KitchenDay`, removes the node from active scene bookkeeping, animates it into the order sheet and plays the order sound.
 
 ## Source map and tests
 
