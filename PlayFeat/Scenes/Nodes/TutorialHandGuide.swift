@@ -75,7 +75,7 @@ final class TutorialHandGuide: SKNode {
         hand.isHidden = !pulsating
         guard pulsating else { return }
         let amount = CGFloat(min(1, max(0, (phase - 0.45) / 1.1)))
-        let opens = phase < 0.25 || (!cue.serves && phase >= 1.55)
+        let opens = phase < 0.25 || phase >= 1.55
         hand.texture = opens ? openHand : pinchHand
         hand.size = CGSize(width: 103 * scale, height: 128 * scale)
         hand.alpha = 0.8

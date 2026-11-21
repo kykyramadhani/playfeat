@@ -45,7 +45,7 @@ Placement is `.grill(slot)`, `.plate(index)` or `.glass(index)`. The current kit
 4. Detect a transition into the active grip. If the hand is empty, find the nearest eligible free item touched by any recognized joint or cursor, within item radius plus `grabSlack` (30 scene points).
 5. Lift a placed item off its station, mark it held by the hand ID and clear its falling state.
 6. Ease the item toward the cartoon hand's drawn pinch, clamped inside the scene.
-7. If a carried completed dish reaches a customer who wants it, serve magnetically without requiring release.
+7. A completed dish is served only when the hand opens over a customer's serve area; carrying it through serves nothing.
 8. Otherwise, release only after a continuously neutral/open grip lasts `releaseDelay = 0.1` seconds.
 
 Current kitchen `dragSmoothing` is 0.5, converted from a per-60-Hz fraction into a frame-delta-aware easing fraction by `GameScene.easing`. This is additional to upstream palm smoothing. Cursor movement and carried-food movement therefore have different latency sources.
@@ -85,7 +85,7 @@ Generally, glow time is `bakeSec + 8 × multiplier` and burn time is `bakeSec + 
 
 ## Serving
 
-Customers have serve rectangles over the alien only (not its order sheet, which reaches over the counter). A carried dish can be magnetically pulled into a matching customer's expanded reach. Releasing in overlapping areas prefers a customer requesting that dish. A successful handover updates `KitchenDay`, removes the node from active scene bookkeeping, animates it into the order sheet and plays the order sound.
+Each customer's serve area is the alien's rectangle plus the oval of its order bubble (`Seat.serveAreaContains`), each tested by its own shape rather than one box around both. A dish is only served on release; there is no magnet. Releasing in overlapping areas prefers a customer requesting that dish. A successful handover updates `KitchenDay`, removes the node from active scene bookkeeping, animates it into the order sheet and plays the order sound.
 
 ## Source map and tests
 

@@ -3,7 +3,8 @@
 //  PlayFeat
 //  Created by kyky on 10/11/26.
 //
-//  A planet's home: the landed spaceship with its fuel gauge, the board of
+//  A planet's home: the landed spaceship (tap it to open its hatch) with its
+//  fuel gauge, the board of
 //  the planet's six levels with their best stars, and under it the recipe
 //  book, the marathon trophy and the shop. The marathon opens once the first
 //  level has a star; the first time it's opened before the planet is done,
@@ -30,6 +31,7 @@ struct PlanetSelectView: View {
     @State private var showRecipeBook = false
     @State private var showSpoilerWarning = false
     @State private var showShop = false
+    @State private var isShipOpen = false
     @State private var notice: PlanetNotice?
     /// Built once, when the board opens, from the stars days left for it.
     @State private var starFlights: FuelFlightPlan
@@ -110,11 +112,7 @@ struct PlanetSelectView: View {
 
     /// Each planet's landed ship, with its fuel gauge on the side panel.
     private var spaceship: some View {
-        Image(planet.id == .k2332b ? "K2332bSpaceship" : "LandedSpaceship")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 764, height: 674)
-            .accessibilityHidden(true)
+        LandedShip(planet: planet.id, isOpen: $isShipOpen)
             .overlay(alignment: .topLeading) {
                 ClickButton(action: { notice = .gas }) {
                     FuelGauge(filledBars: fuel.fuelBars(outOf: FuelGauge.barCount))

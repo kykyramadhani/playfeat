@@ -199,6 +199,16 @@ struct ArtAssetTests {
         }
     }
 
+    /// Every planet's landed ship has a closed and an open picture, or
+    /// tapping it on the level board would show nothing.
+    @Test(arguments: Planet.ID.allCases)
+    func everyLandedShipHasBothPictures(planet: Planet.ID) {
+        let art = LandedShip.art(for: planet)
+        for name in [art.closed, art.open] {
+            #expect(UIImage(named: name) != nil, "missing ship art \(name)")
+        }
+    }
+
     /// The bubble is drawn round, so its trimmed art must be close to square —
     /// a lopsided result means the crop picked up stray pixels.
     @Test func trimmedBubbleIsSquare() throws {

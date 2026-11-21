@@ -35,9 +35,22 @@ nonisolated struct KitchenLayout {
 
     /// Screen point (y-down, SwiftUI) of a point on the art.
     func viewPoint(_ artPoint: CGPoint) -> CGPoint {
+        CGPoint(x: artOrigin.x + artPoint.x * scale, y: artOrigin.y + artPoint.y * scale)
+    }
+
+    /// Point on the art under a scene point (y-up, SpriteKit): the reverse
+    /// of `scenePoint`.
+    func artPoint(fromScene scenePoint: CGPoint) -> CGPoint {
+        let viewY = screenSize.height - scenePoint.y
+        return CGPoint(x: (scenePoint.x - artOrigin.x) / scale, y: (viewY - artOrigin.y) / scale)
+    }
+
+    /// Where the art's top-left corner lands on screen (y-down): the art is
+    /// centred both ways.
+    private var artOrigin: CGPoint {
         CGPoint(
-            x: (screenSize.width - Self.artSize.width * scale) / 2 + artPoint.x * scale,
-            y: (screenSize.height - Self.artSize.height * scale) / 2 + artPoint.y * scale
+            x: (screenSize.width - Self.artSize.width * scale) / 2,
+            y: (screenSize.height - Self.artSize.height * scale) / 2
         )
     }
 
@@ -104,10 +117,25 @@ nonisolated extension KitchenLayout {
         /// The order sheet stands left of the alien, so its tail points right.
         let orderSheetPointsRight: Bool
 
-        /// Where a dish is handed over: the alien itself. The order sheet is
-        /// left out on purpose: it reaches over the counter, and a dish
-        /// carried past it on the way to a plate was being served by mistake.
-        var serveArea: CGRect { alien }
+        /// Whether a dish let go at `artPoint` is handed to this seat: over
+        /// the alien or its order bubble. Each is tested by its own shape,
+        /// not one box around both, so the gap between them stays out.
+        func serveAreaContains(_ artPoint: CGPoint) -> Bool {
+            alien.contains(artPoint) || orderBubble.contains(artPoint)
+        }
+
+        /// The oval of the order sheet's speech bubble, turned as `OrderSheet`
+        /// draws it. Its little tail is left out.
+        var orderBubble: TurnedEllipse {
+            let turn = KitchenLayout.orderBubbleTurnDegrees
+            return TurnedEllipse(
+                center: orderSheet.center,
+                radii: CGSize(width: KitchenLayout.orderBubbleOval.width / 2,
+                              height: KitchenLayout.orderBubbleOval.height / 2),
+                // Mirroring a turned picture turns it the other way.
+                degrees: orderSheetPointsRight ? -turn : turn
+            )
+        }
 
         /// This seat moved `distance` art points to the right (left if
         /// negative), its alien and order sheet together.
@@ -155,9 +183,12 @@ nonisolated extension KitchenLayout {
     /// The canvas every alien picture is drawn on, in art points.
     static let alienCanvas = CGSize(width: 475, height: 432)
 
-    /// How far outside a customer's serve area a carried dish they ordered
-    /// is pulled in, as if by a magnet.
-    static let serveMagnetReach: CGFloat = 30
+    /// The order bubble picture's size, and how far it is turned so its
+    /// tail points back up at the customer (`OrderSheet`).
+    static let orderBubbleArtSize = CGSize(width: 206.9, height: 165)
+    static let orderBubbleTurnDegrees: Double = 172.74
+    /// The oval inside the order bubble picture (OrderBubble.svg), without its tail.
+    static let orderBubbleOval = CGSize(width: 204, height: 165)
 }
 
 extension CGRect {

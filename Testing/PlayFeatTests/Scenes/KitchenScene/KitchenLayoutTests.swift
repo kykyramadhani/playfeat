@@ -27,6 +27,17 @@ struct KitchenLayoutTests {
         #expect(layout.viewPoint(CGPoint(x: 1366, y: 1024)) == CGPoint(x: 1024.5, y: 512))
     }
 
+    /// Hands are tested on the art, so a scene point has to map back to the
+    /// art point it was drawn from, margins and all.
+    @Test func aScenePointMapsBackToTheArtPointItCameFrom() {
+        let layout = KitchenLayout(screenSize: CGSize(width: 1512, height: 945))
+        let artPoint = CGPoint(x: 300, y: 420)
+
+        let roundTrip = layout.artPoint(fromScene: layout.scenePoint(artPoint))
+
+        #expect(roundTrip.distance(to: artPoint) < 0.001)
+    }
+
     /// On a MacBook's 16:10 screen the stations at the bottom of the counter
     /// stay on screen, where the hands can reach them.
     @Test func theCountersStationsStayOnScreenOnAMacBook() {
@@ -91,7 +102,8 @@ struct KitchenLayoutTests {
         let layout = KitchenLayout(screenSize: KitchenLayout.artSize)
 
         for index in KitchenLayout.seats.indices {
-            #expect(layout.seat(at: index).serveArea == KitchenLayout.seats[index].serveArea)
+            #expect(layout.seat(at: index).alien == KitchenLayout.seats[index].alien)
+            #expect(layout.seat(at: index).orderBubble == KitchenLayout.seats[index].orderBubble)
         }
     }
 
@@ -107,7 +119,7 @@ struct KitchenLayoutTests {
         #expect(shifts == [-683, 683, -683, 683])
     }
 
-    /// The alien, its order sheet and the serve area the hands are tested
+    /// The alien, its order sheet and the order bubble the hands are tested
     /// against all move together, so serving lines up with the drawing.
     @Test func aMovedSeatKeepsItsAlienAndOrderSheetTogether() {
         let original = KitchenLayout.seats[0]
@@ -115,7 +127,8 @@ struct KitchenLayoutTests {
 
         #expect(moved.orderSheet == original.orderSheet.offsetBy(dx: -683, dy: 0))
         #expect(moved.alienPose.center.x == original.alienPose.center.x - 683)
-        #expect(moved.serveArea == original.serveArea.offsetBy(dx: -683, dy: 0))
+        #expect(moved.alien == original.alien.offsetBy(dx: -683, dy: 0))
+        #expect(moved.orderBubble.center.x == original.orderBubble.center.x - 683)
     }
 
     /// Each customer slides until its whole picture is past its edge.

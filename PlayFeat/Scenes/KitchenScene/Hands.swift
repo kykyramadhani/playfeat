@@ -5,8 +5,8 @@
 //
 //  The kitchen's hand handling: a cartoon hand follows every hand, a fist grabs
 //  the nearest bubble (or item put down) it touches and it grows a little
-//  while held, a dish carried near the
-//  customer who ordered it is pulled in, and a hand that stays open lets go.
+//  while held, and a hand that stays open lets go. Serving is a let-go too:
+//  the player opens their hand over the customer.
 //  Same feel as the classic board — same easing, release debounce and
 //  dropout grace — so a player moving between modes notices no change.
 //
@@ -50,7 +50,6 @@ extension KitchenScene {
             grabIfClosing(&tracked, handID: hand.id, state: state, joints: joints)
             let pinch = handCursors[hand.id]?.heldItemPosition ?? cursor
             carry(tracked, toward: pinch, frameDelta: frameDelta)
-            pullToCustomer(&tracked)
             releaseIfOpen(&tracked, state: state, now: now)
             tracked.previousState = state
             hands[hand.id] = tracked
@@ -84,17 +83,6 @@ extension KitchenScene {
             toward: target,
             by: GameScene.easing(base: dragSmoothing, delta: frameDelta)
         )
-    }
-
-    /// A dish carried close to the customer who ordered it is pulled in and
-    /// served at once; the hand doesn't have to open.
-    private func pullToCustomer(_ hand: inout KitchenHand) {
-        guard let node = hand.held, let seat = magnetSeat(for: node) else { return }
-        hand.held = nil
-        hand.openSince = nil
-        node.heldBy = nil
-        node.zPosition = 2
-        serveOrReject(node, at: seat)
     }
 
     /// Lets go only once the hand has stayed open, so one misread frame

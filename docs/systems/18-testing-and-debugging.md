@@ -94,7 +94,7 @@ Trace the shared key constant, persistence write and live consumer. Check langua
 
 ## Device verification
 
-For camera/interaction changes, play through calibration, one/two-hand mode, Pinch/F-Pinch, pickup, cooking, assembly, magnetic serving, deliberate release and brief tracking loss. Repeat after rotation/window resizing, a background round trip, pause/resume, Retry and Next. For rule changes, also exercise overtime, a failed day and postgame persistence.
+For camera/interaction changes, play through calibration, one/two-hand mode, Pinch/F-Pinch, pickup, cooking, assembly, serving on release over the alien and over its order bubble, deliberate release and brief tracking loss. Repeat after rotation/window resizing, a background round trip, pause/resume, Retry and Next. For rule changes, also exercise overtime, a failed day and postgame persistence.
 
 Record actual runtime evidence when reporting a performance or animation fix. A compiling view and passing navigation tests alone do not prove that a visual animation is visible on screen.
 
