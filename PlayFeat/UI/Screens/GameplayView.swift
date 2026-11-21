@@ -59,14 +59,11 @@ struct GameplayView: View {
     /// second cover or fires the navigation twice.
     @State private var isEndingRun = false
 
-    /// Where the "get ready" beat has got to: 3 → 2 → 1 → 0, where 0 is the
-    /// "GO!" flash, and -1 once it is over and the overlay is gone. The board
-    /// is already up and the camera live throughout; the game state machine
-    /// simply stays `.idle` until the countdown finishes, so nothing spawns
-    /// and no clock runs while the player settles.
-    @State private var countdown = 3
+    /// The countdown step over the live camera and board. The game stays
+    /// idle until the overlay clears.
+    @State private var countdown: GetReadyOverlay.Step? = .ready
 
-    private var isCountingDown: Bool { countdown >= 0 }
+    private var isCountingDown: Bool { countdown != nil }
 
     /// The app went to the background mid-run. The player may have moved or
     /// put the iPad down, so coming back plays a fresh 3-2-1 before the clock
@@ -189,8 +186,8 @@ struct GameplayView: View {
 
                 LoseHeartOverlay(gameStateManager: gameStateManager)
 
-                if isCountingDown {
-                    GetReadyOverlay(count: countdown)
+                if let countdown {
+                    GetReadyOverlay(step: countdown)
                         .ignoresSafeArea()
                 }
 
@@ -253,20 +250,19 @@ struct GameplayView: View {
         .designScaled()
     }
 
-    /// Plays the 3-2-1-GO! beat. False if it was cut short: the view went
+    /// Plays the opening countdown. False if it was cut short: the view went
     /// away, or a newer count replaced it.
     private func playGetReadyCountdown() async -> Bool {
-        // One shot at the top of the beat — the clip already voices 3-2-1.
-        audio.play(.countdown)
-        for step in stride(from: 3, through: 0, by: -1) {
-            countdown = step  // 0 is the "GO!" beat
+        for step in GetReadyOverlay.Step.allCases {
+            countdown = step
+            if step == .three { audio.play(.countdown) }
             do {
                 try await Task.sleep(for: .seconds(1))
             } catch {
                 return false
             }
         }
-        countdown = -1
+        countdown = nil
         return true
     }
 
