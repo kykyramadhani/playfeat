@@ -5,8 +5,9 @@
 //
 //  Asset names for the planet-kitchen items, which the level files name by
 //  id ("duskFlatbread", "pepperFlatbread"). Some items look different once
-//  put down on a station: the mushroom is chopped on the plate, the
-//  tentacle, the slime and the finished dessert are drawn as the whole glass,
+//  put down on a station: the mushroom is chopped on the plate, the sea
+//  cookie and its starfish sugar lie at the plate's angle, the tentacle,
+//  the slime and the finished dessert are drawn as the whole glass,
 //  noodles as the whole pot while they boil, and the noodle dishes as the
 //  whole bowl. An upgraded ingredient (shop or marathon card) has a premium
 //  look, and so does everything made from it that has premium art.
@@ -63,7 +64,8 @@ nonisolated enum KitchenArt {
     /// Pictures of the whole glass with something in it, drawn whole even
     /// in a hand (the bowl's and pot's are trimmed to the food there).
     static let glassStateImages: Set<String> = [
-        "TentacleGlass", "SlimeGlass", "SlimyTentaclesGlass", "PremiumTentacleGlass", "PremiumSlimyTentaclesGlass",
+        "TentacleGlass", "SlimeGlass", "SlimyTentaclesGlass",
+        "PremiumTentacleGlass", "PremiumSlimeGlass", "PremiumSlimyTentaclesGlass",
     ]
 
     private struct WholeStationPictures {
@@ -146,18 +148,19 @@ nonisolated enum KitchenArt {
         KitchenMenu.coralNoodles: "CoralNoodles",
         KitchenMenu.urchinNoodles: "UrchinNoodles",
         KitchenMenu.clamNoodles: "ClamNoodles",
-        // ponytail: not drawn yet. The ruined noodles and clam borrow the
-        // burnt flatbread, and the plain Star Cookie borrows its premium look,
-        // the only picture of the finished cookie so far.
-        KitchenMenu.mushyNoodles: "FlatbreadBurnt",
-        KitchenMenu.burntClam: "FlatbreadBurnt",
-        KitchenMenu.starCookie: "PremiumStarCookie",
+        KitchenMenu.mushyNoodles: "NoodlesMushy",
+        KitchenMenu.burntClam: "ClamBurnt",
+        // ponytail: the plain Star Cookie is only drawn on the plate so far,
+        // so its bubble shows that, while the premium one is seen from above.
+        KitchenMenu.starCookie: "StarCookie",
     ]
 
     private static let placedImages: [String: String] = [
         KitchenMenu.mushroom: "MushroomTopping",
         KitchenMenu.tentacle: "TentacleGlass",
         KitchenMenu.slime: "SlimeGlass",
+        KitchenMenu.seaCookie: "SeaCookiePlated",
+        KitchenMenu.starfishSugar: "StarfishSugarTopping",
     ]
 
     /// Pictures of a cooking tool with the item cooking in it.
@@ -198,6 +201,11 @@ nonisolated enum KitchenArt {
     private static let premiumPlacedImages: [String: PremiumArt] = [
         KitchenMenu.mushroom: PremiumArt(upgradedBy: KitchenMenu.mushroom, image: "PremiumMushroomTopping"),
         KitchenMenu.tentacle: PremiumArt(upgradedBy: KitchenMenu.tentacle, image: "PremiumTentacleGlass"),
+        KitchenMenu.slime: PremiumArt(upgradedBy: KitchenMenu.slime, image: "PremiumSlimeGlass"),
+        KitchenMenu.seaCookie: PremiumArt(upgradedBy: KitchenMenu.seaCookie, image: "PremiumSeaCookiePlated"),
+        KitchenMenu.starCookie: PremiumArt(upgradedBy: KitchenMenu.seaCookie, image: "PremiumStarCookiePlated"),
+        // ponytail: no premium starfish sugar at the plate's angle yet.
+        KitchenMenu.starfishSugar: PremiumArt(upgradedBy: KitchenMenu.starfishSugar, image: "PremiumStarfishSugar"),
         KitchenMenu.boiledNoodles: PremiumArt(upgradedBy: KitchenMenu.rawNoodles, image: "PremiumNoodlesInBowl"),
     ]
 }
