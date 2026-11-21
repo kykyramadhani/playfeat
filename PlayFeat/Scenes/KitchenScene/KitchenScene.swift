@@ -33,6 +33,13 @@ final class KitchenScene: SKScene {
         }
     }
     private var soundscape: KitchenSoundscape?
+    private(set) var tutorial: KitchenTutorial?
+
+    func installTutorial(_ tutorial: KitchenTutorial) {
+        self.tutorial?.removeFromParent()
+        self.tutorial = tutorial
+        addChild(tutorial)
+    }
 
     // MARK: - Tuning
 
@@ -148,6 +155,7 @@ final class KitchenScene: SKScene {
         updateHands(now: currentTime, frameDelta: frameDelta)
         updateDropGlows()
         soundscape?.update(day: day, cookers: cookers)
+        tutorial?.update(in: self)
     }
 
     // MARK: - Spawning
@@ -267,7 +275,7 @@ final class KitchenScene: SKScene {
     /// the grill and the plates and glasses. A finished dish let go anywhere
     /// else goes back to its plate, since it took a while to make; anything
     /// else falls.
-    func settle(_ node: KitchenBubbleNode) {
+    func settle(_ node: KitchenBubbleNode, releasedByPlayer: Bool = false) {
         node.heldBy = nil
         node.zPosition = 2
         node.run(.scale(to: 1, duration: Self.heldScaleDuration))
@@ -281,6 +289,8 @@ final class KitchenScene: SKScene {
         } else if let station = station(under: node) {
             refuse(node, at: station)
         } else {
+            node.isTutorialDiscard = releasedByPlayer && day?.level.id == "1-2"
+                && node.ingredient == KitchenMenu.burntFlatbread
             drop(node)
         }
     }
@@ -291,6 +301,7 @@ final class KitchenScene: SKScene {
         hangThenFall(node)
         shakeRed(station)
         audio?.play(.wrongIngredient)
+        tutorial?.refused(node.ingredient, at: station, in: self)
     }
 
     /// Leaves `node` hanging where it was let go for a moment, out of
@@ -379,6 +390,7 @@ final class KitchenScene: SKScene {
     var upgradedIngredients: Set<String> { day?.pricing.upgradedIngredients ?? [] }
 
     func remove(_ node: KitchenBubbleNode) {
+        if node.isTutorialDiscard { tutorial?.discardedBurntBread() }
         bubbles.removeAll { $0 === node }
         node.pop()
     }

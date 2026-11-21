@@ -48,14 +48,20 @@ struct GameStorage {
 
     static let seenIntroductionsKey = "seenIntroductions"
 
-    /// IDs of the New Tools / New Menu popups already shown.
+    /// Recipe-book unlocks and other story introductions already seen.
     static var seenIntroductions: Set<String> {
         Set(UserDefaults.standard.stringArray(forKey: seenIntroductionsKey) ?? [])
     }
 
     static func markIntroductionSeen(_ id: String) {
-        let seen = seenIntroductions.union([id])
-        UserDefaults.standard.set(Array(seen).sorted(), forKey: seenIntroductionsKey)
+        markIntroductionsSeen([id])
+    }
+
+    static func markIntroductionsSeen(_ ids: [String]) {
+        let previous = seenIntroductions
+        let updated = previous.union(ids)
+        guard updated != previous else { return }
+        UserDefaults.standard.set(updated.sorted(), forKey: seenIntroductionsKey)
     }
 
     // MARK: - Kitchen shop
@@ -122,16 +128,6 @@ struct GameStorage {
         guard score > bestMarathonScore(on: planet, in: defaults) else { return false }
         defaults.set(score, forKey: marathonBestKey(on: planet))
         return true
-    }
-
-    // MARK: - Marathon spoiler warning
-
-    static let marathonSpoilerSeenKey = "marathonSpoilerSeen"
-
-    /// The marathon's spoiler warning has been shown once already.
-    static var hasSeenMarathonSpoiler: Bool {
-        get { UserDefaults.standard.bool(forKey: marathonSpoilerSeenKey) }
-        set { UserDefaults.standard.set(newValue, forKey: marathonSpoilerSeenKey) }
     }
 
     /// Banks a finished run: its coins, and its dish count if that beats the

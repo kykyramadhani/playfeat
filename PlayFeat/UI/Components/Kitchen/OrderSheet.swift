@@ -17,8 +17,13 @@ struct OrderSheet: View {
     var upgraded: Set<String> = []
 
     private static let barWidth: CGFloat = 129
-    /// Below this the bar turns red.
-    private static let lowPatience = 0.35
+    private var patienceColor: Color {
+        switch KitchenRules.PatienceZone(patienceLeft: patience) {
+        case .green: .patienceHigh
+        case .yellow: .starYellow
+        case .red: .patienceLow
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -43,7 +48,7 @@ struct OrderSheet: View {
             .frame(width: Self.barWidth, height: 11)
             .overlay(alignment: .leading) {
                 Capsule()
-                    .fill(patience < Self.lowPatience ? Color.patienceLow : Color.patienceHigh)
+                    .fill(patienceColor)
                     .frame(width: Self.barWidth * patience)
             }
     }

@@ -80,7 +80,7 @@ A newly unknown node retains the sprite's default scale; the pinch helper treats
 
 ## Pressing buttons by pinching
 
-Story reports, Buffet round breaks, and Buffet reports keep hand tracking active and opt in with `acceptsHandClicks()`. Each enabled `ClickButton` offers its bounds through the `HandClickTargets` preference. `HandPointerLayer` draws the hand, highlights the button underneath, and presses it when a pinch **starts** over it. `PinchClickDetector` counts at most one press per frame. A held pinch, a pinch dragged onto a button, or a hand that appears already pinching does not press a button. Tapping uses the same button action.
+Story reports and Buffet rules, round breaks, and reports keep hand tracking active and opt in with `acceptsHandClicks()`. Each enabled `ClickButton` offers its bounds through the `HandClickTargets` preference. `HandPointerLayer` draws the hand, highlights the button underneath, and presses it when a pinch **starts** over it. `PinchClickDetector` counts at most one press per frame. A held pinch, a pinch dragged onto a button, or a hand that appears already pinching does not press a button. Tapping uses the same button action.
 
 The manual pause menu uses touch controls. Opening it suspends Vision and clears the cursors while the camera session stays ready. Resume restores detection with the existing calibration. Retry from the report or the pause menu closes the old kitchen and starts a fresh seat calibration.
 

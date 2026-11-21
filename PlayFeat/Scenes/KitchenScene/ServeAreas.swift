@@ -58,7 +58,9 @@ extension KitchenScene {
     /// Serves the customer at `seat` if they ordered `node`; otherwise the
     /// dish is turned away and falls.
     func serveOrReject(_ node: KitchenBubbleNode, at seat: Int) {
-        if let day, day.serve(node.ingredient, at: seat) {
+        if let day, let customer = day.presentCustomers.first(where: { $0.seat == seat }),
+           day.serve(node.ingredient, at: seat) {
+            if day.isRunning, !day.isRoundOver { tutorial?.served(node.ingredient, to: customer) }
             audio?.play(.putOrder)
             if day.lastTip > 0 { audio?.play(.tip) }
             handOver(node, to: seat)

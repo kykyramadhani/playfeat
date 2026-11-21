@@ -15,7 +15,7 @@
 //  freezes it for the card break, and losing three customers ends it with
 //  the marathon report. STOP pauses either.
 //
-//  Reports and Buffet breaks keep hand tracking on for their pinch buttons.
+//  Reports and Buffet overlays keep hand tracking on for their pinch buttons.
 //  The manual pause menu suspends detection and uses touch controls.
 //
 
@@ -28,6 +28,7 @@ struct KitchenView: View {
     @Environment(HandPoseManager.self) private var handPoseManager
     /// Forwarded by PlayFeatApp (PhoneSafeSides hosts the app separately).
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Bindable var sceneManager: SceneManager
 
@@ -42,8 +43,7 @@ struct KitchenView: View {
     @State private var marathonStep: MarathonStep?
     @State private var isPaused = false
     @State private var showSettings = false
-    /// New Tools / New Menu popups still to show before the countdown.
-    @State private var introductions: [KitchenIntroduction]
+    @State private var showsBuffetRules: Bool
     /// The app left the foreground while the day was running.
     @State private var isInterrupted = false
     /// It went as far as the background: coming back plays a fresh 3-2-1.
@@ -76,10 +76,7 @@ struct KitchenView: View {
         )
         _day = State(initialValue: day)
         
-        let seen = GameStorage.seenIntroductions
-        _introductions = State(initialValue: KitchenIntroduction.introduced(byLevel: level.id).filter {
-            !seen.contains($0.id)
-        })
+        _showsBuffetRules = State(initialValue: marathon != nil)
         
         #if DEBUG
         _hasCalibrated = State(initialValue: DebugLaunch.skipSeatCheck)
@@ -124,6 +121,7 @@ struct KitchenView: View {
         }
         .onAppear(perform: setUp)
         .onDisappear(perform: tearDown)
+        .onChange(of: reduceMotion) { _, enabled in scene.tutorial?.reduceMotion = enabled }
         .onChange(of: day.isRunning) { _, running in
             if !running { audio.stopKitchenLoops() }
         }
@@ -173,19 +171,14 @@ struct KitchenView: View {
                 RedEdgeFlash(losses: marathon.lostCustomers)
             }
 
-            if countdown >= 0, introductions.isEmpty {
+            if countdown >= 0, !showsBuffetRules {
                 GetReadyOverlay(count: countdown)
                     .ignoresSafeArea()
             }
 
-            if let introduction = introductions.first {
-                IntroductionPopup(introduction: introduction) {
-                    GameStorage.markIntroductionSeen(introduction.id)
-                    // By id: a popup still fading out can be tapped again.
-                    introductions.removeAll { $0.id == introduction.id }
-                }
-                .id(introduction.id)
-                .transition(.opacity)
+            if showsBuffetRules {
+                BuffetRulesCard { showsBuffetRules = false }
+                    .acceptsHandClicks()
             }
 
             if handPoseManager.authorizationStatus == .denied
@@ -212,12 +205,10 @@ struct KitchenView: View {
                 SettingsView(onClose: { showSettings = false })
             }
         }
-        // Runs again as each introduction closes; counts down once none are left.
-        .task(id: introductions.count) {
-            guard introductions.isEmpty, await playGetReadyCountdown(), scenePhase == .active else { return }
+        .task(id: showsBuffetRules) {
+            guard !showsBuffetRules, await playGetReadyCountdown(), scenePhase == .active else { return }
             startPlaying()
         }
-        .animation(.easeOut(duration: 0.2), value: introductions.count)
         .task(id: resumeCountdownRequest) {
             guard resumeCountdownRequest > 0,
                   await playGetReadyCountdown(),
@@ -244,6 +235,9 @@ struct KitchenView: View {
         let supply: any BubbleSupply = marathon.map { MarathonBubbleSupply(starters: $0.planet.buffet.starters) }
             ?? StoryBubbleSupply(level: day.level)
         scene.prepare(for: day, bubbleSupply: supply)
+        let tutorial = KitchenTutorial(isBuffet: marathon != nil)
+        tutorial.reduceMotion = reduceMotion
+        scene.installTutorial(tutorial)
         if let marathon { applyUpgrades(of: marathon) }
         scene.handInput = handPoseManager
         scene.audio = audio
@@ -431,7 +425,7 @@ struct KitchenView: View {
             // `.inactive` always comes first and has already paused the day.
             needsGetReadyOnReturn = isInterrupted
         default:
-            if countdown >= 0, hasCalibrated, introductions.isEmpty {
+            if countdown >= 0, hasCalibrated, !showsBuffetRules {
                 countdownGeneration += 1
                 isInterrupted = true
                 needsGetReadyOnReturn = true
@@ -447,6 +441,11 @@ struct KitchenView: View {
     private func startPlaying() {
         guard sceneManager.screen == .kitchen(day.level),
               !isPaused, scenePhase == .active else { return }
+        if marathon == nil {
+            // The live tutorial replaces the introduction cards. Keep their
+            // recipe-book unlocks tied to starting the same story level.
+            GameStorage.markIntroductionsSeen(KitchenIntroduction.introduced(byLevel: day.level.id).map(\.id))
+        }
         day.start()
         audio.startMusic(gameplayMusic)
         audio.setMusicRate(musicRate)

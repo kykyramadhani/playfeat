@@ -121,6 +121,9 @@ extension KitchenScene {
         }
 
         setDown(node, at: station, position: centre(of: station))
+        if let day, day.isRunning, !day.isRoundOver {
+            tutorial?.placed(node.ingredient, on: station, levelID: day.level.id)
+        }
         // Later items sit on top: the topping over the bread.
         let stackHeight = assembly(at: station)?.contents.count ?? 1
         node.zPosition = 2 + CGFloat(stackHeight) * 0.1
@@ -215,6 +218,7 @@ extension KitchenScene {
     /// replaced by the finished dish, which can be picked up as one item.
     private func combineIfComplete(_ station: KitchenBubbleNode.Placement) {
         guard let dish = assembly(at: station)?.completedDish else { return }
+        if let day, day.isRunning, !day.isRoundOver { tutorial?.assembled(dish, levelID: day.level.id) }
         changeAssembly(at: station) { $0.combine() }
 
         for ingredient in bubbles.filter({ $0.placement == station }) {
