@@ -117,7 +117,12 @@ final class SceneManager {
         }
     }
 
-    /// The closing kitchen has let go of its camera, player and music; the
+    /// A kitchen is closing so that another can open (NEXT, RETRY, RESTART).
+    var isHandingOverKitchen: Bool {
+        if case .kitchenHandover = screen { true } else { false }
+    }
+
+    /// The closing kitchen has let go of its player and music; the
     /// level waiting in the handover, if any, opens now.
     func kitchenDidClose() {
         guard case .kitchenHandover(let level) = screen else { return }

@@ -162,6 +162,27 @@ struct SceneManagerTests {
         #expect(manager.marathon !== firstRun)
     }
 
+    /// The closing kitchen keeps the camera running only when another
+    /// kitchen is about to open.
+    @Test func aRetryIsAKitchenHandover() throws {
+        let manager = SceneManager()
+        let level = try LevelLoader.load("1-1")
+        manager.goToKitchen(level)
+
+        manager.goToKitchen(level)
+
+        #expect(manager.isHandingOverKitchen)
+    }
+
+    @Test func leavingForTheBoardIsNotAKitchenHandover() throws {
+        let manager = SceneManager()
+        manager.goToKitchen(try LevelLoader.load("1-1"))
+
+        manager.goToPlanetSelect()
+
+        #expect(!manager.isHandingOverKitchen)
+    }
+
     /// Leaving for the board: the kitchen closing afterwards opens nothing.
     @Test func closingAKitchenOnTheWayToTheBoardStaysOnTheBoard() throws {
         let manager = SceneManager()

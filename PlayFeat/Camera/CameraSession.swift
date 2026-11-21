@@ -57,6 +57,14 @@ final class CameraSession: NSObject {
 
     let captureSession = AVCaptureSession()
 
+    /// The one on-screen view of this session. Every `CameraPreviewView`
+    /// shows this same layer rather than making its own, so the session
+    /// never has two preview connections at once. Swapping one preview layer
+    /// for another while the camera runs (a kitchen handing over to the
+    /// next) can leave the new layer blank, at least with Continuity Camera
+    /// on a Mac.
+    let previewLayer: AVCaptureVideoPreviewLayer
+
     /// Called on the video queue for every frame. Set it once, before
     /// `start()`. `nonisolated(unsafe)` because it is written on the main
     /// actor before the camera runs and only read on the video queue after.
@@ -77,9 +85,13 @@ final class CameraSession: NSObject {
     private let permission = CameraManager()
     private var isConfigured = false
 
-    private weak var previewLayer: AVCaptureVideoPreviewLayer?
     private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
     private var rotationObservers: [NSKeyValueObservation] = []
+
+    override init() {
+        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        super.init()
+    }
 
     // MARK: - Start / stop
 
@@ -104,10 +116,10 @@ final class CameraSession: NSObject {
         }
     }
 
-    /// Handed over by `CameraPreviewView` so rotation can be driven from a
-    /// single coordinator that knows about both the feed and what's on screen.
-    func attach(previewLayer layer: AVCaptureVideoPreviewLayer) {
-        previewLayer = layer
+    /// Called by `CameraPreviewView` when it shows `previewLayer`: the
+    /// rotation coordinator reads the layer's place on screen, so it starts
+    /// over from there.
+    func previewDidMove() {
         if let device = (captureSession.inputs.first as? AVCaptureDeviceInput)?.device {
             startTrackingRotation(for: device)
         }
@@ -195,9 +207,18 @@ final class CameraSession: NSObject {
             self.captureSession.commitConfiguration()
 
             DispatchQueue.main.async {
+                self.mirrorPreview()
                 self.startTrackingRotation(for: device)
             }
         }
+    }
+
+    /// The preview's connection exists only once the session has an input,
+    /// so this runs after configuration rather than when the layer is made.
+    private func mirrorPreview() {
+        guard let connection = previewLayer.connection, connection.isVideoMirroringSupported else { return }
+        connection.automaticallyAdjustsVideoMirroring = false
+        connection.isVideoMirrored = true // natural "selfie" view
     }
 
     // MARK: - Rotation tracking
@@ -240,7 +261,7 @@ final class CameraSession: NSObject {
     /// accept the angle is what leaves the skeleton lagging behind a rotated
     /// camera image.
     private func applyRotationAngle(_ angle: CGFloat) {
-        let previewConnection = previewLayer?.connection
+        let previewConnection = previewLayer.connection
         let outputConnection = videoOutput.connection(with: .video)
 
         let acceptedEverywhere = [previewConnection, outputConnection]

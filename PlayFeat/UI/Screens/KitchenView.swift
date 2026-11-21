@@ -238,6 +238,7 @@ struct KitchenView: View {
         if let marathon { applyUpgrades(of: marathon) }
         scene.handInput = handPoseManager
         scene.audio = audio
+        handPoseManager.setDetectionPaused(false)
         handPoseManager.start()
         UIApplication.shared.isIdleTimerDisabled = true
     }
@@ -249,9 +250,19 @@ struct KitchenView: View {
         audio.stopClockWarning()
         audio.stopKitchenLoops()
         handPoseManager.releasePlayer()
-        handPoseManager.stop()
         UIApplication.shared.isIdleTimerDisabled = false
-        sceneManager.kitchenDidClose()
+        // The next kitchen wants the camera straight back, and stopping and
+        // restarting it in between takes seconds with Continuity Camera on a
+        // Mac. Releasing the player is enough for calibration to start over.
+        guard sceneManager.isHandingOverKitchen else {
+            handPoseManager.stop()
+            return
+        }
+        // onDisappear runs while SwiftUI is switching screens. Finish the
+        // handover after that update so it can mount a fresh kitchen.
+        Task { @MainActor [sceneManager] in
+            sceneManager.kitchenDidClose()
+        }
     }
 
     /// Plays the 3-2-1-GO! beat. False if it was cut short.
@@ -301,7 +312,7 @@ struct KitchenView: View {
                 levelNumber: PlanetCatalog.dayNumber(of: report.level.id) ?? 1,
                 onNext: { sceneManager.goToNextLevel(after: report.level) },
                 onBack: sceneManager.goToPlanetSelect,
-                onRetry: { sceneManager.goToKitchen(report.level) }
+                onRetry: restartDay
             )
             .transition(.opacity)
             .zIndex(200)
@@ -367,6 +378,7 @@ struct KitchenView: View {
     private func pauseDay() {
         day.pause()
         isPaused = true
+        handPoseManager.setDetectionPaused(true)
         audio.stopClockWarning()
         audio.stopKitchenLoops()
         audio.fadeOutMusic()
@@ -374,11 +386,15 @@ struct KitchenView: View {
 
     private func resumeDay() {
         isPaused = false
+        handPoseManager.setDetectionPaused(false)
         startPlaying()
     }
 
     /// Starts this level, or the whole marathon, over from its beginning.
     private func restartDay() {
+        // The SpriteKit view stays live while the pause menu is open.
+        // Stop the outgoing scene before changing screens.
+        scene.isPaused = true
         if let marathon {
             sceneManager.startMarathon(on: marathon.planet.id)
         } else {

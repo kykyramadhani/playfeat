@@ -95,7 +95,10 @@ struct ContentView: View {
         .onChange(of: language) { _, newValue in
             AppLocalization.apply(newValue)
         }
-        .animation(.easeInOut(duration: 0.3), value: sceneManager.screen)
+        // Remove the outgoing kitchen before mounting the next one. An
+        // opacity transition keeps its SpriteView alive during teardown.
+        .animation(sceneManager.isHandingOverKitchen ? nil : .easeInOut(duration: 0.3),
+                   value: sceneManager.screen)
     }
 
     /// The camera preview lives inside GameplayView, as that screen's

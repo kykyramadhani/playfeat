@@ -3,8 +3,9 @@
 //  PlayFeat
 //
 //  Layer 1 (back): the live front-camera feed the player sees themselves in.
-//  It renders the game's *existing* CameraSession rather than making its own —
-//  iOS only allows one AVCaptureSession per camera at a time.
+//  It shows the game's *existing* CameraSession and its one preview layer
+//  rather than making its own: iOS only allows one AVCaptureSession per
+//  camera, and one preview layer keeps a screen handover from going blank.
 //
 
 import UIKit
@@ -15,32 +16,42 @@ struct CameraPreviewView: UIViewRepresentable {
     let camera: CameraSession
 
     func makeUIView(context: Context) -> PreviewView {
-        let view = PreviewView()
-        let layer = view.videoPreviewLayer
-        layer.session = camera.captureSession
-        layer.videoGravity = camera.previewGravity
-
-        if let connection = layer.connection, connection.isVideoMirroringSupported {
-            connection.automaticallyAdjustsVideoMirroring = false
-            connection.isVideoMirrored = true // natural "selfie" view
-        }
-        
+        let view = PreviewView(previewLayer: camera.previewLayer)
+        camera.previewLayer.videoGravity = camera.previewGravity
         // Rotation is driven by the camera's RotationCoordinator, which needs
-        // this layer to compute the horizon-level preview angle.
-        camera.attach(previewLayer: layer)
+        // the layer's new place on screen to compute the preview angle.
+        camera.previewDidMove()
         return view
     }
 
     func updateUIView(_ uiView: PreviewView, context: Context) {
-        uiView.videoPreviewLayer.videoGravity = camera.previewGravity
+        camera.previewLayer.videoGravity = camera.previewGravity
     }
 
-    /// A UIView whose backing layer *is* the preview layer, so it resizes with
-    /// the view automatically instead of needing manual frame bookkeeping.
+    /// Hosts the shared preview layer and keeps it the size of the view.
+    /// Adding the layer here takes it away from the previous preview, if any.
     final class PreviewView: UIView {
-        override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
-        var videoPreviewLayer: AVCaptureVideoPreviewLayer {
-            layer as! AVCaptureVideoPreviewLayer
+        private let previewLayer: AVCaptureVideoPreviewLayer
+
+        init(previewLayer: AVCaptureVideoPreviewLayer) {
+            self.previewLayer = previewLayer
+            super.init(frame: .zero)
+            layer.addSublayer(previewLayer)
+        }
+
+        @available(*, unavailable)
+        required init?(coder: NSCoder) {
+            fatalError("PreviewView is created in code only")
+        }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            // A newer preview may have taken the layer; leave it alone then.
+            guard previewLayer.superlayer === layer else { return }
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            previewLayer.frame = bounds
+            CATransaction.commit()
         }
     }
 }

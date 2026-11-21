@@ -62,10 +62,13 @@ final class HandPoseManager {
         // Runs on the video queue: process there, publish on the main thread.
         let processor = self.processor
         camera.onFrame = { [weak self] pixelBuffer in
-            guard !processor.isSuspended else { return }
+            guard let generation = processor.frameGeneration else { return }
             let frame = processor.process(pixelBuffer)
             guard let self else { return }
-            DispatchQueue.main.async { self.publish(frame) }
+            DispatchQueue.main.async {
+                guard self.frameGeneration == generation else { return }
+                self.publish(frame)
+            }
         }
     }
 
@@ -78,11 +81,17 @@ final class HandPoseManager {
     /// The app is out of the foreground (see `suspend()`).
     private var isSuspended = false
 
+    private var isDetectionPaused = false
+    private var frameGeneration: UInt = 0
+
     /// Requests camera permission (if needed) and starts the camera.
     /// Safe to call multiple times. Call from the main thread (e.g. `.onAppear`).
     /// While suspended it only records the request; `resume()` acts on it.
     func start() {
-        isCameraWanted = true
+        if !isCameraWanted {
+            isCameraWanted = true
+            updateFrameProcessing()
+        }
         guard !isSuspended else { return }
         camera.start { [weak self] status in
             self?.authorizationStatus = status
@@ -90,8 +99,24 @@ final class HandPoseManager {
     }
 
     func stop() {
-        isCameraWanted = false
+        if isCameraWanted || isDetectionPaused {
+            isCameraWanted = false
+            isDetectionPaused = false
+            updateFrameProcessing()
+        }
         camera.stop()
+    }
+
+    /// Pause Vision and clear visible poses while keeping the capture session
+    /// and calibrated player ready for Resume.
+    func setDetectionPaused(_ paused: Bool) {
+        guard isDetectionPaused != paused else { return }
+        isDetectionPaused = paused
+        updateFrameProcessing()
+        if paused {
+            if !hands.isEmpty { hands = [] }
+            if playerBody != nil { playerBody = nil }
+        }
     }
 
     /// The app is leaving the foreground: stop all GPU work. Call on
@@ -100,7 +125,7 @@ final class HandPoseManager {
     func suspend() {
         guard !isSuspended else { return }
         isSuspended = true
-        camera.performOnVideoQueue { [processor] in processor.suspend() }
+        updateFrameProcessing()
         camera.stop()
     }
 
@@ -109,8 +134,16 @@ final class HandPoseManager {
     func resume() {
         guard isSuspended else { return }
         isSuspended = false
-        camera.performOnVideoQueue { [processor] in processor.resume() }
+        updateFrameProcessing()
         if isCameraWanted { start() }
+    }
+
+    private func updateFrameProcessing() {
+        // Invalidate any frames already waiting to publish on the main actor.
+        // Turning detection back on always takes a fresh frame.
+        frameGeneration += 1
+        let activeGeneration = isCameraWanted && !isSuspended && !isDetectionPaused ? frameGeneration : nil
+        camera.performOnVideoQueue { [processor] in processor.frameGeneration = activeGeneration }
     }
 
     /// Until calibration passes, only someone sitting in `frame` (view space,
