@@ -97,12 +97,7 @@ struct KitchenView: View {
             if hasCalibrated {
                 dayOverlays
             } else {
-                SeatCalibrationView(handPoseManager: handPoseManager) {
-                    handPoseManager.lockOntoPlayer()
-                    hasCalibrated = true
-                    audio.play(.handFound)
-                }
-                .designScaled()
+                calibrationLayer
             }
 
             if let marathon, let marathonStep {
@@ -162,6 +157,37 @@ struct KitchenView: View {
             .onChange(of: proxy.size) { _, newSize in scene.size = newSize }
         }
         .ignoresSafeArea()
+    }
+
+    /// The seat check, with a way back to where the player came from. The
+    /// button sits above the camera-permission card too, so a player who
+    /// turned the camera off can still leave.
+    private var calibrationLayer: some View {
+        ZStack {
+            SeatCalibrationView(handPoseManager: handPoseManager) {
+                handPoseManager.lockOntoPlayer()
+                hasCalibrated = true
+                audio.play(.handFound)
+            }
+
+            // Figma "Button" (1950:946): top left of the 1366 × 1024 canvas.
+            RaisedBackButton(action: leaveBeforePlaying)
+                .padding(.top, 45)
+                .padding(.leading, 49)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .designScaled()
+    }
+
+    /// Back from the seat check: to the Buffet lobby for a marathon, the
+    /// planet board for a level. Nothing has been played yet, so nothing is
+    /// recorded.
+    private func leaveBeforePlaying() {
+        if marathon != nil {
+            sceneManager.goToMarathon()
+        } else {
+            sceneManager.goToPlanetSelect()
+        }
     }
 
     private var dayOverlays: some View {
