@@ -70,13 +70,19 @@ Changing the saved gesture resets detectors; evidence gathered for Pinch must no
 
 ## Chirality and artwork
 
-`HandClassifier` copies `observation.chirality`. The tracker remembers the last known value for each hand ID and ignores `.unknown` updates. `HandData` carries that remembered value to both scenes. Cursor updates also preserve existing orientation when given unknown chirality. Screen position no longer decides left/right.
+`HandClassifier` copies `observation.chirality`. The tracker remembers the last known value for each hand ID and ignores `.unknown` updates. Once calibration locks onto the player (`keepsHandSides`), a hand keeps the side it already has, so a misread flip can't flip its art; a hand lost and found again gets a new ID and is read afresh. `HandData` carries that remembered value to both scenes. Cursor updates also preserve existing orientation when given unknown chirality. Screen position no longer decides left/right.
 
-The **current code** uses `xScale = 1` for `.left` and `-1` for `.right`; the pinch-offset mirror follows that convention. Some comments still describe the opposite mirroring. Use the assignments and test the actual mirrored camera feed when replacing art.
+The **current code** uses `xScale = 1` for `.left` and `-1` for `.right` (`HandCursorNode.artMirror`, shared with the SwiftUI hand pointers); the pinch-offset mirror follows that convention. Some comments still describe the opposite mirroring. Use the assignments and test the actual mirrored camera feed when replacing art.
 
 Cursor artwork is square, sized to `bubbleRadius × 2.5`. Its palm anchor is `(0.49, 0.425)`, and the drawn pinch location is `(0.05, 0.60)`. Held-item position is cursor position plus the scaled/mirrored difference between those two points. The node briefly changes scale on grip changes, swaps open/pinch textures, and fades away over 0.25 seconds after the tracker stops publishing it.
 
 A newly unknown node retains the sprite's default scale; the pinch helper treats non-left chirality using its other mirror branch. Check that initial-unknown appearance if artwork placement looks inconsistent before the first known reading. The held-item offset also does not include the node's transient pop scale.
+
+## Pressing buttons by pinching
+
+Story reports, Buffet round breaks, and Buffet reports keep hand tracking active and opt in with `acceptsHandClicks()`. Each enabled `ClickButton` offers its bounds through the `HandClickTargets` preference. `HandPointerLayer` draws the hand, highlights the button underneath, and presses it when a pinch **starts** over it. `PinchClickDetector` counts at most one press per frame. A held pinch, a pinch dragged onto a button, or a hand that appears already pinching does not press a button. Tapping uses the same button action.
+
+The manual pause menu uses touch controls. Opening it suspends Vision and clears the cursors while the camera session stays ready. Resume restores detection with the existing calibration. Retry from the report or the pause menu closes the old kitchen and starts a fresh seat calibration.
 
 ## Scene interaction and troubleshooting
 
@@ -93,6 +99,7 @@ If no hand appears, check camera authorization, player body selection and wrist 
 - [Finger geometry](../../PlayFeat/Vision/Gestures/GestureGeometry.swift)
 - [Published hand model](../../PlayFeat/Vision/HandData.swift)
 - [Cursor node](../../PlayFeat/Scenes/Nodes/HandCursorNode.swift)
+- [Pinch presses](../../PlayFeat/Vision/Gestures/PinchClickDetector.swift), [hand-pressable buttons](../../PlayFeat/UI/Components/Button/HandClickTarget.swift), [hand pointers](../../PlayFeat/UI/Overlays/HandPointerLayer.swift)
 - [Identity tests](../../Testing/PlayFeatTests/Vision/Gestures/HandIdentityTrackerTests.swift)
 - [Gesture tests](../../Testing/PlayFeatTests/Vision/Gestures/GestureDetectorTests.swift)
 - [Cursor tests](../../Testing/PlayFeatTests/Scenes/Nodes/HandCursorNodeTests.swift)

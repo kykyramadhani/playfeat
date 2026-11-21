@@ -459,7 +459,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.reability.playfeat;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.playfeat;
 				PRODUCT_MODULE_NAME = PlayFeat;
 				PRODUCT_NAME = AstroFeast;
 				REGISTER_APP_GROUPS = YES;
@@ -507,7 +507,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.reability.playfeat;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.playfeat;
 				PRODUCT_MODULE_NAME = PlayFeat;
 				PRODUCT_NAME = AstroFeast;
 				REGISTER_APP_GROUPS = YES;

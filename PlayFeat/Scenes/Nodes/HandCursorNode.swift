@@ -78,9 +78,13 @@ final class HandCursorNode: SKNode {
     func setChirality(_ chirality: VNChirality) {
         guard chirality != .unknown, chirality != self.chirality else { return }
         self.chirality = chirality
-        
-        // Mirror the art for a left hand.
-        art.xScale = chirality == .left ? 1 : -1
+        art.xScale = Self.artMirror(for: chirality)
+    }
+
+    /// How the art is flipped for a hand: 1 as drawn, -1 mirrored. Shared
+    /// with HandPointerLayer, so its hands face the same way as these.
+    static func artMirror(for chirality: VNChirality) -> CGFloat {
+        chirality == .right ? -1 : 1
     }
 
     /// Shows the pinching art while the hand grips, the open art otherwise.

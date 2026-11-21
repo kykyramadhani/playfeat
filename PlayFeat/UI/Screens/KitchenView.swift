@@ -15,6 +15,9 @@
 //  freezes it for the card break, and losing three customers ends it with
 //  the marathon report. STOP pauses either.
 //
+//  Reports and Buffet breaks keep hand tracking on for their pinch buttons.
+//  The manual pause menu suspends detection and uses touch controls.
+//
 
 import AVFoundation
 import SpriteKit
@@ -107,11 +110,17 @@ struct KitchenView: View {
 
             if let marathon, let marathonStep {
                 marathonOverlay(marathonStep, of: marathon)
+                    .acceptsHandClicks()
                     .transition(.opacity)
                     .zIndex(200)
             }
 
             storyReportOverlay
+        }
+        .overlayPreferenceValue(HandClickTargets.self) { targets in
+            if !targets.isEmpty {
+                HandPointerLayer(targets: targets)
+            }
         }
         .onAppear(perform: setUp)
         .onDisappear(perform: tearDown)
@@ -283,15 +292,15 @@ struct KitchenView: View {
         return true
     }
 
-    /// Both reports keep the finished kitchen visible. Income is banked only once.
+    /// Both reports keep the finished kitchen visible. Income is banked only
+    /// once. Hand tracking and the awake screen stay on for the report's
+    /// buttons, until the player leaves the kitchen (`tearDown`).
     private func endDay() {
         guard sceneManager.screen == .kitchen(day.level),
               sceneManager.levelReport == nil, marathonStep != .report else { return }
         day.pause()
         audio.stopMusic(ifPlaying: gameplayMusic)
         audio.stopKitchenLoops()
-        handPoseManager.stop()
-        UIApplication.shared.isIdleTimerDisabled = false
         if let marathon {
             marathonNewBest = GameStorage.recordMarathon(score: marathon.points, on: marathon.planet.id)
             withAnimation(.easeOut(duration: 0.3)) { marathonStep = .report }
@@ -314,6 +323,7 @@ struct KitchenView: View {
                 onBack: sceneManager.goToPlanetSelect,
                 onRetry: restartDay
             )
+            .acceptsHandClicks()
             .transition(.opacity)
             .zIndex(200)
         }
