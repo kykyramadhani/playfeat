@@ -163,7 +163,8 @@ struct LocalizationTests {
             "Round %lld", "Customers Lost", "%lld of %lld",
             // Notices and the new planet
             "Complete previous level to unlock this level", "Complete the first level to unlock marathon mode",
-            "You have to finish all six levels to continue to the next planet", "Energy renews every 15 minutes",
+            "You have to finish all six levels to continue to the next planet",
+            "One energy comes back every 5 minutes", "Not enough energy. One comes back every 5 minutes",
             "Congratulations!!", "You’ve unlocked a new planet", "Proceed to Planet",
             // Level board, shop, marathon warning
             "Back to Galaxy", "Ingredients", "Tools",

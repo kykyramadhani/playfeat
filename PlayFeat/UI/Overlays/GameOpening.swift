@@ -62,7 +62,7 @@ struct GameOpening: View {
                 // Most-dishes-served card, bottom-left.
                 highscoreCard(w: lw)
                     .position(x: w * 0.125, y: h * 0.82)
-                    .onTapGesture { GameCenter.showLeaderboard() }
+                    .onTapGesture { GameCenter.showLeaderboard(GameCenter.classicLeaderboardID) }
 
                 // Tap-to-Play tray, centred low.
                 playTray(w: lw)

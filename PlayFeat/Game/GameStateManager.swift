@@ -305,7 +305,7 @@ final class GameStateManager {
             inventory.consumeMultiplier()
         }
         GameStorage.record(result)
-        GameCenter.submit(totalDishesServed)
+        GameCenter.submit(totalDishesServed, to: GameCenter.classicLeaderboardID)
     }
 
     // MARK: - Ticking

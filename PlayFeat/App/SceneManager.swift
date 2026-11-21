@@ -12,6 +12,13 @@ import Foundation
 
 @Observable
 final class SceneManager {
+    /// What starting a story level costs: spent as its kitchen opens.
+    let energy: EnergyStore
+
+    init(energy: EnergyStore = EnergyStore()) {
+        self.energy = energy
+    }
+
     /// AstroFeast opens on the galaxy map, straight from START.
     private(set) var screen: AppScreen = .galaxy
 
@@ -90,7 +97,23 @@ final class SceneManager {
     /// The marathon being played; nil on a level.
     private(set) var marathon: MarathonSession?
 
+    /// A level the player couldn't afford: the screen on show says so until
+    /// the player closes the note.
+    private(set) var isShortOfEnergy = false
+
+    func dismissEnergyShortfall() {
+        isShortOfEnergy = false
+    }
+
+    /// Opens `level`'s kitchen, spending its energy cost. Short of energy,
+    /// nothing opens and the screen on show tells the player.
     func goToKitchen(_ level: LevelData) {
+        do {
+            try energy.spend(level.energyCost)
+        } catch {
+            isShortOfEnergy = true
+            return
+        }
         marathon = nil
         levelReport = nil
         enterKitchen(level)

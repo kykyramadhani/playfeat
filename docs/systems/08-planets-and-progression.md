@@ -65,7 +65,7 @@ The popup's Proceed action currently closes the popup. There is no second-planet
 
 ## Energy and coins on the selector
 
-`PlanetScreen` displays the saved global coin count, while energy is the design's fixed `25/25` sample. Level energy costs are real configuration fields displayed by level details, but starting a level or marathon does not deduct energy. Do not implement progression logic by reading the rendered string.
+`PlanetScreen` displays the saved global coin count and the live energy meter; tapping the meter opens a note on how energy comes back. Energy (`EnergyMeter`, saved by `EnergyStore`) holds 25 at most and gets one point back every 5 minutes; the refill clock starts when the meter drops below full and keeps counting while the app is closed. `SceneManager.goToKitchen` spends a level's `energyCost` whenever a story level starts (PLAY, NEXT, RETRY); short of energy, nothing opens and a note says so. The Buffet and the classic game cost nothing.
 
 The board's `progress` and the shared top bar's coin count are local snapshots. If adding purchases or rewards without leaving these views, ensure those snapshots are refreshed where needed; UserDefaults alone is not an observable model.
 

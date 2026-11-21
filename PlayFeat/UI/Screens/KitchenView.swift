@@ -51,6 +51,8 @@ struct KitchenView: View {
     @State private var needsGetReadyOnReturn = false
     @State private var resumeCountdownRequest = 0
     @State private var marathonNewBest = false
+    /// The run's points are saved and sent once, however the run ends.
+    @State private var isMarathonRunBanked = false
     @State private var countdownGeneration = 0
 
     private var gameplayMusic: String { marathon == nil ? MusicTrack.story : MusicTrack.buffet }
@@ -114,6 +116,13 @@ struct KitchenView: View {
             }
 
             storyReportOverlay
+
+            if sceneManager.isShortOfEnergy {
+                PlanetNoticePopup(notice: .notEnoughEnergy, onClose: sceneManager.dismissEnergyShortfall)
+                    .acceptsHandClicks()
+                    .transition(.opacity)
+                    .zIndex(300)
+            }
         }
         .overlayPreferenceValue(HandClickTargets.self) { targets in
             if !targets.isEmpty {
@@ -199,7 +208,7 @@ struct KitchenView: View {
                     onResume: resumeDay,
                     onRestart: restartDay,
                     onSettings: { showSettings = true },
-                    onHome: sceneManager.goToPlanetSelect
+                    onHome: quitToHome
                 )
             }
 
@@ -245,7 +254,6 @@ struct KitchenView: View {
         scene.audio = audio
         handPoseManager.setDetectionPaused(false)
         handPoseManager.start()
-        UIApplication.shared.isIdleTimerDisabled = true
     }
 
     /// Closes everything this day opened. NEXT and RETRY wait for this (the
@@ -255,7 +263,6 @@ struct KitchenView: View {
         audio.stopClockWarning()
         audio.stopKitchenLoops()
         handPoseManager.releasePlayer()
-        UIApplication.shared.isIdleTimerDisabled = false
         // The next kitchen wants the camera straight back, and stopping and
         // restarting it in between takes seconds with Continuity Camera on a
         // Mac. Releasing the player is enough for calibration to start over.
@@ -289,8 +296,24 @@ struct KitchenView: View {
     }
 
     /// Both reports keep the finished kitchen visible. Income is banked only
-    /// once. Hand tracking and the awake screen stay on for the report's
-    /// buttons, until the player leaves the kitchen (`tearDown`).
+    /// once. Hand tracking stays on for the report's buttons, until the
+    /// player leaves the kitchen (`tearDown`).
+    /// Keeps the run's points as the planet's best if they beat it, and
+    /// sends them to the planet's Buffet leaderboard.
+    private func bankMarathonRun(_ marathon: MarathonSession) {
+        guard !isMarathonRunBanked else { return }
+        isMarathonRunBanked = true
+        marathonNewBest = GameStorage.recordMarathon(score: marathon.points, on: marathon.planet.id)
+        GameCenter.submit(marathon.points, to: GameCenter.buffetLeaderboardID(on: marathon.planet.id))
+    }
+
+    /// HOME from the pause card. Leaving a marathon gives the run up: it
+    /// ends there, and its points count as if the last customer had left.
+    private func quitToHome() {
+        if let marathon { bankMarathonRun(marathon) }
+        sceneManager.goToPlanetSelect()
+    }
+
     private func endDay() {
         guard sceneManager.screen == .kitchen(day.level),
               sceneManager.levelReport == nil, marathonStep != .report else { return }
@@ -298,16 +321,28 @@ struct KitchenView: View {
         audio.stopMusic(ifPlaying: gameplayMusic)
         audio.stopKitchenLoops()
         if let marathon {
-            marathonNewBest = GameStorage.recordMarathon(score: marathon.points, on: marathon.planet.id)
+            bankMarathonRun(marathon)
             withAnimation(.easeOut(duration: 0.3)) { marathonStep = .report }
         } else {
             let previousBest = GameStorage.bestStars(forLevel: day.level.id)
             GameStorage.recordDay(onLevel: day.level.id, stars: day.stars, income: day.total)
+            reportAchievements()
             scene.tutorial?.finishLevel(day.level.id, stars: day.stars)
             withAnimation(.easeOut(duration: 0.3)) {
                 sceneManager.showReport(LevelReport(day: day, previousBestStars: previousBest))
             }
         }
+    }
+
+    /// The story achievements this day earned or kept, now that its stars are saved.
+    private func reportAchievements() {
+        let dessert = PlanetCatalog.planet(day.level.planet).kitchen.dessert
+        let recap = StoryDayRecap(
+            stars: day.stars,
+            ordersDelivered: day.ordersDelivered, ordersMissed: day.ordersMissed, tips: day.tips,
+            angryCustomersServed: day.angryCustomersServed, dessertsServed: day.servedDishes[dessert] ?? 0
+        )
+        GameCenter.report(StoryAchievement.earned(after: recap, bestStars: GameStorage.bestStars(forLevel:)))
     }
 
     @ViewBuilder
@@ -408,6 +443,8 @@ struct KitchenView: View {
         // Stop the outgoing scene before changing screens.
         scene.isPaused = true
         if let marathon {
+            // Starting over gives the run up, so its points still count.
+            bankMarathonRun(marathon)
             sceneManager.startMarathon(on: marathon.planet.id)
         } else {
             sceneManager.goToKitchen(day.level)

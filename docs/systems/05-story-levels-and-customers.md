@@ -76,7 +76,7 @@ All six story days have `durationSec = 90` and refill delay 2 seconds. Bubble ID
 | 1-5 | 2 | 0.6 | 2 s / 4 s | 0.60 | Yes | 35, 60, 75 | 4 |
 | 1-6 | 3 | 0.6 | 2 s / 4 s | 0.60 | Yes | 50, 85, 105 | 5 |
 
-These values are snapshots of the bundled JSON. Energy is currently UI information, not a charged resource.
+These values are snapshots of the bundled JSON. Starting a level spends its energy cost (see [planets and progression](08-planets-and-progression.md)).
 
 ## Overtime and results
 

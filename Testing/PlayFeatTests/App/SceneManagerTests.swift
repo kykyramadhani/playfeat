@@ -5,6 +5,7 @@
 //  Which screen the app lands on after each navigation call.
 //
 
+import Foundation
 import Testing
 @testable import PlayFeat
 
@@ -13,16 +14,48 @@ struct SceneManagerTests {
 
     private let result = GameResult(dishesByType: ["salad": 2], speedBonus: 5)
 
+    /// A manager with a full energy meter of its own, so tests don't drain
+    /// (or depend on) the energy saved on the device.
+    private func makeManager(energy: EnergyMeter = EnergyMeter()) -> SceneManager {
+        let defaults = UserDefaults(suiteName: "SceneManagerTests-\(UUID().uuidString)") ?? .standard
+        defaults.set(energy.stored, forKey: EnergyStore.storedKey)
+        defaults.set(energy.refillStartedAt, forKey: EnergyStore.refillStartedAtKey)
+        return SceneManager(energy: EnergyStore(defaults: defaults))
+    }
+
+    // MARK: - Energy
+
+    @Test func startingALevelSpendsItsEnergy() throws {
+        let manager = makeManager()
+        let level = try LevelLoader.load("1-1")
+
+        manager.goToKitchen(level)
+
+        #expect(manager.screen == .kitchen(level))
+        #expect(manager.energy.meter.energy(at: .now) == EnergyMeter.maxEnergy - level.energyCost)
+    }
+
+    @Test func aLevelCostingMoreEnergyThanIsLeftDoesntOpen() throws {
+        let manager = makeManager(energy: EnergyMeter(stored: 1, refillStartedAt: .now))
+        let level = try LevelLoader.load("1-1")
+        manager.goToPlanet(.kepler186f)
+
+        manager.goToKitchen(level)
+
+        #expect(manager.screen == .planetSelect)
+        #expect(manager.isShortOfEnergy)
+    }
+
     /// AstroFeast skips the classic main menu: START lands on the galaxy map.
     @Test func theAppOpensOnTheGalaxyMapWithTheTutorialStillToRead() {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         #expect(manager.screen == .galaxy)
         #expect(manager.isInTutorial)
     }
 
     @Test func playingOpensTheGameplayScreen() {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         manager.play()
 
@@ -31,7 +64,7 @@ struct SceneManagerTests {
 
     /// The results screen carries the finished run's outcome with it.
     @Test func endingARunShowsItsResults() {
-        let manager = SceneManager()
+        let manager = makeManager()
         manager.play()
 
         manager.goToPostGame(result)
@@ -40,7 +73,7 @@ struct SceneManagerTests {
     }
 
     @Test func playAgainGoesFromTheResultsBackIntoGameplay() {
-        let manager = SceneManager()
+        let manager = makeManager()
         manager.goToPostGame(result)
 
         manager.replayGame()
@@ -50,7 +83,7 @@ struct SceneManagerTests {
 
     /// Tap to Play opens the galaxy; a planet there opens its board.
     @Test func theGalaxyLeadsToAPlanetsBoard() {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         manager.goToGalaxy()
         #expect(manager.screen == .galaxy)
@@ -61,7 +94,7 @@ struct SceneManagerTests {
 
     /// Landing on a planet from the galaxy opens that planet's board.
     @Test func landingOnAPlanetOpensItsBoard() {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         manager.goToPlanet(.k2332b)
 
@@ -72,7 +105,7 @@ struct SceneManagerTests {
     /// A day's kitchen is on its own planet, so leaving it goes back to that
     /// planet's board.
     @Test func aPlanetTwoDayReturnsToPlanetTwosBoard() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("2-1")
 
         manager.goToKitchen(level)
@@ -84,7 +117,7 @@ struct SceneManagerTests {
 
     /// The planet board opens first; a level there starts the run.
     @Test func thePlanetBoardSitsBetweenTheMenuAndARun() {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         manager.goToPlanetSelect()
         #expect(manager.screen == .planetSelect)
@@ -95,7 +128,7 @@ struct SceneManagerTests {
 
     /// The unlocked trophy opens the marathon; STORY MODE goes back to the board.
     @Test func theMarathonOpensFromThePlanetBoardAndLeadsBackToIt() {
-        let manager = SceneManager()
+        let manager = makeManager()
         manager.goToPlanetSelect()
 
         manager.goToMarathon()
@@ -107,7 +140,7 @@ struct SceneManagerTests {
 
     /// A planet level opens its kitchen, carrying the level it plays.
     @Test func aLevelOpensItsKitchen() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
 
         manager.goToKitchen(level)
@@ -118,7 +151,7 @@ struct SceneManagerTests {
     /// RETRY from a kitchen doesn't open the new one straight away: the
     /// old kitchen closes first, so the day is rebuilt from nothing.
     @Test func retryingALevelClosesTheOldKitchenFirst() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         manager.goToKitchen(level)
 
@@ -128,7 +161,7 @@ struct SceneManagerTests {
     }
 
     @Test func theWaitingKitchenOpensOnceTheOldOneHasClosed() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         manager.goToKitchen(level)
         manager.goToKitchen(level)
@@ -141,7 +174,7 @@ struct SceneManagerTests {
     /// Pressing RETRY again while the old kitchen is still closing keeps
     /// waiting for it, rather than opening a kitchen beside it.
     @Test func aSecondRetryDuringTheHandoverKeepsWaiting() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         manager.goToKitchen(level)
         manager.goToKitchen(level)
@@ -152,7 +185,7 @@ struct SceneManagerTests {
     }
 
     @Test func restartingAMarathonClosesTheOldKitchenAndStartsAFreshRun() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         manager.startMarathon(on: .kepler186f)
         let firstRun = try #require(manager.marathon)
 
@@ -165,7 +198,7 @@ struct SceneManagerTests {
     /// The closing kitchen keeps the camera running only when another
     /// kitchen is about to open.
     @Test func aRetryIsAKitchenHandover() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         manager.goToKitchen(level)
 
@@ -175,7 +208,7 @@ struct SceneManagerTests {
     }
 
     @Test func leavingForTheBoardIsNotAKitchenHandover() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         manager.goToKitchen(try LevelLoader.load("1-1"))
 
         manager.goToPlanetSelect()
@@ -185,7 +218,7 @@ struct SceneManagerTests {
 
     /// Leaving for the board: the kitchen closing afterwards opens nothing.
     @Test func closingAKitchenOnTheWayToTheBoardStaysOnTheBoard() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         manager.goToKitchen(level)
         manager.goToPlanetSelect()
@@ -196,7 +229,7 @@ struct SceneManagerTests {
     }
 
     @Test func aStoryReportKeepsTheFinishedKitchenOnScreen() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         let report = makeReport(for: level)
         manager.goToKitchen(level)
@@ -208,7 +241,7 @@ struct SceneManagerTests {
     }
 
     @Test func leavingTheReportReturnsToTheBoardAndClearsIt() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         manager.goToKitchen(level)
         manager.showReport(makeReport(for: level))
@@ -220,7 +253,7 @@ struct SceneManagerTests {
     }
 
     @Test func nextFromTheReportOpensAFreshKitchenForTheFollowingLevel() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         let nextLevel = try LevelLoader.load("1-2")
         manager.goToKitchen(level)
@@ -233,7 +266,7 @@ struct SceneManagerTests {
     }
 
     @Test func retryFromTheReportRebuildsTheKitchenAndClearsTheReport() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-1")
         manager.goToKitchen(level)
         manager.showReport(makeReport(for: level))
@@ -245,7 +278,7 @@ struct SceneManagerTests {
     }
 
     @Test func nextAfterTheFinalLevelReturnsToTheBoard() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         let level = try LevelLoader.load("1-6")
         manager.goToKitchen(level)
         manager.showReport(makeReport(for: level))
@@ -260,7 +293,7 @@ struct SceneManagerTests {
 
     /// A day that beat the level's best leaves its new stars for the board.
     @Test func aReportWithNewStarsLeavesThemForTheBoard() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         manager.showReport(try makeOneStarReport(previousBest: 0))
 
@@ -268,7 +301,7 @@ struct SceneManagerTests {
     }
 
     @Test func aReportWithNoNewStarsLeavesNothing() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         manager.showReport(try makeOneStarReport(previousBest: 1))
 
@@ -276,7 +309,7 @@ struct SceneManagerTests {
     }
 
     @Test func aLevelPlayedTwiceBeforeTheBoardKeepsOneDelivery() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         manager.showReport(try makeOneStarReport(previousBest: 0))
 
         manager.showReport(try makeOneStarReport(previousBest: 0))
@@ -285,7 +318,7 @@ struct SceneManagerTests {
     }
 
     @Test func theBoardTakesOnlyItsOwnPlanetsStars() throws {
-        let manager = SceneManager()
+        let manager = makeManager()
         manager.showReport(try makeOneStarReport(previousBest: 0))
 
         manager.markStarsDelivered(on: ["1-1", "1-2"])
@@ -315,7 +348,7 @@ struct SceneManagerTests {
     }
 
     @Test func theShopIsReachableAndItsBackButtonReturnsToTheMenu() {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         manager.goToShop()
         #expect(manager.screen == .shop)
@@ -326,7 +359,7 @@ struct SceneManagerTests {
 
     /// Read once per launch: a second run goes straight to the seat check.
     @Test func finishingTheTutorialSkipsItForLaterRuns() {
-        let manager = SceneManager()
+        let manager = makeManager()
 
         manager.finishTutorial()
         manager.replayGame()

@@ -44,7 +44,7 @@ The retained classic route is `GameplayView + GameStateManager + GameScene`. It 
 ## Current implementation boundaries
 
 - Kepler-186f has six bundled story levels. The next planet shows an unlock/congratulations popup, but has no playable board yet.
-- Energy cost is displayed; the `25/25` energy counter is sample UI. There is no spending/refill service behind it.
+- Starting a story level spends its energy cost; energy refills one point every 5 minutes up to 25.
 - Story results stay over the frozen kitchen. Earned stars light up in place. Flying stars and the extra report fuel gauge have been removed.
 - The recipe book has four real entries and six tile positions; remaining tiles are placeholders, not a full recipe-unlock system.
 - Permanent kitchen upgrades, temporary marathon cards, and classic coin multipliers are three different systems.

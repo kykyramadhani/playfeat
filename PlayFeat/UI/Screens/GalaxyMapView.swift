@@ -174,4 +174,5 @@ struct GalaxyMapView: View {
 #Preview {
     GalaxyMapView(sceneManager: SceneManager())
         .environment(AudioManager())
+        .environment(EnergyStore())
 }

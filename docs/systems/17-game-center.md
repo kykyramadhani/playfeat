@@ -4,7 +4,7 @@
 
 `GameCenter` is a small static adapter around GameKit. It handles authentication presentation, score submission, loading leaderboard entries and showing Apple's leaderboard dashboard. `LeaderboardEntry` copies display data out of GameKit so views do not need to retain `GKPlayer` objects.
 
-The configured leaderboard ID is `com.reability.playfeat.mostdishes`. The app entitlements enable Game Center. The service's configured identifier and score meaning must match the code; changing a screen title alone does not create a new leaderboard.
+Leaderboards: the classic game's `com.reability.playfeat.mostdishes`, and one Buffet (marathon) leaderboard per planet, in points: `com.reability.playfeat.buffet.kepler_186f` and `com.reability.playfeat.buffet.k2_332b` (`GameCenter.buffetLeaderboardID(on:)`; IDs take no hyphens). All three are in `GameCenterResources.gamekit` for local testing. Story mode reports achievements instead (below). The app entitlements enable Game Center. The service's configured identifier and score meaning must match the code; changing a screen title alone does not create a new leaderboard.
 
 ## Authentication
 
@@ -20,19 +20,28 @@ The value named `totalDishesServed` comes from the classic completed-dish tally,
 
 Errors are ignored with `try?`; there is no persistent retry/outbox queue. Local coins/highscore saving occurs independently, so a failed network submission does not erase the local result.
 
-## Loading the marathon-home list
+## Buffet leaderboard
 
-`MarathonView` runs a task that requests the top five entries. The helper loads the configured leaderboard and global/all-time ranks starting at 1. It maps rank, player display name, score and whether the row belongs to the local player into `LeaderboardEntry`.
+`KitchenView.bankMarathonRun` saves a marathon run's points as the local best (`GameStorage.recordMarathon`) and submits them to its planet's Buffet leaderboard, once per run: when the third customer is lost, or when the player gives up from the pause card (HOME or RESTART). `MarathonView` lists that leaderboard's top five, and tapping the board opens Game Center's own view of it. A signed-out player, offline request, missing leaderboard or empty ranking all produce an empty list.
 
-A signed-out player, offline request, missing leaderboard or empty ranking all produce an empty array. The interface's empty state does not distinguish these causes. Loading is tied to the view task; an authentication change after that request does not have an explicit automatic refresh subscription here.
+## Story achievements
 
-`showLeaderboard()` can present Apple's dashboard with a retained delegate to dismiss it. That API is separate from the custom five-row list.
+When a story day ends, `KitchenView.reportAchievements()` saves its stars first, then reports every achievement `StoryAchievement.earned(after:bestStars:)` finds, at 100%. Achievements already earned are reported again harmlessly. The rules are plain data in `Game/StoryAchievement.swift`, covered by `StoryAchievementTests`.
 
-## Important current gap
+Each needs an achievement with this ID in App Store Connect (`com.reability.playfeat.achievement.<id>`), with its title, descriptions and image there:
 
-Despite appearing on the marathon home, the current leaderboard is still submitted by the **classic** game. `MarathonSession`/`KitchenView.endDay` do not currently submit marathon points or update the global best score at marathon end. The home screen also reads `GameStorage.highscore`, which the classic result path updates.
-
-If marathon points are meant to replace classic dish count, decide whether to use a separate leaderboard and local storage key. Silently mixing those score units in one ranking would make results incomparable.
+| ID | Earned by |
+|---|---|
+| `firstSale`, `hotGrill`, `twoToppings`, `somethingSweet`, `theAngryAlien`, `doubleTrouble` | Clearing levels 1-1 to 1-6 (at least one star) |
+| `upsideDown`, `pickATopping`, `grillIsBack`, `sweetStars`, `angryAgain`, `fullTide` | Clearing levels 2-1 to 2-6 |
+| `keplerChef`, `tideChef` | Clearing every level of Kepler-186f / K2-332 b |
+| `keplerStarChef`, `tideStarChef` | Three stars on every level of that planet |
+| `perfectDay` | Three stars on any level |
+| `nobodyLeftHungry` | A day with no customer lost and at least 3 served |
+| `calmTheStorm` | Serving an angry alien |
+| `sweetTooth` | Serving the planet's dessert |
+| `tipJar` | 20 tips in one day |
+| `starCollector`, `superstar` | 10 and 30 stars across the story |
 
 ## Troubleshooting
 
@@ -42,7 +51,8 @@ Check the signed-in player, entitlements, bundle provisioning, exact leaderboard
 
 - [GameKit adapter](../../PlayFeat/Network/GameCenter.swift), [view-facing entry model](../../PlayFeat/Network/LeaderboardEntry.swift)
 - [Authentication caller](../../PlayFeat/UI/Screens/ContentView.swift)
-- [Submission caller](../../PlayFeat/Game/GameStateManager.swift)
+- [Submission callers](../../PlayFeat/Game/GameStateManager.swift) (classic), [kitchen](../../PlayFeat/UI/Screens/KitchenView.swift) (Buffet points, story achievements)
+- [Achievement rules](../../PlayFeat/Game/StoryAchievement.swift)
 - [Marathon-home reader](../../PlayFeat/UI/Screens/MarathonView.swift), [leaderboard UI](../../PlayFeat/UI/Components/PlanetSelect/LeaderboardList.swift)
 - [Entitlements](../../PlayFeat/PlayFeat.entitlements)
 
