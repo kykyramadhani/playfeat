@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "StoryFoodShip.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

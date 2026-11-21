@@ -29,13 +29,15 @@ struct ContentView: View {
     /// actually read.
     @AppStorage(AppLocalization.storageKey) private var language: AppLanguage = .english
 
-    /// The galaxy map is mounted behind the launch screen, so its presence
-    /// alone does not mean the player has reached the planet selector.
-    private var showsMenuMusicScreen: Bool {
-        guard !showLaunchScreen else { return false }
+    /// The music ContentView plays for the screen on show; nil where the
+    /// screen plays its own, or none. The first screen is mounted behind the
+    /// launch screen, so its presence alone does not mean the player sees it.
+    private var screenMusic: String? {
+        guard !showLaunchScreen else { return nil }
         switch sceneManager.screen {
-        case .mainMenu, .galaxy, .planetSelect, .marathon, .shop: return true
-        case .gameplay, .kitchen, .kitchenHandover, .postGame: return false
+        case .introStory: return MusicTrack.story
+        case .mainMenu, .galaxy, .planetSelect, .marathon, .shop: return MusicTrack.menu
+        case .gameplay, .kitchen, .kitchenHandover, .postGame: return nil
         }
     }
 
@@ -86,11 +88,11 @@ struct ContentView: View {
             openDebugKitchenIfRequested()
             #endif
         }
-        .onChange(of: showsMenuMusicScreen, initial: true) { _, shouldPlay in
-            if shouldPlay {
-                audio.startMusic(MusicTrack.menu)
-            } else {
-                audio.stopMusic(ifPlaying: MusicTrack.menu)
+        .onChange(of: screenMusic, initial: true) { previousMusic, music in
+            if let music {
+                audio.startMusic(music)
+            } else if let previousMusic {
+                audio.stopMusic(ifPlaying: previousMusic)
             }
         }
         .onChange(of: language) { _, newValue in
@@ -108,6 +110,16 @@ struct ContentView: View {
     @ViewBuilder
     private var currentScreen: some View {
         switch sceneManager.screen {
+        case .introStory:
+            // Held back until the launch screen lifts, so the first panel
+            // and its music start together, from the beginning.
+            if showLaunchScreen {
+                Color.storyInk
+                    .ignoresSafeArea()
+            } else {
+                IntroStoryView(onFinish: sceneManager.finishIntroStory)
+                    .transition(.opacity)
+            }
         case .mainMenu:
             GameOpening(sceneManager: sceneManager)
                 .transition(.opacity)

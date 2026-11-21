@@ -2606,6 +2606,105 @@
           }
         }
       }
+    },
+    "Once upon a time, there was an astronaut who had just finished his research at a foreign planet and he wanted to go back home." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dahulu kala, ada seorang astronaut yang baru saja menyelesaikan penelitiannya di sebuah planet asing, dan ia ingin pulang ke rumah."
+          }
+        }
+      }
+    },
+    "Suddenly, his spaceship crashed midway on his journey back home due to an asteroid collision." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiba-tiba, pesawat luar angkasanya menabrak asteroid di tengah perjalanan pulang."
+          }
+        }
+      }
+    },
+    "The crash made the spaceship plunge down and fell upon another planet." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabrakan itu membuat pesawatnya meluncur jatuh ke sebuah planet lain."
+          }
+        }
+      }
+    },
+    "Sadly, the spaceship became damaged and ran out of fuel. The astronaut had no idea how to get back." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sayangnya, pesawatnya rusak dan kehabisan bahan bakar. Sang astronaut tidak tahu bagaimana cara pulang."
+          }
+        }
+      }
+    },
+    "Then he met a local alien of the planet. The alien said he needed to get stars for the fuel by selling food for the aliens." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lalu ia bertemu alien penduduk planet itu. Kata si alien, ia harus mengumpulkan bintang untuk bahan bakar dengan berjualan makanan untuk para alien."
+          }
+        }
+      }
+    },
+    "Ever since then, the astronaut had to sell food for aliens in order to get back home." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sejak saat itu, sang astronaut berjualan makanan untuk para alien agar bisa pulang ke rumah."
+          }
+        }
+      }
+    },
+    "Tap anywhere to continue" : {
+      "comment" : "Intro story: hint under the caption to turn the page.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ketuk di mana saja untuk lanjut"
+          }
+        }
+      }
+    },
+    "Tap anywhere to start" : {
+      "comment" : "Intro story: hint under the last caption, which ends the story.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ketuk di mana saja untuk mulai"
+          }
+        }
+      }
+    },
+    "Skip Story" : {
+      "comment" : "Intro story: button that ends the story at once.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lewati Cerita"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

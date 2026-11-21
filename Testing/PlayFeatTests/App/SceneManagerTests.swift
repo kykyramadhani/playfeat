@@ -14,13 +14,53 @@ struct SceneManagerTests {
 
     private let result = GameResult(dishesByType: ["salad": 2], speedBonus: 5)
 
-    /// A manager with a full energy meter of its own, so tests don't drain
-    /// (or depend on) the energy saved on the device.
+    /// A returning player's manager, with a full energy meter of its own, so
+    /// tests don't drain (or depend on) the energy and story saved on the device.
     private func makeManager(energy: EnergyMeter = EnergyMeter()) -> SceneManager {
         let defaults = UserDefaults(suiteName: "SceneManagerTests-\(UUID().uuidString)") ?? .standard
         defaults.set(energy.stored, forKey: EnergyStore.storedKey)
         defaults.set(energy.refillStartedAt, forKey: EnergyStore.refillStartedAtKey)
-        return SceneManager(energy: EnergyStore(defaults: defaults))
+        GameStorage.markIntroductionSeen(SceneManager.introStoryID, in: defaults)
+        return SceneManager(energy: EnergyStore(defaults: defaults), defaults: defaults)
+    }
+
+    // MARK: - Intro story
+
+    /// Fresh, empty defaults: what a new install starts with.
+    private func makeFreshInstallDefaults() throws -> UserDefaults {
+        try #require(UserDefaults(suiteName: "SceneManagerTests-\(UUID().uuidString)"))
+    }
+
+    @Test func aFreshInstallOpensOnTheIntroStory() throws {
+        let manager = SceneManager(defaults: try makeFreshInstallDefaults())
+
+        #expect(manager.screen == .introStory)
+    }
+
+    @Test func finishingTheIntroStoryGoesToTheGalaxy() throws {
+        let manager = SceneManager(defaults: try makeFreshInstallDefaults())
+
+        manager.finishIntroStory()
+
+        #expect(manager.screen == .galaxy)
+    }
+
+    @Test func theIntroStoryNeverPlaysAgainOnceFinished() throws {
+        let defaults = try makeFreshInstallDefaults()
+        SceneManager(defaults: defaults).finishIntroStory()
+
+        let nextLaunch = SceneManager(defaults: defaults)
+
+        #expect(nextLaunch.screen == .galaxy)
+    }
+
+    @Test func otherIntroductionsDontCountAsSeeingTheStory() throws {
+        let defaults = try makeFreshInstallDefaults()
+        GameStorage.markIntroductionSeen("newPlanet_k2332b", in: defaults)
+
+        let manager = SceneManager(defaults: defaults)
+
+        #expect(manager.screen == .introStory)
     }
 
     // MARK: - Energy

@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "StoryAlienMeeting.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

@@ -10,6 +10,8 @@
 import Foundation
 
 enum AppScreen: Equatable {
+    /// The comic played once per install, before the first galaxy.
+    case introStory
     case mainMenu
     /// The galaxy: the planets, opened from the main menu's Tap to Play.
     case galaxy

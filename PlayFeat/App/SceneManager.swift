@@ -15,12 +15,30 @@ final class SceneManager {
     /// What starting a story level costs: spent as its kitchen opens.
     let energy: EnergyStore
 
-    init(energy: EnergyStore = EnergyStore()) {
+    /// Where the intro story's "seen" mark is kept.
+    private let defaults: UserDefaults
+
+    /// Remembered with the other one-off introductions. UserDefaults goes
+    /// with the app, so a reinstall shows the story again, whatever Game
+    /// Center or another device has saved.
+    static let introStoryID = "introStory"
+
+    init(energy: EnergyStore = EnergyStore(), defaults: UserDefaults = .standard) {
         self.energy = energy
+        self.defaults = defaults
+        let hasSeenIntroStory = GameStorage.seenIntroductions(in: defaults).contains(Self.introStoryID)
+        screen = hasSeenIntroStory ? .galaxy : .introStory
     }
 
-    /// AstroFeast opens on the galaxy map, straight from START.
+    /// AstroFeast opens on the galaxy map after the loading screen, with the
+    /// intro story in between on the first launch after install.
     private(set) var screen: AppScreen = .galaxy
+
+    /// The intro story was read to the end or skipped: it never plays again.
+    func finishIntroStory() {
+        GameStorage.markIntroductionSeen(Self.introStoryID, in: defaults)
+        goToGalaxy()
+    }
 
     /// True until the walkthrough has been read or skipped this launch.
     private(set) var isInTutorial = true
