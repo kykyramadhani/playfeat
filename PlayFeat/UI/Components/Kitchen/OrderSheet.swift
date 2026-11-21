@@ -28,8 +28,9 @@ struct OrderSheet: View {
             // The bubble's tail points back up at the customer.
             Image("OrderBubble")
                 .resizable()
-                .frame(width: 206.9, height: 165)
-                .rotationEffect(.degrees(172.74))
+                .frame(width: KitchenLayout.orderBubbleArtSize.width,
+                       height: KitchenLayout.orderBubbleArtSize.height)
+                .rotationEffect(.degrees(KitchenLayout.orderBubbleTurnDegrees))
                 .scaleEffect(x: isMirrored ? -1 : 1, y: 1)
 
             VStack(spacing: 22) {

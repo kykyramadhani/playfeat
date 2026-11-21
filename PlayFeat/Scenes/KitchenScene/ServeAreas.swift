@@ -4,12 +4,12 @@
 //  Created by kyky on 13/11/26.
 //
 //  Handing a finished dish to a customer. Each position has an invisible
-//  serve area over the alien. A customer pulls in the
-//  dish they ordered as soon as it is carried near, like a magnet, without
-//  the hand having to open. Any other dish let go in there, or anything
-//  lifted off a plate or glass (a flatbread missing its topping), is turned
-//  away with a red cross and falls. The payment and the customer leaving
-//  are KitchenDay's.
+//  serve area: the alien and its order bubble, each by its own shape. The
+//  player serves by opening their hand there; carrying a dish through it
+//  serves nothing. The dish they ordered is handed over. Any other dish, or
+//  anything lifted off a plate or glass (a flatbread missing its topping),
+//  is turned away with a red cross and falls. The payment and the customer
+//  leaving are KitchenDay's.
 //
 
 import SpriteKit
@@ -22,7 +22,7 @@ extension KitchenScene {
     func customerSeat(around node: KitchenBubbleNode) -> Int? {
         guard let day, isOfferedAsDish(node) else { return nil }
         let reached = KitchenLayout.seats.indices.filter { seat in
-            day.isOccupied(seat) && layout.sceneRect(layout.seat(at: seat).serveArea).contains(node.position)
+            day.isOccupied(seat) && serveArea(of: seat, contains: node.position)
         }
         return reached.first { day.wants(node.ingredient, at: $0) } ?? reached.first
     }
@@ -37,22 +37,14 @@ extension KitchenScene {
     /// `dish`: where a carried dish would be served.
     func seat(wanting dish: String, around point: CGPoint, in day: KitchenDay) -> Int? {
         KitchenLayout.seats.indices.first { seat in
-            day.wants(dish, at: seat)
-                && layout.sceneRect(layout.seat(at: seat).serveArea).contains(point)
+            day.wants(dish, at: seat) && serveArea(of: seat, contains: point)
         }
     }
 
-    /// The customer who pulls a carried `node` in: one who ordered that
-    /// dish, with it within reach of their serve area.
-    func magnetSeat(for node: KitchenBubbleNode) -> Int? {
-        guard let day else { return nil }
-        let reach = layout.length(KitchenLayout.serveMagnetReach)
-        return KitchenLayout.seats.indices.first { seat in
-            day.wants(node.ingredient, at: seat)
-                && layout.sceneRect(layout.seat(at: seat).serveArea)
-                    .insetBy(dx: -reach, dy: -reach)
-                    .contains(node.position)
-        }
+    /// Whether the scene point `point` is in the serve area of `seat` as
+    /// placed on this screen.
+    private func serveArea(of seat: Int, contains point: CGPoint) -> Bool {
+        layout.seat(at: seat).serveAreaContains(layout.artPoint(fromScene: point))
     }
 
     /// Serves the customer at `seat` if they ordered `node`; otherwise the

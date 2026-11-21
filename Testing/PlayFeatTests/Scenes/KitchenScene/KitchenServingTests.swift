@@ -47,18 +47,6 @@ struct KitchenServingTests {
         #expect(day.presentCustomers.map(\.dish) == [KitchenMenu.mushroomFlatbread])
     }
 
-    /// The order sheet reaches over the counter, so a dish carried past it
-    /// on the way to a plate must not be handed over.
-    @Test func aDishLetGoOverTheOrderSheetAloneIsNotServed() throws {
-        let (scene, day) = makeScene()
-        let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
-
-        _ = letGo(KitchenMenu.pepperFlatbread, atArtPoint: try orderSheetPointOutOfReach(of: seat), in: scene)
-
-        #expect(day.points == 0)
-        #expect(day.presentCustomers.count == 2)
-    }
-
     /// A dish the customer didn't order is turned away: it hangs for a
     /// moment under the red cross, then falls.
     @Test func aWrongDishAtACustomerIsTurnedAwayAndFalls() throws {
@@ -107,7 +95,7 @@ struct KitchenServingTests {
         let (scene, day) = makeKitchenScene(level: makeLevel(
             counterSpots: 2, firstOrder: KitchenMenu.mushroomFlatbread, angryAt: [2], refillDelaySec: 0
         ))
-        let overlap = KitchenLayout.seats[0].serveArea.intersection(KitchenLayout.seats[2].serveArea)
+        let overlap = KitchenLayout.seats[0].alien.intersection(KitchenLayout.seats[2].alien)
         #expect(!overlap.isEmpty)
 
         _ = letGo(KitchenMenu.mushroomFlatbread, atArtPoint: overlap.center, in: scene)
@@ -115,68 +103,36 @@ struct KitchenServingTests {
         #expect(day.presentCustomers.map(\.dish) == [Planet.kepler186f.kitchen.angryOrder])
     }
 
-    // MARK: - Magnet
+    // MARK: - The serve area's shape
 
-    /// A dish placed at `point` (art points), as if a hand were carrying it.
-    private func carried(_ item: String, atArtPoint point: CGPoint, in scene: KitchenScene) -> KitchenBubbleNode {
-        let node = KitchenBubbleNode(ingredient: item, radius: 80)
-        node.position = scene.layout.scenePoint(point)
-        node.heldBy = 0
-        return node
-    }
-
-    /// Just outside the serve area, within the magnet's reach.
-    private func nearServeArea(of seat: Int) -> CGPoint {
-        let area = KitchenLayout.seats[seat].serveArea
-        return CGPoint(x: area.midX, y: area.maxY + KitchenLayout.serveMagnetReach / 2)
-    }
-
-    @Test func aCustomerPullsInTheDishTheyOrderedWhenItComesNear() throws {
+    @Test func aDishLetGoOverTheOrderBubbleIsServed() throws {
         let (scene, day) = makeScene()
         let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
 
-        let dish = carried(KitchenMenu.pepperFlatbread, atArtPoint: nearServeArea(of: seat), in: scene)
+        _ = letGo(KitchenMenu.pepperFlatbread, atArtPoint: KitchenLayout.seats[seat].orderSheet.center, in: scene)
 
-        #expect(scene.magnetSeat(for: dish) == seat)
+        #expect(day.points == DishPricing.unupgraded.pay(for: KitchenMenu.pepperFlatbread))
     }
 
-    @Test func aCustomerDoesntPullInADishTheyDidntOrder() throws {
+    /// The alien and the bubble are tested by their own shapes, not one box
+    /// around both: the empty corner of the order sheet serves nothing.
+    @Test func aDishLetGoInTheOrderSheetsEmptyCornerIsNotServed() throws {
         let (scene, day) = makeScene()
         let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
 
-        let dish = carried(KitchenMenu.slimyTentacles, atArtPoint: nearServeArea(of: seat), in: scene)
+        _ = letGo(KitchenMenu.pepperFlatbread, atArtPoint: try emptyCornerOfOrderSheet(at: seat), in: scene)
 
-        #expect(scene.magnetSeat(for: dish) == nil)
+        #expect(day.points == 0)
+        #expect(day.presentCustomers.count == 2)
     }
 
-    @Test func aDishCarriedOverTheOrderSheetAloneIsntPulledIn() throws {
-        let (scene, day) = makeScene()
-        let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
-
-        let dish = carried(KitchenMenu.pepperFlatbread, atArtPoint: try orderSheetPointOutOfReach(of: seat), in: scene)
-
-        #expect(scene.magnetSeat(for: dish) == nil)
-    }
-
-    /// A corner of the seat's order sheet beyond the alien's serve area and
-    /// the magnet's reach around it.
-    private func orderSheetPointOutOfReach(of seat: Int) throws -> CGPoint {
-        let reach = KitchenLayout.serveMagnetReach
-        let pulledIn = KitchenLayout.seats[seat].serveArea.insetBy(dx: -reach, dy: -reach)
-        let sheet = KitchenLayout.seats[seat].orderSheet.insetBy(dx: 1, dy: 1)
+    /// A corner of the seat's order sheet box that is outside both the
+    /// bubble's oval and the alien.
+    private func emptyCornerOfOrderSheet(at seat: Int) throws -> CGPoint {
+        let place = KitchenLayout.seats[seat]
+        let sheet = place.orderSheet.insetBy(dx: 1, dy: 1)
         let corners = [CGPoint(x: sheet.minX, y: sheet.minY), CGPoint(x: sheet.maxX, y: sheet.minY),
                        CGPoint(x: sheet.minX, y: sheet.maxY), CGPoint(x: sheet.maxX, y: sheet.maxY)]
-        return try #require(corners.first { !pulledIn.contains($0) })
-    }
-
-    @Test func aDishFarFromTheCustomerIsntPulledIn() throws {
-        let (scene, day) = makeScene()
-        let seat = try #require(seat(ordering: KitchenMenu.pepperFlatbread, in: day))
-        let area = KitchenLayout.seats[seat].serveArea
-
-        let far = CGPoint(x: area.midX, y: area.maxY + KitchenLayout.serveMagnetReach * 2)
-        let dish = carried(KitchenMenu.pepperFlatbread, atArtPoint: far, in: scene)
-
-        #expect(scene.magnetSeat(for: dish) == nil)
+        return try #require(corners.first { !place.serveAreaContains($0) })
     }
 }

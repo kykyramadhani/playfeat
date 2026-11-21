@@ -124,7 +124,6 @@ final class KitchenTutorial: SKNode {
         let source: CGPoint?
         let destination: CGRect
         var carrying = false
-        var serves = false
     }
 
     /// Resolve live targets each frame, including a replacement bubble after a
@@ -134,9 +133,8 @@ final class KitchenTutorial: SKNode {
         let level = day.level.id
         if level == "1-1",
            let customer = day.presentCustomers.first(where: { $0.dish == KitchenMenu.pepperFlatbread }) {
-            let spot = scene.layout.sceneRect(scene.layout.seat(at: customer.seat).serveArea)
-            if let cue = move(.servePepper, item: KitchenMenu.pepperFlatbread, to: spot, in: scene,
-                              serves: true) { return cue }
+            let spot = scene.layout.sceneRect(scene.layout.seat(at: customer.seat).alien)
+            if let cue = move(.servePepper, item: KitchenMenu.pepperFlatbread, to: spot, in: scene) { return cue }
             let breadOnPlate = scene.plates.firstIndex { $0.contents.contains(KitchenMenu.bakedFlatbread) }
             if let index = breadOnPlate {
                 return move(.addPepper, item: KitchenMenu.pepper, to: .plate(index), in: scene)
@@ -220,11 +218,9 @@ final class KitchenTutorial: SKNode {
         return move(lesson, item: item, to: scene.layout.sceneRect(scene.artRect(of: station)), in: scene)
     }
 
-    private func move(_ lesson: Lesson, item: String, to rect: CGRect, in scene: KitchenScene,
-                      serves: Bool = false) -> Cue? {
+    private func move(_ lesson: Lesson, item: String, to rect: CGRect, in scene: KitchenScene) -> Cue? {
         guard !progress.hasLearned(lesson), let node = available(item, in: scene) else { return nil }
-        return Cue(lesson: lesson, source: node.position, destination: rect,
-                   carrying: node.heldBy != nil, serves: serves)
+        return Cue(lesson: lesson, source: node.position, destination: rect, carrying: node.heldBy != nil)
     }
 
     private func highlight(_ lesson: Lesson, station: KitchenBubbleNode.Placement,

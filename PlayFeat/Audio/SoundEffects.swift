@@ -54,6 +54,8 @@ enum SoundEffect: String, CaseIterable {
     case coinSpentBuffet = "sfx_coin_spent_buffet"
     case unlock = "sfx_unlock"
     case bestScore = "sfx_best_score"
+    /// The landed ship's hatch dropping open on the level board.
+    case openShip = "sfx_open_ship"
 
     func resourceURL(in bundle: Bundle = .main) -> URL? {
         for ext in ["wav", "mp3", "m4a", "caf"] {
