@@ -91,25 +91,25 @@ struct KitchenDayTests {
         #expect(day.presentCustomers.count == 1)
     }
 
-    /// Nobody new steps up in the day's last 20 s, so every order taken can
-    /// still be made: a spot freed at 69 s would refill at 71 s, too late.
-    @Test func noNewCustomerStepsUpAfterSeventySeconds() {
+    /// Nobody new steps up in the day's last 10 s, so every order taken can
+    /// still be made: a spot freed at 79 s would refill at 81 s, too late.
+    @Test func noNewCustomerStepsUpAfterEightySeconds() {
         let day = makeDay(makeLevel(patienceSec: 200))
-        run(day, to: 69)
+        run(day, to: 79)
         #expect(serve(KitchenMenu.pepperFlatbread, in: day))
 
-        run(day, to: 85, from: 69.2)
+        run(day, to: 89, from: 79.2)
 
         #expect(day.presentCustomers.isEmpty)
     }
 
-    /// A spot freed at 67 s refills at 69 s, still before the cutoff.
-    @Test func aRefillDueBeforeSeventySecondsStillStepsUp() {
+    /// A spot freed at 77 s refills at 79 s, still before the cutoff.
+    @Test func aRefillDueBeforeEightySecondsStillStepsUp() {
         let day = makeDay(makeLevel(patienceSec: 200))
-        run(day, to: 67)
+        run(day, to: 77)
         #expect(serve(KitchenMenu.pepperFlatbread, in: day))
 
-        run(day, to: 69.6, from: 67.2)
+        run(day, to: 79.6, from: 77.2)
 
         #expect(day.presentCustomers.count == 1)
     }
