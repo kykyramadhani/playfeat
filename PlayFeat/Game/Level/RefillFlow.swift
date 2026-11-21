@@ -7,7 +7,7 @@
 //  only once they step up. Each counter spot has its own timer; the first
 //  customer steps up at once and the other spots fill `refillDelaySec`
 //  apart. When a spot frees, the next customer steps up `refillDelaySec`
-//  later. Nobody new comes in the day's last `closingSec` (after 70 s of a
+//  later. Nobody new comes in the day's last `closingSec` (after 80 s of a
 //  90 s day), so every order taken can still be finished. Whoever is at the
 //  counter when the clock runs out can still be served (overtime); the day
 //  ends once they're gone.
@@ -40,9 +40,10 @@ nonisolated struct RefillFlow: CustomerFlow {
         stepUpTimes = (0..<refill.counterSpots).map { TimeInterval($0) * refill.refillDelaySec }
     }
 
-    /// The end of the day nobody new steps up in: a customer arriving later
-    /// couldn't have their order made before the clock runs out.
-    static let closingSec: TimeInterval = 20
+    /// The end of the day nobody new steps up in. Short on purpose: overtime
+    /// already lets the last orders be finished after the clock runs out, and
+    /// a longer gap left the counter empty for the day's closing stretch.
+    static let closingSec: TimeInterval = 10
 
     /// Customers step up until this play time.
     var lastArrivalSec: TimeInterval { durationSec - Self.closingSec }

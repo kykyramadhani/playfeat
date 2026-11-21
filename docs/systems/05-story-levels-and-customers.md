@@ -80,7 +80,7 @@ These values are snapshots of the bundled JSON. Starting a level spends its ener
 
 ## Overtime and results
 
-From 70 seconds (`durationSec - RefillFlow.closingSec`), `RefillFlow` stops creating new customers, so every order taken can still be made before the clock runs out. Marathons have no such cutoff. The day ends only when the counter and waiting queue are empty. Existing customers can still be served; bubbles keep arriving in overtime while the day is running.
+From 80 seconds (`durationSec - RefillFlow.closingSec`), `RefillFlow` stops creating new customers, so every order taken can still be made before the clock runs out. Marathons have no such cutoff. The day ends only when the counter and waiting queue are empty. Existing customers can still be served; bubbles keep arriving in overtime while the day is running.
 
 When `day.isOver` changes to true, `KitchenView.endDay` pauses play, stops music/camera, reads the previous best stars, banks the day, and creates a `LevelReport`. Best stars only increase; day income is added to the global coin balance. The report remains over the frozen kitchen. Stars reveal in place; there are currently no flying-star effects or extra report fuel gauge.
 
