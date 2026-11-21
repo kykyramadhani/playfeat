@@ -17,6 +17,34 @@
         "submissionType" : "BEST_SCORE",
         "vendorIdentifier" : "com.reability.playfeat.mostdishes",
         "visibility" : "SHOW_FOR_ALL"
+      },
+      {
+        "activityProperties" : {
+
+        },
+        "archived" : false,
+        "defaultFormatter" : "INTEGER",
+        "referenceName" : "Buffet Points: Kepler-186f",
+        "scoreRangeEnd" : null,
+        "scoreRangeStart" : null,
+        "scoreSortType" : "DESC",
+        "submissionType" : "BEST_SCORE",
+        "vendorIdentifier" : "com.reability.playfeat.buffet.kepler_186f",
+        "visibility" : "SHOW_FOR_ALL"
+      },
+      {
+        "activityProperties" : {
+
+        },
+        "archived" : false,
+        "defaultFormatter" : "INTEGER",
+        "referenceName" : "Buffet Points: K2-332 b",
+        "scoreRangeEnd" : null,
+        "scoreRangeStart" : null,
+        "scoreSortType" : "DESC",
+        "submissionType" : "BEST_SCORE",
+        "vendorIdentifier" : "com.reability.playfeat.buffet.k2_332b",
+        "visibility" : "SHOW_FOR_ALL"
       }
     ]
   }

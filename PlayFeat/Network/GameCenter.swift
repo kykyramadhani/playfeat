@@ -2,9 +2,10 @@
 //  GameCenter.swift
 //  GetCooking
 //
-//  Game Center in four calls: sign in at launch, submit the run's dish count
-//  when a run ends, read the top scores for the marathon screen, and open the
-//  dashboard from the Most Dishes Served card.
+//  Game Center: sign in at launch, submit scores when a run ends (classic
+//  dishes served; each planet's Buffet points on its own leaderboard), read
+//  the top scores for the marathon screen, open the dashboard, and report
+//  the story mode's achievements.
 //
 //  Everything here fails quietly on purpose. A player who declined the sign-in
 //  prompt, or has no network, still gets the whole game — GameStorage.highscore
@@ -16,9 +17,17 @@ import GameKit
 import UIKit
 
 enum GameCenter {
-    /// Must match the leaderboard ID created in App Store Connect character for
-    /// character — a mismatch fails silently, scores just never show up.
-    static let leaderboardID = "com.reability.playfeat.mostdishes"
+    // Leaderboard IDs must match App Store Connect character for character —
+    // a mismatch fails silently, scores just never show up.
+
+    /// The classic game's Most Dishes Served.
+    static let classicLeaderboardID = "com.reability.playfeat.mostdishes"
+
+    /// The Buffet (marathon) leaderboard of `planet`, in points. Leaderboard
+    /// IDs take no hyphens, so the planet's are swapped for underscores.
+    static func buffetLeaderboardID(on planet: Planet.ID) -> String {
+        "com.reability.playfeat.buffet.\(planet.rawValue.replacingOccurrences(of: "-", with: "_"))"
+    }
 
     /// Call once, from a view that's already on screen: GameKit can hand back a
     /// sign-in screen that needs a window to be presented from.
@@ -32,11 +41,11 @@ enum GameCenter {
     /// Submit every run, not just personal bests — Game Center keeps the best
     /// score per player itself, and a submit that loses to the stored one is a
     /// no-op on their side.
-    static func submit(_ dishesServed: Int) {
+    static func submit(_ score: Int, to leaderboardID: String) {
         guard GKLocalPlayer.local.isAuthenticated else { return }
         Task {
             try? await GKLeaderboard.submitScore(
-                dishesServed,
+                score,
                 context: 0,
                 player: GKLocalPlayer.local,
                 leaderboardIDs: [leaderboardID]
@@ -44,9 +53,22 @@ enum GameCenter {
         }
     }
 
+    /// Marks `achievements` complete. Reported again on later days, an
+    /// achievement already earned stays as it is and shows no banner twice.
+    static func report(_ achievements: Set<StoryAchievement>) {
+        guard GKLocalPlayer.local.isAuthenticated, !achievements.isEmpty else { return }
+        let completed = achievements.map { achievement in
+            let report = GKAchievement(identifier: achievement.identifier)
+            report.percentComplete = 100
+            report.showsCompletionBanner = true
+            return report
+        }
+        Task { try? await GKAchievement.report(completed) }
+    }
+
     /// The best `count` players of all time. Empty when signed out, offline,
     /// or nobody has a score yet — the screen shows its empty state for all three.
-    static func topEntries(count: Int) async -> [LeaderboardEntry] {
+    static func topEntries(count: Int, of leaderboardID: String) async -> [LeaderboardEntry] {
         guard GKLocalPlayer.local.isAuthenticated,
               let leaderboard = try? await GKLeaderboard.loadLeaderboards(IDs: [leaderboardID]).first,
               let (_, entries, _) = try? await leaderboard.loadEntries(
@@ -67,7 +89,7 @@ enum GameCenter {
         }
     }
 
-    static func showLeaderboard() {
+    static func showLeaderboard(_ leaderboardID: String) {
         guard GKLocalPlayer.local.isAuthenticated, let root = rootViewController else { return }
         let dashboard = GKGameCenterViewController(
             leaderboardID: leaderboardID,

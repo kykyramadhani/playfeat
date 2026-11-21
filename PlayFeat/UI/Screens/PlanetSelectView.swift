@@ -84,6 +84,12 @@ struct PlanetSelectView: View {
             }
         }
         .overlay {
+            if sceneManager.isShortOfEnergy {
+                PlanetNoticePopup(notice: .notEnoughEnergy, onClose: sceneManager.dismissEnergyShortfall)
+                    .transition(.opacity)
+            }
+        }
+        .overlay {
             if showSpoilerWarning {
                 PlanetNoticePopup(notice: .marathonSpoiler, onClose: enterMarathonAfterWarning)
                     .transition(.opacity)
@@ -96,6 +102,7 @@ struct PlanetSelectView: View {
         .animation(.easeOut(duration: 0.2), value: showShop)
         .animation(.easeOut(duration: 0.2), value: notice)
         .animation(.easeOut(duration: 0.2), value: showSpoilerWarning)
+        .animation(.easeOut(duration: 0.2), value: sceneManager.isShortOfEnergy)
         .designScaled()
     }
 
@@ -284,4 +291,5 @@ struct PlanetSelectView: View {
 #Preview {
     PlanetSelectView(sceneManager: SceneManager())
         .environment(AudioManager())
+        .environment(EnergyStore())
 }

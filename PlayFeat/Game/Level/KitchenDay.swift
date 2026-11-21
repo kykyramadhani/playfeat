@@ -33,6 +33,9 @@ final class KitchenDay {
     /// places are empty on screen, though the first customers already wait.
     private(set) var hasOpened = false
     private(set) var ordersDelivered = 0
+    /// How many of each dish were served.
+    private(set) var servedDishes: [String: Int] = [:]
+    private(set) var angryCustomersServed = 0
     /// Points the served dishes have earned.
     private(set) var dishEarnings = 0
     private(set) var ordersMissed = 0
@@ -167,6 +170,8 @@ final class KitchenDay {
     func serve(_ dish: String, at seat: Int) -> Bool {
         guard wants(dish, at: seat), let customer = counter.serve(seat: seat) else { return false }
         ordersDelivered += 1
+        servedDishes[dish, default: 0] += 1
+        if customer.type == .angry { angryCustomersServed += 1 }
         servedWaitSec += elapsed - customer.seatedAt
         dishEarnings += pricing.pay(for: dish)
         lastTip = flow.tip(from: customer, at: elapsed)

@@ -28,6 +28,7 @@ struct PlanetScreen<Content: View>: View {
     /// Watches the saved purse, so a purchase in a popup over this screen
     /// (the shop) shows in the counter at once.
     @AppStorage(GameStorage.coinKey) private var coinCount = 0
+    @Environment(EnergyStore.self) private var energy
     @State private var showSettings = false
     @State private var showEnergyNotice = false
 
@@ -70,11 +71,10 @@ struct PlanetScreen<Content: View>: View {
 
     private var topBar: some View {
         HStack(alignment: .top) {
-            // TODO: energy has no system behind it yet; this is the design's
-            // sample value until it does. Fuel shows on the spaceship.
+            // Fuel shows on the spaceship.
             HStack(spacing: 22) {
                 ClickButton(action: { showEnergyNotice = true }) {
-                    HUDCounter(icon: "EnergyIcon", label: "Energy", value: "25/25", metrics: .energy)
+                    EnergyCounter(meter: energy.meter)
                 }
                 .buttonStyle(.plain)
                 HUDCounter(icon: "HUDCoinsIcon", label: "Coins", value: "\(coinCount)", metrics: .coins)
@@ -100,7 +100,22 @@ struct PlanetScreen<Content: View>: View {
     }
 }
 
+/// The energy counter, ticking every second so a point coming back shows.
+private struct EnergyCounter: View {
+    let meter: EnergyMeter
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            HUDCounter(
+                icon: "EnergyIcon", label: "Energy",
+                value: "\(meter.energy(at: timeline.date))/\(EnergyMeter.maxEnergy)", metrics: .energy
+            )
+        }
+    }
+}
+
 #Preview {
     PlanetScreen(backdrop: .planet(Planet.k2332b.backdrop)) { Color.clear }
         .environment(AudioManager())
+        .environment(EnergyStore())
 }

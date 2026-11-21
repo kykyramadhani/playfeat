@@ -69,6 +69,7 @@ struct ContentView: View {
         // away and made again.
         .id(language)
         .environment(\.locale, language.locale)
+        .environment(sceneManager.energy)
         .onAppear {
             // Here rather than in the App's init: GameKit's sign-in screen
             // needs a window to be presented from, and there isn't one yet
@@ -166,6 +167,7 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(InventoryManager(inMemory: true))
+        .environment(EnergyStore())
         .environment(HandPoseManager())
         .environment(AudioManager())
 }

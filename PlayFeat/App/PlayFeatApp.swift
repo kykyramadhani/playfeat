@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 @main
 struct PlayFeatApp: App {
@@ -36,6 +37,11 @@ struct PlayFeatApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             handleScenePhase(phase)
+        }
+        // The game is played with hands, not touch, so nothing resets the
+        // auto-lock timer: the screen stays on whenever the app is in front.
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            UIApplication.shared.isIdleTimerDisabled = phase == .active
         }
     }
 

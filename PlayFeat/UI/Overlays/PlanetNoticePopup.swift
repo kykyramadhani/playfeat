@@ -17,6 +17,8 @@ enum PlanetNotice: Equatable {
     /// The tank is full but some levels are still unplayed.
     case unplayedLevels
     case energy
+    /// PLAY, NEXT or RETRY on a level that costs more energy than is left.
+    case notEnoughEnergy
     case gas
     /// The marathon serves what the story hasn't shown yet.
     case marathonSpoiler
@@ -26,7 +28,8 @@ enum PlanetNotice: Equatable {
         case .lockedLevel: Text("Complete previous level to unlock this level")
         case .lockedMarathon: Text("Complete the first level to unlock marathon mode")
         case .unplayedLevels: Text("You have to finish all six levels to continue to the next planet")
-        case .energy: Text("Energy renews every 15 minutes")
+        case .energy: Text("One energy comes back every 5 minutes")
+        case .notEnoughEnergy: Text("Not enough energy. One comes back every 5 minutes")
         case .gas: Text("Collect \(PlanetProgress.starsToLeave) stars to fill the tank for the next planet")
         case .marathonSpoiler:
             Text("Marathon is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go.")
@@ -36,7 +39,7 @@ enum PlanetNotice: Equatable {
     /// The picture over the message; the warnings have none.
     var icon: String? {
         switch self {
-        case .energy: "EnergyIcon"
+        case .energy, .notEnoughEnergy: "EnergyIcon"
         case .gas: "GasCan"
         case .lockedLevel, .lockedMarathon, .unplayedLevels, .marathonSpoiler: nil
         }
@@ -93,5 +96,5 @@ struct PlanetNoticePopup: View {
 }
 
 #Preview {
-    PlanetNoticePopup(notice: .gas, onClose: {})
+    PlanetNoticePopup(notice: .energy, onClose: {})
 }

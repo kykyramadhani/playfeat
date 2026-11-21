@@ -36,7 +36,7 @@ nonisolated struct LevelData: Codable, Equatable {
     let burnTimeMultiplier: Double
     /// Total income for 1, 2 and 3 stars, rising.
     let starTargets: [Int]
-    /// What PLAY costs, shown on the level popup. Energy isn't spent yet.
+    /// The energy starting the level costs (SceneManager.goToKitchen).
     let energyCost: Int
     /// Everything a bubble can bring, decoys included.
     let pool: [String]

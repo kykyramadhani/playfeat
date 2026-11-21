@@ -4,7 +4,8 @@
 //  Created by kyky on 11/11/26.
 //
 //  The planet's endless mode: the glowing trophy with the player's best
-//  score under it, PLAY, and the Game Center leaderboard on the right.
+//  score under it, PLAY, and the planet's Buffet leaderboard from Game
+//  Center on the right (tap it for Game Center's own board).
 //  Reached from the unlocked marathon trophy; STORY MODE goes back to the
 //  level board.
 //
@@ -29,7 +30,7 @@ struct MarathonView: View {
         .designScaled()
         .task {
             highestScore = GameStorage.bestMarathonScore(on: sceneManager.planet)
-            leaderboard = await GameCenter.topEntries(count: Self.leaderboardSize)
+            leaderboard = await GameCenter.topEntries(count: Self.leaderboardSize, of: leaderboardID)
         }
     }
 
@@ -87,6 +88,8 @@ struct MarathonView: View {
 
     // MARK: - Leaderboard
 
+    private var leaderboardID: String { GameCenter.buffetLeaderboardID(on: sceneManager.planet) }
+
     private var leaderboardBoard: some View {
         VStack(spacing: -BoardBanner.overlap) {
             BoardBanner(title: Text("Leaderboard"))
@@ -98,10 +101,14 @@ struct MarathonView: View {
                 .frame(width: 579, height: 800, alignment: .top)
                 .boardPanelBackground(cornerRadius: 24)
         }
+        .contentShape(Rectangle())
+        .onTapGesture { GameCenter.showLeaderboard(leaderboardID) }
+        .accessibilityAddTraits(.isButton)
     }
 }
 
 #Preview {
     MarathonView(sceneManager: SceneManager())
         .environment(AudioManager())
+        .environment(EnergyStore())
 }

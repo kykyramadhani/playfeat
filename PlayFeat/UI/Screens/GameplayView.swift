@@ -162,14 +162,10 @@ struct GameplayView: View {
         .onAppear {
             connectScene()
             handPoseManager.start()
-
-            // Disables Auto-Lock Screen during Gameplay
-            UIApplication.shared.isIdleTimerDisabled = true
         }
         .onDisappear {
             handPoseManager.releasePlayer()
             handPoseManager.stop()
-            UIApplication.shared.isIdleTimerDisabled = false
             audio.stopMusic(ifPlaying: MusicTrack.classic)
         }
     }
