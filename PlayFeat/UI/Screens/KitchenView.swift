@@ -36,8 +36,7 @@ struct KitchenView: View {
     @State private var day: KitchenDay
     @State private var scene = KitchenScene(size: KitchenLayout.artSize)
     @State private var hasCalibrated = false
-    /// 3 → 0 ("GO!") during a get-ready beat, -1 otherwise.
-    @State private var countdown = 3
+    @State private var countdown: GetReadyOverlay.Step? = .ready
     /// Set while a marathon is being played; levels leave it nil.
     private let marathon: MarathonSession?
     /// What shows over a finished marathon round.
@@ -100,12 +99,7 @@ struct KitchenView: View {
             if hasCalibrated {
                 dayOverlays
             } else {
-                SeatCalibrationView(handPoseManager: handPoseManager) {
-                    handPoseManager.lockOntoPlayer()
-                    hasCalibrated = true
-                    audio.play(.handFound)
-                }
-                .designScaled()
+                calibrationLayer
             }
 
             if let marathon, let marathonStep {
@@ -174,6 +168,37 @@ struct KitchenView: View {
         .ignoresSafeArea()
     }
 
+    /// The seat check, with a way back to where the player came from. The
+    /// button sits above the camera-permission card too, so a player who
+    /// turned the camera off can still leave.
+    private var calibrationLayer: some View {
+        ZStack {
+            SeatCalibrationView(handPoseManager: handPoseManager) {
+                handPoseManager.lockOntoPlayer()
+                hasCalibrated = true
+                audio.play(.handFound)
+            }
+
+            // Figma "Button" (1950:946): top left of the 1366 × 1024 canvas.
+            RaisedBackButton(action: leaveBeforePlaying)
+                .padding(.top, 45)
+                .padding(.leading, 49)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .designScaled()
+    }
+
+    /// Back from the seat check: to the Buffet lobby for a marathon, the
+    /// planet board for a level. Nothing has been played yet, so nothing is
+    /// recorded.
+    private func leaveBeforePlaying() {
+        if marathon != nil {
+            sceneManager.goToMarathon()
+        } else {
+            sceneManager.goToPlanetSelect()
+        }
+    }
+
     private var dayOverlays: some View {
         ZStack {
             KitchenHUD(day: day, marathon: marathon)
@@ -182,8 +207,8 @@ struct KitchenView: View {
                 RedEdgeFlash(losses: marathon.lostCustomers)
             }
 
-            if countdown >= 0, !showsBuffetRules {
-                GetReadyOverlay(count: countdown)
+            if let countdown, !showsBuffetRules {
+                GetReadyOverlay(step: countdown)
                     .ignoresSafeArea()
             }
 
@@ -198,7 +223,7 @@ struct KitchenView: View {
             }
 
             // Gone while paused, so it comes back hidden after RESUME.
-            if countdown < 0, !day.isOver, marathonStep == nil, !isPaused {
+            if countdown == nil, !day.isOver, marathonStep == nil, !isPaused {
                 pauseButtonLayer
             }
 
@@ -277,13 +302,13 @@ struct KitchenView: View {
         }
     }
 
-    /// Plays the 3-2-1-GO! beat. False if it was cut short.
+    /// Plays the opening countdown. False if it was cut short.
     private func playGetReadyCountdown() async -> Bool {
         let generation = countdownGeneration
-        audio.play(.countdown)
-        for step in stride(from: 3, through: 0, by: -1) {
+        for step in GetReadyOverlay.Step.allCases {
             guard generation == countdownGeneration, scenePhase == .active else { return false }
             countdown = step
+            if step == .three { audio.play(.countdown) }
             do {
                 try await Task.sleep(for: .seconds(1))
             } catch {
@@ -291,7 +316,7 @@ struct KitchenView: View {
             }
         }
         guard generation == countdownGeneration, scenePhase == .active else { return false }
-        countdown = -1
+        countdown = nil
         return true
     }
 
@@ -470,7 +495,7 @@ struct KitchenView: View {
             // `.inactive` always comes first and has already paused the day.
             needsGetReadyOnReturn = isInterrupted
         default:
-            if countdown >= 0, hasCalibrated, !showsBuffetRules {
+            if countdown != nil, hasCalibrated, !showsBuffetRules {
                 countdownGeneration += 1
                 isInterrupted = true
                 needsGetReadyOnReturn = true

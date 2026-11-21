@@ -46,6 +46,41 @@ struct KitchenItemLookTests {
         #expect(KitchenArt.glassStateImages.contains("SlimeGlass"))
     }
 
+    @Test func upgradedSlimeFillsTheGlassWithPremiumSlime() {
+        let premium = KitchenArt.placedImage(of: KitchenMenu.slime, upgraded: [KitchenMenu.slime])
+
+        #expect(premium == "PremiumSlimeGlass")
+        #expect(KitchenArt.glassStateImages.contains(premium))
+    }
+
+    /// Ruined food has its own look, no longer the burnt flatbread's.
+    @Test func mushyNoodlesAndABurntClamHaveTheirOwnArt() {
+        #expect(KitchenArt.image(of: KitchenMenu.mushyNoodles) == "NoodlesMushy")
+        #expect(KitchenArt.image(of: KitchenMenu.burntClam) == "ClamBurnt")
+    }
+
+    /// The cookie and its sugar lie at the plate's angle once put down.
+    @Test func theSeaCookieLiesAtThePlatesAngle() {
+        #expect(KitchenArt.placedImage(of: KitchenMenu.seaCookie) == "SeaCookiePlated")
+        #expect(KitchenArt.placedImage(of: KitchenMenu.starfishSugar) == "StarfishSugarTopping")
+        #expect(KitchenArt.placedImage(of: KitchenMenu.starCookie) == "StarCookie")
+    }
+
+    @Test func anUpgradedSeaCookieIsPremiumOnThePlateAndInTheStarCookie() {
+        let upgraded: Set<String> = [KitchenMenu.seaCookie]
+
+        #expect(KitchenArt.placedImage(of: KitchenMenu.seaCookie, upgraded: upgraded) == "PremiumSeaCookiePlated")
+        #expect(KitchenArt.placedImage(of: KitchenMenu.starCookie, upgraded: upgraded) == "PremiumStarCookiePlated")
+        #expect(KitchenArt.image(of: KitchenMenu.starCookie, upgraded: upgraded) == "PremiumStarCookie")
+    }
+
+    /// Premium starfish sugar keeps its premium look on the plate.
+    @Test func upgradedStarfishSugarStaysPremiumOnThePlate() {
+        let upgraded: Set<String> = [KitchenMenu.starfishSugar]
+
+        #expect(KitchenArt.placedImage(of: KitchenMenu.starfishSugar, upgraded: upgraded) == "PremiumStarfishSugar")
+    }
+
     // MARK: - Premium
 
     /// The flatbread upgrade makes every flatbread look premium, whatever the grill did to it.

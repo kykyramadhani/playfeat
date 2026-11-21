@@ -138,8 +138,9 @@ struct ReportPopup<Header: View>: View {
                 .foregroundStyle(Color.purple800)
                 .frame(width: 313.2)
             HStack(spacing: 0) {
-                Image("CoinsIcon")
+                Image("HUDCoinsIcon")
                     .resizable()
+                    .scaledToFit()
                     .frame(width: 81, height: 81)
                 Text(total, format: .number)
                     .font(.atkinson(size: 50, weight: .bold))

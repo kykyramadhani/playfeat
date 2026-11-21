@@ -71,7 +71,7 @@ struct KitchenDropTargetTests {
         let (scene, day) = makeScene()
         let seat = try #require(day.presentCustomers.first?.seat)
 
-        let dish = carry(KitchenMenu.pepperFlatbread, atArtPoint: KitchenLayout.seats[seat].orderSheet.center, in: scene)
+        let dish = carry(KitchenMenu.pepperFlatbread, atArtPoint: KitchenLayout.seats[seat].alien.center, in: scene)
 
         #expect(scene.dropTarget(for: dish) == .customer(seat: seat))
         #expect(scene.litTargets.isEmpty)

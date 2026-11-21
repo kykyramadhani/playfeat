@@ -2,7 +2,7 @@
 //  GetReadyOverlay.swift
 //  GetCooking
 //
-//  The 3-2-1-GO! between passing the seat check and the first recipe landing.
+//  The illustrated countdown between passing the seat check and playing.
 //
 //  Deliberately shown over a live board — camera, plate and HUD all visible
 //  behind it — so the player can settle their hands before anything is asked
@@ -12,42 +12,42 @@
 import SwiftUI
 
 struct GetReadyOverlay: View {
-    /// Seconds left: 3, 2, 1, then 0 for the "GO!" beat. The overlay is gone
-    /// by the time it goes negative.
-    let count: Int
+    enum Step: String, CaseIterable {
+        case ready = "CountdownReady"
+        case three = "CountdownThree"
+        case two = "CountdownTwo"
+        case one = "CountdownOne"
+        case start = "CountdownStart"
+
+        var accessibilityLabel: Text {
+            switch self {
+            case .ready: Text("GET READY!")
+            case .three: Text(3, format: .number)
+            case .two: Text(2, format: .number)
+            case .one: Text(1, format: .number)
+            case .start: Text("Start!")
+            }
+        }
+    }
+
+    let step: Step
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Only on the first beat. By the second the player has read it,
-            // and leaving it up just crowds the numbers.
-            Text("GET READY!")
-                .font(.atkinson(size: 56, weight: .black))
-                .opacity(count == 3 ? 1 : 0)
-                .padding(.top, 140)
-
-            Spacer()
-
-            // "GO!" rather than a fourth number, so the beat play actually
-            // starts on is unmistakable. Sized down a little because three
-            // glyphs at 160pt overflow a narrow screen.
-            Text(count > 0 ? "\(count)" : "GO!")
-                .font(.atkinson(size: count > 0 ? 160 : 130, weight: .black))
-                .contentTransition(.numericText(countsDown: true))
-                .animation(.snappy, value: count)
-
-            Spacer()
-            Spacer()
-        }
-        .foregroundStyle(.white)
-        .outlined(width: 4)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .allowsHitTesting(false)
+        // The exported 1366 × 1024 artwork includes each word or digit's
+        // exact position. Keep the transparent canvas intact at every size.
+        Image(step.rawValue)
+            .resizable()
+            .scaledToFit()
+            .frame(maxWidth: DesignCanvas.size.width * 0.5, maxHeight: DesignCanvas.size.height * 0.5)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .accessibilityLabel(step.accessibilityLabel)
+            .allowsHitTesting(false)
     }
 }
 
 #Preview {
     ZStack {
         Color.gray
-        GetReadyOverlay(count: 3)
+        GetReadyOverlay(step: .three)
     }
 }

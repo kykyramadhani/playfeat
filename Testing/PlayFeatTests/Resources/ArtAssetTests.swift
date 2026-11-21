@@ -44,6 +44,13 @@ struct ArtAssetTests {
         #expect(UIImage(named: "RingingBell") != nil)
     }
 
+    @Test func countdownArtworkPreservesItsDesignCanvas() throws {
+        for step in GetReadyOverlay.Step.allCases {
+            let image = try #require(UIImage(named: step.rawValue))
+            #expect(image.size == DesignCanvas.size)
+        }
+    }
+
     /// The marathon HUD's coin and lost-customer cross, and its colours.
     /// Referenced by name, so a rename leaves an empty plaque.
     @Test(arguments: ["MarathonCoinIcon", "LostCustomerCross"])

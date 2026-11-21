@@ -15,7 +15,7 @@ flowchart TD
     Board --> Detail[Level detail popup]
     Detail --> Kitchen[Kitchen screen]
     Kitchen --> Calibration[Seat calibration]
-    Calibration -->|Story| Countdown[3-2-1-GO]
+    Calibration -->|Story| Countdown[Get Ready → 3 → 2 → 1 → Start]
     Calibration -->|Buffet| Rules[Buffet rules card]
     Rules --> Countdown
     Countdown --> Play[Kitchen play]
