@@ -54,16 +54,16 @@ struct SettingsView: View {
                 }
                 settingRow("Language", height: SegmentedPill.Size.regular.buttonSize.height) { languageChoice }
                 settingRow("One Hand Mode", height: SegmentedPill.Size.regular.buttonSize.height) { handModeChoice }
-                settingRow("Pickup Gesture", height: SegmentedPill.Size.regular.buttonSize.height) {
-                    SegmentedPill(
-                        leftTitle: Text("Pinch"),
-                        rightTitle: Text("F Pinch"),
-                        isRightSelected: Binding(
-                            get: { grip == .fPinch },
-                            set: { grip = $0 ? .fPinch : .pinch }
-                        )
-                    )
-                }
+                // settingRow("Pickup Gesture", height: SegmentedPill.Size.regular.buttonSize.height) {
+                //     SegmentedPill(
+                //         leftTitle: Text("Pinch"),
+                //         rightTitle: Text("F Pinch"),
+                //         isRightSelected: Binding(
+                //             get: { grip == .fPinch },
+                //             set: { grip = $0 ? .fPinch : .pinch }
+                //         )
+                //     )
+                // }
                 settingRow("Always Show Tutorial", height: SegmentedPill.Size.regular.buttonSize.height) {
                     SegmentedPill(leftTitle: Text("OFF"), rightTitle: Text("ON"), isRightSelected: $alwaysShowTutorial)
                         .accessibilityElement(children: .contain)
