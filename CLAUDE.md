@@ -39,7 +39,10 @@ is needed during play.
 - **AVAudio** — music and sound effects.
 - **Accessibility** — Atkinson Hyperlegible font, one-hand mode in Settings.
 
-No third-party dependencies and no SPM packages.
+One third-party dependency: **Lottie** (`lottie-spm`, SPM), which plays the
+intro story's panel animations (`Resources/Animation/IntroStory/`). Their
+artwork comes from the asset catalog (`Story/`); captions stay in SwiftUI so
+they can be translated. Ask before adding any other package.
 
 ### Game flow
 
