@@ -167,7 +167,11 @@ struct KitchenStationTests {
     @Test func slimeFirstThenTheTentacleMakeTheDessertToo() throws {
         let (scene, _) = try makeScene()
 
-        letGo(Menu.slime, over: scene.artRect(of: .glass(0)), in: scene)
+        let slime = letGo(Menu.slime, over: scene.artRect(of: .glass(0)), in: scene)
+        #expect(slime.placement == .glass(0))
+        #expect(slime.isDrawnAsWholeStation)
+        #expect(items(on: .glass(0), in: scene) == [Menu.slime])
+
         letGo(Menu.tentacle, over: scene.artRect(of: .glass(0)), in: scene)
 
         #expect(items(on: .glass(0), in: scene) == [Menu.slimyTentacles])
