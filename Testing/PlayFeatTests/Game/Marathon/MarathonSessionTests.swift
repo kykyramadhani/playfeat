@@ -15,7 +15,7 @@ import Testing
 struct MarathonSessionTests {
 
     private func makeSession(on planet: Planet = .kepler186f) -> MarathonSession {
-        MarathonSession(planet: planet, positionTypes: KitchenLayout.positionTypes, random: SeededGenerator(state: 3))
+        MarathonSession(planet: planet, openSeats: Array(KitchenLayout.seats.indices), random: SeededGenerator(state: 3))
     }
 
     private func makeFlow(on planet: Planet = .kepler186f) -> MarathonFlow {

@@ -3,11 +3,11 @@
 //  PlayFeat
 //  Created by kyky on 17/11/26.
 //
-//  Who stands at the kitchen counter. Each alien drawing is a position that
-//  takes one type of customer (the angry alien has its own). Customers who
-//  step up while no position of their type is free wait until one is, and
-//  their patience only starts once they stand at it. A position frees when
-//  its customer is served or gives up.
+//  Who stands at the kitchen counter. Each alien drawing is a position; a
+//  customer stands at a free one picked at random among those the level
+//  opens. Customers who step up while every open position is taken wait
+//  until one frees, and their patience only starts once they stand. A
+//  position frees when its customer is served or gives up.
 //
 
 import Foundation
@@ -41,19 +41,20 @@ nonisolated struct Arrival: Equatable {
 }
 
 nonisolated struct Counter {
-    /// The type of customer each position takes.
-    let positionTypes: [CustomerType]
-    /// Who stands at each position right now.
-    private(set) var seats: [SeatedCustomer?]
-    /// Stepped up, waiting for a position of their type.
+    /// The positions customers may take, by index into the kitchen's seats.
+    let openSeats: [Int]
+    /// Who stands at each taken position.
+    private(set) var seats: [Int: SeatedCustomer] = [:]
+    /// Stepped up, waiting for a free position.
     private(set) var waiting: [Arrival] = []
+    private var random: AnyRandomNumberGenerator
 
-    init(positionTypes: [CustomerType]) {
-        self.positionTypes = positionTypes
-        seats = Array(repeating: nil, count: positionTypes.count)
+    init(openSeats: [Int], random: any RandomNumberGenerator) {
+        self.openSeats = openSeats
+        self.random = AnyRandomNumberGenerator(random)
     }
 
-    var present: [SeatedCustomer] { seats.compactMap { $0 } }
+    var present: [SeatedCustomer] { seats.values.sorted { $0.seat < $1.seat } }
 
     /// Everyone at the counter or waiting for it.
     var headcount: Int { present.count + waiting.count }
@@ -64,13 +65,12 @@ nonisolated struct Counter {
         waiting += arrivals
     }
 
-    /// Stands waiting customers at free positions of their type, oldest
-    /// first, while fewer than `spots` stand at the counter.
+    /// Stands waiting customers at free positions, oldest first, while
+    /// fewer than `spots` stand at the counter.
     mutating func seatWaiting(at time: TimeInterval, spots: Int) {
-        while present.count < spots,
-              let next = waiting.indices.first(where: { freePosition(for: waiting[$0].type) != nil }),
-              let seat = freePosition(for: waiting[next].type) {
-            let arrival = waiting.remove(at: next)
+        while present.count < spots, !waiting.isEmpty,
+              let seat = openSeats.filter({ seats[$0] == nil }).randomElement(using: &random) {
+            let arrival = waiting.removeFirst()
             seats[seat] = SeatedCustomer(
                 dish: arrival.dish, type: arrival.type, seat: seat, seatedAt: time, patienceSec: arrival.patienceSec
             )
@@ -87,12 +87,6 @@ nonisolated struct Counter {
 
     /// The customer at `seat` takes their dish and leaves. Nil if nobody stands there.
     mutating func serve(seat: Int) -> SeatedCustomer? {
-        guard seats.indices.contains(seat), let customer = seats[seat] else { return nil }
-        seats[seat] = nil
-        return customer
-    }
-
-    private func freePosition(for type: CustomerType) -> Int? {
-        seats.indices.first { seats[$0] == nil && positionTypes[$0] == type }
+        seats.removeValue(forKey: seat)
     }
 }

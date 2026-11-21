@@ -245,33 +245,125 @@ extension MarathonCard {
 
 // MARK: - Report
 
+/// The end of a marathon run, as in the design: the total points, a recap
+/// of the run and how long it lasted on the left, every upgrade bought on
+/// the right, and BACK / RESTART below.
 struct MarathonReportView: View {
     @Environment(AudioManager.self) private var audio
     var isNewBest = false
     let session: MarathonSession
-    let onNext: () -> Void
+    let onBack: () -> Void
+    let onRestart: () -> Void
+
+    private static let cardSize = CGSize(width: 1169, height: 816)
+    private static let columnWidth: CGFloat = 534
+    /// The design's buttons hang off a 1024-point screen, as in ReportPopup.
+    private static let fitScale: CGFloat = 0.92
 
     var body: some View {
-        ReportPopup(
-            title: Text("Marathon Complete"),
-            rows: [
-                .init(count: nil, label: "Rounds Played", value: session.roundsPlayed),
-                .init(count: nil, label: "Average Dishes / Round", value: session.averageDishesPerRound),
-                .init(count: nil, label: "Customers Served", value: session.dishesServed),
-            ],
-            totalLabel: "Total Points",
-            total: session.coinsEarned,
-            buttons: [.next(onNext)]
-        ) {
-            VStack(spacing: 18) {
-                Text("Total Marathon Points")
-                    .font(.atkinson(size: 32, weight: .bold))
-                    .textCase(.uppercase)
-                Text(session.points, format: .number)
-                    .font(.atkinson(size: 64, weight: .bold))
+        ZStack {
+            Color.black.opacity(0.5).ignoresSafeArea()
+
+            card
+                .padding(.top, 56)
+                .overlay(alignment: .top) { TiltedTitleBadge(title: Text("Marathon Complete")).padding(.top, 3) }
+                .overlay(alignment: .bottom) { buttons.offset(y: 59) }
+                .scaleEffect(Self.fitScale)
+        }
+        .designScaled()
+        .accessibilityElement(children: .contain)
+        .accessibilityAddTraits(.isModal)
+    }
+
+    private var card: some View {
+        HStack(alignment: .top, spacing: 37) {
+            VStack(spacing: 0) {
+                totalPoints
+                recap.padding(.top, 24)
+                runDuration.padding(.top, 26)
             }
-            .foregroundStyle(Color.purple900)
-            .frame(height: 187)
+            .frame(width: Self.columnWidth)
+            UpgradesBoughtPanel(cards: session.bought)
+        }
+        .padding(.top, 40)
+        .frame(width: 1078, height: 687, alignment: .top)
+        .background(Color.purple50, in: RoundedRectangle(cornerRadius: 24))
+        .padding(.top, 70)
+        .frame(width: Self.cardSize.width, height: Self.cardSize.height, alignment: .top)
+        .boardPanelBackground(cornerRadius: 46.3)
+        .overlay { PopupScrews(size: 24, inset: 24) }
+    }
+
+    private var totalPoints: some View {
+        VStack(spacing: 18) {
+            Text("Total Marathon Points")
+                .font(.atkinson(size: 32, weight: .bold))
+                .textCase(.uppercase)
+            Text(session.points, format: .number)
+                .font(.atkinson(size: 64, weight: .bold))
+        }
+        .foregroundStyle(Color.purple900)
+    }
+
+    /// The RECAP tab over a cream box of the run's numbers.
+    private var recap: some View {
+        VStack(spacing: 0) {
+            Text("Recap")
+                .font(.atkinson(size: 38, weight: .bold))
+                .textCase(.uppercase)
+                .foregroundStyle(.white)
+                .frame(width: 340, height: 64)
+                .background(Color.labelTab, in: UnevenRoundedRectangle(topLeadingRadius: 64, topTrailingRadius: 64))
+            VStack(spacing: 22) {
+                recapRow("Rounds Played", value: session.roundsPlayed)
+                recapRow("Average Wait / Customer", value: Int(session.day.averageWaitSec.rounded()))
+                recapRow("Customers Served", value: session.dishesServed)
+            }
+            .padding(.horizontal, 40)
+            .frame(width: Self.columnWidth, height: 207)
+            .creamBox(.recap)
+        }
+    }
+
+    private func recapRow(_ label: LocalizedStringKey, value: Int) -> some View {
+        HStack {
+            Text(label)
+                .font(.atkinson(size: 24, weight: .regular))
+            Spacer()
+            Text(value, format: .number)
+                .font(.atkinson(size: 40, weight: .bold))
+        }
+        .foregroundStyle(Color.purple800)
+        .frame(height: 30)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var runDuration: some View {
+        HStack {
+            Text("Buffet Run Duration")
+                .font(.atkinson(size: 24, weight: .bold))
+            Spacer()
+            Image("StopwatchIcon")
+                .resizable()
+                .frame(width: 40, height: 40)
+            Text(Duration.seconds(Int(session.day.elapsed)).formatted(.time(pattern: .minuteSecond)))
+                .font(.atkinson(size: 48, weight: .bold))
+        }
+        .foregroundStyle(Color.purple800)
+        .padding(.horizontal, 40)
+        .frame(width: Self.columnWidth, height: 113)
+        .creamBox(.total)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var buttons: some View {
+        HStack(spacing: 46) {
+            ReportButtonView(button: ReportButton(
+                title: "Back", icon: "HomeIcon", palette: .blue, label: .white, action: onBack
+            ))
+            ReportButtonView(button: ReportButton(
+                title: "Restart", icon: "RestartIcon", palette: .pink, label: .electricPink, action: onRestart
+            ))
         }
         .task {
             audio.play(.runOver)
@@ -280,5 +372,67 @@ struct MarathonReportView: View {
                 audio.play(.bestScore)
             }
         }
+    }
+}
+
+/// UPGRADE BOUGHT over a scrolling two-column grid of the cards bought.
+private struct UpgradesBoughtPanel: View {
+    let cards: [MarathonCard]
+
+    private static let columns = Array(repeating: GridItem(.fixed(173), spacing: 22), count: 2)
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Text("Upgrade Bought")
+                .font(.atkinson(size: 24, weight: .bold))
+                .textCase(.uppercase)
+                .foregroundStyle(Color.purple900)
+            if cards.isEmpty {
+                Text("No upgrades this run")
+                    .font(.atkinson(size: 20, weight: .regular))
+                    .foregroundStyle(Color.purple800)
+                    .frame(maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: Self.columns, spacing: 22) {
+                        ForEach(cards, id: \.self) { BoughtUpgradeTile(card: $0) }
+                    }
+                }
+            }
+        }
+        .padding(.top, 24)
+        .frame(width: 430, height: 603)
+        .background(.white, in: RoundedRectangle(cornerRadius: 24))
+    }
+}
+
+/// One card bought: its icon, name, effect and price, on a lilac tile.
+private struct BoughtUpgradeTile: View {
+    let card: MarathonCard
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image("EnergyIcon")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 64, height: 64)
+            Text(card.name)
+                .font(.atkinson(size: 18, weight: .bold))
+            Text(card.effectText)
+                .font(.atkinson(size: 11, weight: .regular))
+            HStack(spacing: 2) {
+                Image("CoinsIcon")
+                    .resizable()
+                    .frame(width: 24, height: 24)
+                Text(card.price, format: .number)
+                    .font(.atkinson(size: 20, weight: .bold))
+            }
+        }
+        .foregroundStyle(Color.purple900)
+        .multilineTextAlignment(.center)
+        .padding(10)
+        .frame(width: 173, height: 200)
+        .background(Color.purple50, in: RoundedRectangle(cornerRadius: 24))
+        .accessibilityElement(children: .combine)
     }
 }

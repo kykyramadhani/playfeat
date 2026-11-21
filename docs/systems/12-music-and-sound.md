@@ -65,14 +65,8 @@ the generic click and uses `sfx_card_picked` instead.
 | New star reaches fuel gauge | `sfx_gas_collected`, fitted to the 0.25-second gauge-fill animation |
 | Introduction / planet or station unlock | `sfx_hint` / `sfx_unlock` |
 | Buffet upgrade break / pick / actual purchase | `sfx_card_reveal` / `sfx_card_picked` / `sfx_coin_spent_buffet` |
-| Buffet final report | `sfx_run_over`, with the temporary fallback below |
+| Buffet final report | `sfx_run_over` (`runOver`) |
 | New Buffet personal best | `sfx_best_score`; records are points per planet, separate from classic dish counts |
-
-**Asset handoff note:** `sfx_round_over` is for STORY reports only. The distinct
-Buffet `sfx_run_over` file has not been supplied. `SoundEffect.runOver` looks for
-that filename first, then temporarily falls back to `lose_heart`. Add the new
-file to the app resources to replace the fallback; the TODO is beside the enum
-case. Do not redirect Buffet to the story report file.
 
 The angry-arrival clip runs at **2x speed**. Gas playback rate is calculated
 from the decoded clip duration; changing the source clip still fits the same

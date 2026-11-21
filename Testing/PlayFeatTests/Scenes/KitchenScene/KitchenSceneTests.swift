@@ -36,6 +36,15 @@ struct KitchenSceneTests {
 
     /// There is no bin: an unwanted item let go over the bare table goes
     /// behind it and is thrown away.
+    /// A carried item passes over food on the counter, the cooking rings
+    /// and the drop glows, but under the hand that holds it.
+    @Test func aCarriedItemIsDrawnOverTheCounterAndUnderTheHand() {
+        let counterLayers = [KitchenScene.dropGlowZ, KitchenScene.cookingGaugeZ, KitchenBubbleNode(ingredient: KitchenMenu.pepper, radius: 10).zPosition]
+
+        #expect(counterLayers.allSatisfy { $0 < KitchenScene.heldZ })
+        #expect(KitchenScene.heldZ < KitchenScene.handZ)
+    }
+
     @Test func anItemLetGoOverTheBareTableIsThrownAway() {
         let scene = makeScene()
 

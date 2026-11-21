@@ -45,7 +45,10 @@ final class KitchenScene: SKScene {
 
     /// Bubble radius in art points (the Figma "S" bubble is 160 across).
     static let bubbleArtRadius: CGFloat = 70
-    static let heldZ: CGFloat = 0
+    /// A carried item passes over everything on the counter (food on a
+    /// tool, the cooking rings, the drop glows) but stays under the hand
+    /// holding it.
+    static let heldZ: CGFloat = 50
     static let handZ: CGFloat = 60
     /// A pinched item grows to this, so the player sees what they hold.
     static let heldScale: CGFloat = 1.25

@@ -104,7 +104,7 @@ struct KitchenLayoutTests {
             wide.seat(at: index).alien.minX - KitchenLayout.seats[index].alien.minX
         }
 
-        #expect(shifts == [-683, 683, -683])
+        #expect(shifts == [-683, 683, -683, 683])
     }
 
     /// The alien, its order sheet and the serve area the hands are tested
@@ -118,8 +118,7 @@ struct KitchenLayoutTests {
         #expect(moved.serveArea == original.serveArea.offsetBy(dx: -683, dy: 0))
     }
 
-    /// Each customer slides until its whole picture is past its wall: left
-    /// off the art from the left wall, up off it from the ceiling.
+    /// Each customer slides until its whole picture is past its edge.
     @Test func everyCustomerSlidesPastItsWallToLeave() {
         for index in KitchenLayout.seats.indices {
             let seat = KitchenLayout.seats[index]
@@ -129,6 +128,7 @@ struct KitchenLayoutTests {
             switch seat.entersFrom {
             case .left: #expect(gone.maxX <= 0)
             case .top: #expect(gone.maxY <= 0)
+            case .right: #expect(gone.minX >= KitchenLayout.artSize.width)
             }
         }
     }
@@ -148,8 +148,20 @@ struct KitchenLayoutTests {
         #expect(layout.sceneRect(KitchenLayout.window).maxY == KitchenLayout.artSize.height)
     }
 
-    /// The two green aliens take regular customers; the red one is the angry alien's.
-    @Test func theRedAliensPositionIsTheAngryCustomers() {
-        #expect(KitchenLayout.positionTypes == [.regular, .regular, .angry])
+    /// The first level keeps its customers to the left wall while the player learns.
+    @Test func theFirstLevelsCustomersOnlyComeFromTheLeft() throws {
+        let level = try LevelLoader.load("1-1")
+        let seats = KitchenLayout.openSeats(on: level)
+
+        #expect(!seats.isEmpty)
+        #expect(seats.allSatisfy { KitchenLayout.seats[$0].entersFrom == .left })
+    }
+
+    /// Later levels open every edge: left, top and right.
+    @Test func laterLevelsOpenEverySide() throws {
+        let level = try LevelLoader.load("1-2")
+        let sides = Set(KitchenLayout.openSeats(on: level).map { KitchenLayout.seats[$0].entersFrom })
+
+        #expect(sides == Set(CustomerSide.allCases))
     }
 }

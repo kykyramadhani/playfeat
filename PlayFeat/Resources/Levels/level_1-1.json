@@ -13,7 +13,8 @@
     "angryAt": [],
     "angryEvery": null,
     "patienceSec": 45,
-    "angryPatienceSec": 25
+    "angryPatienceSec": 25,
+    "customerSides": ["left"]
   },
   "gravity": {
     "direction": "down",

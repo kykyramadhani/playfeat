@@ -51,7 +51,8 @@ struct EffectPlaybackTests {
     @Test func reportModesAndRetainedMusicStayDistinct() throws {
         #expect(SoundEffect.storyReport.rawValue == "sfx_round_over")
         #expect(SoundEffect.runOver.rawValue == "sfx_run_over")
-        #expect(!SoundEffect.runOver.resourceNames.contains(SoundEffect.storyReport.rawValue))
+        #expect(SoundEffect.storyReport.resourceURL()?.lastPathComponent == "sfx_round_over.wav")
+        #expect(SoundEffect.runOver.resourceURL()?.lastPathComponent == "sfx_run_over.wav")
         #expect(MusicTrack.buffet == "music_buffet")
         for name in [MusicTrack.menu, MusicTrack.story, MusicTrack.buffet] {
             let url = try #require(Bundle.main.url(forResource: name, withExtension: "wav"))

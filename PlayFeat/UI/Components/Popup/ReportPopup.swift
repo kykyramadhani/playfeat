@@ -158,12 +158,17 @@ struct ReportPopup<Header: View>: View {
     private var buttonRow: some View {
         HStack(spacing: 68) {
             ForEach(buttons.indices, id: \.self) { index in
-                reportButton(buttons[index])
+                ReportButtonView(button: buttons[index])
             }
         }
     }
+}
 
-    private func reportButton(_ button: ReportButton) -> some View {
+/// A report's raised button: its title and icon on the button's palette.
+struct ReportButtonView: View {
+    let button: ReportButton
+
+    var body: some View {
         ClickButton(action: button.action, sound: button.sound) {
             HStack(spacing: 11.8) {
                 Text(button.title)
@@ -185,8 +190,8 @@ struct ReportPopup<Header: View>: View {
     }
 }
 
-private extension View {
-    /// The cream, white-rimmed box the report's numbers sit in.
+extension View {
+    /// The cream, white-rimmed box a report's numbers sit in.
     /// The drop shadow sits on the box alone, so the text inside stays flat.
     func creamBox(_ box: CreamBox) -> some View {
         let shape = RoundedRectangle(cornerRadius: box.cornerRadius)
@@ -203,7 +208,7 @@ private extension View {
 
 /// The two cream boxes' measurements from the design: the total box is the
 /// recap box drawn at about 0.63 scale, rim and drop included.
-private struct CreamBox {
+struct CreamBox {
     let cornerRadius: CGFloat
     let rimWidth: CGFloat
     let dropHeight: CGFloat

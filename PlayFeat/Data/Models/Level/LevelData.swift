@@ -68,6 +68,9 @@ nonisolated extension LevelData {
         let angryEvery: Int?
         let patienceSec: TimeInterval
         let angryPatienceSec: TimeInterval
+        /// The screen edges customers lean in from; nil means every edge.
+        /// The first level keeps them to one side while the player learns.
+        var customerSides: [CustomerSide]? = nil
     }
 
     struct BubbleEntry: Codable, Equatable {
@@ -83,4 +86,9 @@ nonisolated extension LevelData {
 nonisolated enum CustomerType: String, Codable {
     case regular
     case angry
+}
+
+/// A screen edge a customer leans in from.
+nonisolated enum CustomerSide: String, Codable, CaseIterable {
+    case left, top, right
 }

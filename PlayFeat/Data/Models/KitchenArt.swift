@@ -73,8 +73,8 @@ nonisolated enum KitchenArt {
     }
 
     private static let wholeStationPictures = [
-        // The glass's mug is 346 pixels wide in its pictures.
-        WholeStationPictures(images: glassStateImages, artPointsPerPixel: KitchenLayout.glassMugWidth / 346),
+        // The new glass state art is drawn at three pixels per art point.
+        WholeStationPictures(images: glassStateImages, artPointsPerPixel: 1 / 3),
         // Cut to the pot's box in the design's counter frames, stove and all.
         WholeStationPictures(images: ["PotNoodlesCooking", "PotNoodlesCooked"],
                              artPointsPerPixel: CounterLayout.potSize.width / 528),

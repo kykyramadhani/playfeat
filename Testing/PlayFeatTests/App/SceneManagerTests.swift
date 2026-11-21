@@ -259,34 +259,34 @@ struct SceneManagerTests {
     // MARK: - Stars for the fuel gauge
 
     /// A day that beat the level's best leaves its new stars for the board.
-    @Test func aReportWithNewStarsLeavesThemForTheBoard() {
+    @Test func aReportWithNewStarsLeavesThemForTheBoard() throws {
         let manager = SceneManager()
 
-        manager.showReport(makeOneStarReport(previousBest: 0))
+        manager.showReport(try makeOneStarReport(previousBest: 0))
 
         #expect(manager.starDeliveries == [StarDelivery(levelID: "test", previousBest: 0, newBest: 1)])
     }
 
-    @Test func aReportWithNoNewStarsLeavesNothing() {
+    @Test func aReportWithNoNewStarsLeavesNothing() throws {
         let manager = SceneManager()
 
-        manager.showReport(makeOneStarReport(previousBest: 1))
+        manager.showReport(try makeOneStarReport(previousBest: 1))
 
         #expect(manager.starDeliveries.isEmpty)
     }
 
-    @Test func aLevelPlayedTwiceBeforeTheBoardKeepsOneDelivery() {
+    @Test func aLevelPlayedTwiceBeforeTheBoardKeepsOneDelivery() throws {
         let manager = SceneManager()
-        manager.showReport(makeOneStarReport(previousBest: 0))
+        manager.showReport(try makeOneStarReport(previousBest: 0))
 
-        manager.showReport(makeOneStarReport(previousBest: 0))
+        manager.showReport(try makeOneStarReport(previousBest: 0))
 
         #expect(manager.starDeliveries.count == 1)
     }
 
-    @Test func theBoardTakesOnlyItsOwnPlanetsStars() {
+    @Test func theBoardTakesOnlyItsOwnPlanetsStars() throws {
         let manager = SceneManager()
-        manager.showReport(makeOneStarReport(previousBest: 0))
+        manager.showReport(try makeOneStarReport(previousBest: 0))
 
         manager.markStarsDelivered(on: ["1-1", "1-2"])
         #expect(manager.starDeliveries.count == 1)
@@ -296,18 +296,19 @@ struct SceneManagerTests {
     }
 
     /// A day on the test level that served one order: one star.
-    private func makeOneStarReport(previousBest: Int) -> LevelReport {
+    private func makeOneStarReport(previousBest: Int) throws -> LevelReport {
         let day = makeDay()
         day.start()
         for frame in 0...5 { day.tick(at: Double(frame) * 0.2) }
-        _ = day.serve(KitchenMenu.pepperFlatbread, at: 0)
+        let seat = try #require(day.presentCustomers.first?.seat)
+        #expect(day.serve(KitchenMenu.pepperFlatbread, at: seat))
         return LevelReport(day: day, previousBestStars: previousBest)
     }
 
     private func makeReport(for level: LevelData) -> LevelReport {
         let day = KitchenDay(
             storyLevel: level,
-            positionTypes: KitchenLayout.positionTypes,
+            openSeats: KitchenLayout.openSeats(on: level),
             tools: KitchenTools(for: level, ownedPlates: 1, ownedGlasses: 1)
         )
         return LevelReport(day: day, previousBestStars: 0)

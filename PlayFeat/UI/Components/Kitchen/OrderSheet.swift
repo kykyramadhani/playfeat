@@ -3,8 +3,9 @@
 //  PlayFeat
 //  Created by kyky on 12/11/26.
 //
-//  A customer's speech bubble: what they want, and a patience bar that
-//  drains green to red while they wait.
+//  A customer's speech bubble: what they want, and a patience bar coloured
+//  by the same zones as the tip and the alien's face (green, yellow, red).
+//  Once served, a check mark shows on it until it goes.
 //
 
 import SwiftUI
@@ -13,25 +14,23 @@ struct OrderSheet: View {
     let dish: String
     /// 1 when the customer sits down, 0 when they leave.
     let patience: Double
+    /// The sheet stands left of its customer, so the tail points right.
+    var isMirrored = false
+    var isServed = false
     /// Upgraded ingredients, so the order shows the dish as it will be made.
     var upgraded: Set<String> = []
 
     private static let barWidth: CGFloat = 129
-    private var patienceColor: Color {
-        switch KitchenRules.PatienceZone(patienceLeft: patience) {
-        case .green: .patienceHigh
-        case .yellow: .starYellow
-        case .red: .patienceLow
-        }
-    }
+    private static let checkSize: CGFloat = 54
 
     var body: some View {
         ZStack {
-            // The bubble's tail points back up-left at the customer.
+            // The bubble's tail points back up at the customer.
             Image("OrderBubble")
                 .resizable()
                 .frame(width: 206.9, height: 165)
                 .rotationEffect(.degrees(172.74))
+                .scaleEffect(x: isMirrored ? -1 : 1, y: 1)
 
             VStack(spacing: 22) {
                 patienceBar
@@ -40,6 +39,9 @@ struct OrderSheet: View {
             .offset(y: 4)
         }
         .frame(width: 226, height: 190)
+        .overlay(alignment: .bottomTrailing) {
+            if isServed { servedCheck }
+        }
     }
 
     private var patienceBar: some View {
@@ -48,19 +50,42 @@ struct OrderSheet: View {
             .frame(width: Self.barWidth, height: 11)
             .overlay(alignment: .leading) {
                 Capsule()
-                    .fill(patienceColor)
+                    .fill(Self.barColor(for: KitchenRules.PatienceZone(patienceLeft: patience)))
                     .frame(width: Self.barWidth * patience)
             }
+    }
+
+    private static func barColor(for zone: KitchenRules.PatienceZone) -> Color {
+        switch zone {
+        case .green: .patienceHigh
+        case .yellow: .patienceMedium
+        case .red: .patienceLow
+        }
     }
 
     private var dishArt: some View {
         KitchenItemArt(item: dish, upgraded: upgraded)
             .frame(width: 106, height: 100)
     }
+
+    private var servedCheck: some View {
+        Image(systemName: "checkmark.circle.fill")
+            .resizable()
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(.white, Color.patienceHigh)
+            .frame(width: Self.checkSize, height: Self.checkSize)
+            .offset(x: -24, y: -26)
+            .transition(.scale.combined(with: .opacity))
+            .accessibilityHidden(true)
+    }
 }
 
 #Preview {
-    OrderSheet(dish: "pepperFlatbread", patience: 0.8)
-        .padding()
-        .background(Color.gray)
+    HStack {
+        OrderSheet(dish: "pepperFlatbread", patience: 0.8)
+        OrderSheet(dish: "pepperFlatbread", patience: 0.3, isMirrored: true)
+        OrderSheet(dish: "pepperFlatbread", patience: 0.1, isServed: true)
+    }
+    .padding()
+    .background(Color.gray)
 }

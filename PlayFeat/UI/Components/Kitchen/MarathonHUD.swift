@@ -60,7 +60,7 @@ private extension View {
 }
 
 #Preview {
-    MarathonHUD(session: MarathonSession(planet: .kepler186f, positionTypes: KitchenLayout.positionTypes))
+    MarathonHUD(session: MarathonSession(planet: .kepler186f, openSeats: Array(KitchenLayout.seats.indices)))
         .background(Color.gray)
         .designScaled()
 }

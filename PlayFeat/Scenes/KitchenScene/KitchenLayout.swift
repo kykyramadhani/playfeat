@@ -63,40 +63,46 @@ nonisolated extension KitchenLayout {
     /// the top of the screen down to the table's back edge.
     static let window = CGRect(x: 108, y: 0, width: 1151, height: 697)
 
-    /// How wide the counter glass's mug is drawn, without its handle; what's
-    /// put in the glass is drawn to match it.
-    static let glassMugWidth: CGFloat = 144
-
-    /// The three places a customer stands. The two regular seats are the
-    /// one leaning in from the left wall and the one hanging from the top
-    /// right; the angry customer hangs from the top left.
+    /// The places a customer can stand. The level opens its allowed edges,
+    /// and the counter picks a free seat at random.
     static let seats: [Seat] = [
-        Seat(customerType: .regular, entersFrom: .left,
-             alien: CGRect(x: 47, y: 248, width: 260, height: 297),
-             alienPose: AlienPose(center: CGPoint(x: 166, y: 420), isMirrored: true, turnDegrees: 0),
-             orderSheet: CGRect(x: 262, y: 290, width: 226, height: 190)),
-        Seat(customerType: .regular, entersFrom: .top,
-             alien: CGRect(x: 756, y: 0, width: 259, height: 255),
-             alienPose: AlienPose(center: CGPoint(x: 936, y: 93), isMirrored: false, turnDegrees: -95),
-             orderSheet: CGRect(x: 1000, y: 120, width: 226, height: 190)),
-        Seat(customerType: .angry, entersFrom: .top,
-             alien: CGRect(x: 287, y: 0, width: 224, height: 280),
-             alienPose: AlienPose(center: CGPoint(x: 392, y: 65), isMirrored: true, turnDegrees: 105),
-             orderSheet: CGRect(x: 490, y: 90, width: 226, height: 190)),
+        Seat(entersFrom: .left,
+             alien: CGRect(x: 108, y: 230, width: 206, height: 367),
+             alienPose: AlienPose(center: CGPoint(x: 144, y: 483), isMirrored: true, turnDegrees: -20),
+             orderSheet: CGRect(x: 295, y: 330, width: 226, height: 190), orderSheetPointsRight: false),
+        Seat(entersFrom: .top,
+             alien: CGRect(x: 634, y: 0, width: 315, height: 271),
+             alienPose: AlienPose(center: CGPoint(x: 734, y: 33), isMirrored: true, turnDegrees: 90),
+             orderSheet: CGRect(x: 530, y: 110, width: 226, height: 190), orderSheetPointsRight: true),
+        Seat(entersFrom: .top,
+             alien: CGRect(x: 311, y: 0, width: 299, height: 265),
+             alienPose: AlienPose(center: CGPoint(x: 526, y: 28), isMirrored: false, turnDegrees: -90),
+             orderSheet: CGRect(x: 115, y: 60, width: 226, height: 190), orderSheetPointsRight: true),
+        // The left seat mirrored onto the right wall.
+        Seat(entersFrom: .right,
+             alien: CGRect(x: 1051, y: 230, width: 208, height: 369),
+             alienPose: AlienPose(center: CGPoint(x: 1222, y: 483), isMirrored: false, turnDegrees: 20),
+             orderSheet: CGRect(x: 840, y: 330, width: 226, height: 190), orderSheetPointsRight: true),
     ]
 
-    struct Seat {
-        enum Side { case left, top }
+    /// The seats customers may take on `level`: those on the edges it
+    /// lists, or all of them.
+    static func openSeats(on level: LevelData) -> [Int] {
+        let sides = Set(level.refill?.customerSides ?? CustomerSide.allCases)
+        return seats.indices.filter { sides.contains(seats[$0].entersFrom) }
+    }
 
-        /// Who sits here: an angry customer only ever takes the top-left seat.
-        let customerType: CustomerType
-        /// The screen edge the alien slides in from, and back out to.
-        let entersFrom: Side
+    struct Seat {
+        /// The screen edge the alien leans in from, slides in from, and
+        /// slides back out to.
+        let entersFrom: CustomerSide
         /// Where the alien's head and shoulders show: half of where a dish
         /// can be handed over.
         let alien: CGRect
         let alienPose: AlienPose
         let orderSheet: CGRect
+        /// The order sheet stands left of the alien, so its tail points right.
+        let orderSheetPointsRight: Bool
 
         /// Where a dish is handed over: one invisible box around the alien
         /// and its order sheet, so the player only has to get the dish near
@@ -112,21 +118,21 @@ nonisolated extension KitchenLayout {
                 turnDegrees: alienPose.turnDegrees
             )
             return Seat(
-                customerType: customerType,
                 entersFrom: entersFrom,
                 alien: alien.offsetBy(dx: distance, dy: 0),
                 alienPose: pose,
-                orderSheet: orderSheet.offsetBy(dx: distance, dy: 0)
+                orderSheet: orderSheet.offsetBy(dx: distance, dy: 0),
+                orderSheetPointsRight: orderSheetPointsRight
             )
         }
     }
 
     /// How a seat's alien is drawn. Every alien picture is in one pose,
-    /// head at the top left and body trailing down to the right, on the
-    /// same canvas with its three moods lined up, so only the face changes
-    /// with the mood. The picture is mirrored, then turned about its centre
-    /// so the body reaches back to the wall or the ceiling, and centred on
-    /// `center`.
+    /// head at the top left and body reaching right to a cut end at the
+    /// canvas's right edge, with its three moods lined up on the body, so
+    /// only the face changes with the mood. The picture is mirrored, then
+    /// turned about its centre so that cut end sits past the wall or the
+    /// ceiling, and centred on `center`.
     struct AlienPose {
         let center: CGPoint
         let isMirrored: Bool
@@ -147,15 +153,11 @@ nonisolated extension KitchenLayout {
     }
 
     /// The canvas every alien picture is drawn on, in art points.
-    static let alienCanvas = CGSize(width: 357, height: 455)
+    static let alienCanvas = CGSize(width: 475, height: 432)
 
     /// How far outside a customer's serve area a carried dish they ordered
     /// is pulled in, as if by a magnet.
     static let serveMagnetReach: CGFloat = 60
-
-    /// Who each counter position takes: the regular aliens' first, then the
-    /// angry alien's. How many stand there at once is the level's call.
-    static let positionTypes: [CustomerType] = seats.map(\.customerType)
 }
 
 extension CGRect {
@@ -232,6 +234,7 @@ nonisolated extension KitchenLayout {
         return switch seat.entersFrom {
         case .left: CGSize(width: -drawn.maxX, height: 0)
         case .top: CGSize(width: 0, height: -drawn.maxY)
+        case .right: CGSize(width: artSize.width - drawn.minX, height: 0)
         }
     }
 }

@@ -55,7 +55,8 @@ final class MarathonSession {
 
     private(set) var round = 1
     private(set) var breaksTaken = 0
-    private(set) var owned: Set<MarathonCard> = []
+    /// The cards bought, in the order they were bought.
+    private(set) var bought: [MarathonCard] = []
     /// The cards on offer at the current break.
     private(set) var offer: [MarathonCard] = []
     private(set) var boughtThisBreak: MarathonCard?
@@ -67,13 +68,13 @@ final class MarathonSession {
 
     init(
         planet: Planet,
-        positionTypes: [CustomerType],
+        openSeats: [Int],
         random: any RandomNumberGenerator = SystemRandomNumberGenerator()
     ) {
         self.planet = planet
         day = KitchenDay(
             level: Self.level(on: planet), flow: MarathonFlow(plan: planet.buffet, random: random),
-            positionTypes: positionTypes, tools: KitchenTools(plates: 1, glasses: 0)
+            openSeats: openSeats, tools: KitchenTools(plates: 1, glasses: 0), random: random
         )
         day.roundEndsAt = Self.roundSec
     }
@@ -93,6 +94,8 @@ final class MarathonSession {
     var averageDishesPerRound: Int { dishesServed / max(round, 1) }
     /// Customers who gave up; `MarathonFlow.lostCustomersToEnd` of them end the run.
     var lostCustomers: Int { day.ordersMissed }
+
+    var owned: Set<MarathonCard> { Set(bought) }
 
     // MARK: - Breaks
 
@@ -119,7 +122,7 @@ final class MarathonSession {
         guard boughtThisBreak == nil else { throw .onePerBreak }
         guard coins >= card.price else { throw .notEnoughCoins(have: coins, price: card.price) }
         coinsSpent += card.price
-        owned.insert(card)
+        bought.append(card)
         boughtThisBreak = card
         apply(card.effect)
     }

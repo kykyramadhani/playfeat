@@ -67,7 +67,7 @@ struct KitchenView: View {
         
         let day = sceneManager.marathon?.day ?? KitchenDay(
             storyLevel: level,
-            positionTypes: KitchenLayout.positionTypes,
+            openSeats: KitchenLayout.openSeats(on: level),
             pricing: GameStorage.dishPricing,
             tools: KitchenTools(
                 for: level,
@@ -378,7 +378,12 @@ struct KitchenView: View {
         case .upgrades:
             RoundCompleteOverlay(session: marathon, onContinue: endBreak(buying:))
         case .report:
-            MarathonReportView(isNewBest: marathonNewBest, session: marathon, onNext: sceneManager.goToPlanetSelect)
+            MarathonReportView(
+                isNewBest: marathonNewBest,
+                session: marathon,
+                onBack: sceneManager.goToMarathon,
+                onRestart: restartDay
+            )
         }
     }
 

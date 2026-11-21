@@ -174,6 +174,13 @@ struct ArtAssetTests {
         #expect(sizes.count == 1, "galaxy planet canvases differ: \(sizes)")
     }
 
+    /// Every picture of a filled glass shares one canvas centred on the
+    /// counter glass, so it lies exactly over the empty glass it stands on.
+    @Test func everyFilledGlassSharesTheCounterGlassCanvas() {
+        let sizes = Set(KitchenArt.glassStateImages.compactMap { UIImage(named: $0)?.size }.map { "\($0)" })
+        #expect(sizes.count == 1)
+    }
+
     /// The source art sits on 1920×1080 canvases with the subject filling as
     /// little as 28% of the width. If trimming regresses, every bubble silently
     /// renders a fraction of its intended size.

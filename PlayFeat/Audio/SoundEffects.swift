@@ -41,8 +41,7 @@ enum SoundEffect: String, CaseIterable {
     case dayEnd = "sfx_day_end"
     /// Despite the filename, this belongs to the STORY level report only.
     case storyReport = "sfx_round_over"
-    /// TODO(audio): Add the distinct sfx_run_over.wav (or .mp3) for Buffet's
-    /// final report. Until supplied, use lose_heart; never use sfx_round_over.
+    /// Plays when the Buffet final report appears.
     case runOver = "sfx_run_over"
     case star1 = "sfx_star_1"
     case star2 = "sfx_star_2"
@@ -56,15 +55,9 @@ enum SoundEffect: String, CaseIterable {
     case unlock = "sfx_unlock"
     case bestScore = "sfx_best_score"
 
-    var resourceNames: [String] {
-        self == .runOver ? [rawValue, SoundEffect.loseHeart.rawValue] : [rawValue]
-    }
-
     func resourceURL(in bundle: Bundle = .main) -> URL? {
-        for name in resourceNames {
-            for ext in ["wav", "mp3", "m4a", "caf"] {
-                if let url = bundle.url(forResource: name, withExtension: ext) { return url }
-            }
+        for ext in ["wav", "mp3", "m4a", "caf"] {
+            if let url = bundle.url(forResource: rawValue, withExtension: ext) { return url }
         }
         return nil
     }

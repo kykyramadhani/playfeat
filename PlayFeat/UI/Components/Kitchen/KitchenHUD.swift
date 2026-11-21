@@ -127,7 +127,7 @@ private struct HUDPlaque<Icon: View, Value: View>: View {
     return Group {
         if let level {
             KitchenHUD(day: KitchenDay(
-                storyLevel: level, positionTypes: KitchenLayout.positionTypes,
+                storyLevel: level, openSeats: KitchenLayout.openSeats(on: level),
                 tools: KitchenTools(plates: 1, glasses: 0)
             ))
             .background(Color.gray)
