@@ -50,18 +50,22 @@ struct GameStorage {
 
     /// Recipe-book unlocks and other story introductions already seen.
     static var seenIntroductions: Set<String> {
-        Set(UserDefaults.standard.stringArray(forKey: seenIntroductionsKey) ?? [])
+        seenIntroductions(in: .standard)
     }
 
-    static func markIntroductionSeen(_ id: String) {
-        markIntroductionsSeen([id])
+    static func seenIntroductions(in defaults: UserDefaults) -> Set<String> {
+        Set(defaults.stringArray(forKey: seenIntroductionsKey) ?? [])
     }
 
-    static func markIntroductionsSeen(_ ids: [String]) {
-        let previous = seenIntroductions
+    static func markIntroductionSeen(_ id: String, in defaults: UserDefaults = .standard) {
+        markIntroductionsSeen([id], in: defaults)
+    }
+
+    static func markIntroductionsSeen(_ ids: [String], in defaults: UserDefaults = .standard) {
+        let previous = seenIntroductions(in: defaults)
         let updated = previous.union(ids)
         guard updated != previous else { return }
-        UserDefaults.standard.set(updated.sorted(), forKey: seenIntroductionsKey)
+        defaults.set(updated.sorted(), forKey: seenIntroductionsKey)
     }
 
     // MARK: - Kitchen shop

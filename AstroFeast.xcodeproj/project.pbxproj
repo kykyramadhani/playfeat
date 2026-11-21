@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2D3CD0ED303BFDFC00CD8441 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 2D3CD0EC303BFDFC00CD8441 /* Localizable.xcstrings */; };
 		2DED2DC1303EC0AF00F0AA36 /* GameCenterResources.gamekit in Resources */ = {isa = PBXBuildFile; fileRef = 2DED2DC0303EC0AF00F0AA36 /* GameCenterResources.gamekit */; };
+		4C0771E0A000000000000001 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 4C0771E0A000000000000002 /* Lottie */; };
 		E046096E3074D01B00E30C96 /* Functionality.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = E046096D3074D01B00E30C96 /* Functionality.xctestplan */; };
 /* End PBXBuildFile section */
 
@@ -74,6 +75,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C0771E0A000000000000001 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -145,6 +147,7 @@
 			);
 			name = PlayFeat;
 			packageProductDependencies = (
+				4C0771E0A000000000000002 /* Lottie */,
 			);
 			productName = AstroFeast;
 			productReference = 2DD7B437302B444200DC904E /* AstroFeast.app */;
@@ -227,6 +230,9 @@
 			);
 			mainGroup = 2DD7B42E302B444200DC904E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4C0771E0A000000000000003 /* XCRemoteSwiftPackageReference "lottie-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2DD7B438302B444200DC904E /* Products */;
 			projectDirPath = "";
@@ -665,6 +671,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4C0771E0A000000000000003 /* XCRemoteSwiftPackageReference "lottie-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4C0771E0A000000000000002 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4C0771E0A000000000000003 /* XCRemoteSwiftPackageReference "lottie-spm" */;
+			productName = Lottie;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2DD7B42F302B444200DC904E /* Project object */;
 }

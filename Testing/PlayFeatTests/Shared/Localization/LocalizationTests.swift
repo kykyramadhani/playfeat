@@ -168,13 +168,15 @@ struct LocalizationTests {
             "Congratulations!!", "You’ve unlocked a new planet", "Proceed to Planet",
             // Level board, shop, marathon warning
             "Back to Galaxy", "Ingredients", "Tools",
+            // Intro story
+            "Skip Story", "Tap anywhere to continue", "Tap anywhere to start",
             "Marathon is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go.",
         ]
 
         defer { AppLocalization.apply(.english) }
         AppLocalization.apply(.indonesia)
 
-        for key in keys {
+        for key in keys + IntroStoryPanel.all.map(\.caption) {
             let indonesian = AppLocalization.string(key)
             let english = String(localized: key)
             #expect(indonesian != english, "\"\(english)\" has no Indonesian translation")
