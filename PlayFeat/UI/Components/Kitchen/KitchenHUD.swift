@@ -66,9 +66,10 @@ struct KitchenHUD: View {
     }
 
     /// Changes each second while the round is ending, so the clock shakes
-    /// on every one, and once more as it reaches zero.
-    private var clockBeat: Int {
-        isRoundEnding ? Int(day.timeLeft.rounded(.up)) : 0
+    /// on every one. Nil once time is up: a last shake would start just as
+    /// the round freezes for the break and leave the clock tilted.
+    private var clockBeat: Int? {
+        isRoundEnding ? Int(day.timeLeft.rounded(.up)) : nil
     }
 
     /// "150 +12": the points (or marathon coins) with the tips (or the last
