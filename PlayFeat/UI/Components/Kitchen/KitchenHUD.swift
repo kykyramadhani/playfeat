@@ -46,7 +46,7 @@ struct KitchenHUD: View {
             } value: {
                 coins
             }
-            .accessibilityLabel(marathonCoins == nil ? Text("Coins") : Text("Marathon Coins"))
+            .accessibilityLabel(marathonCoins == nil ? Text("Coins") : Text("Buffet Coins"))
         }
         .tracking(0.64)
         .foregroundStyle(Color.purple900)

@@ -56,7 +56,7 @@ struct MarathonModeButton: View {
     }
 
     private var label: some View {
-        Text("Marathon Mode")
+        Text("Buffet Mode")
             .font(.atkinson(size: 20, weight: .bold))
             .tracking(0.4)
             .textCase(.uppercase)
@@ -68,7 +68,7 @@ struct MarathonModeButton: View {
     }
 
     private var accessibilityText: Text {
-        isUnlocked ? Text("Marathon Mode") : Text("Marathon Mode, locked")
+        isUnlocked ? Text("Buffet Mode") : Text("Buffet Mode, locked")
     }
 }
 

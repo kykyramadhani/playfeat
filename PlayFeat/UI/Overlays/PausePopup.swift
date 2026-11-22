@@ -17,7 +17,7 @@ struct PausePopup: View {
         let restart: LocalizedStringKey
 
         static let level = Labels(title: "Game Pause", resume: "Resume Level", restart: "Retry Level")
-        static let marathon = Labels(title: "Round Pause", resume: "Resume", restart: "Restart Marathon")
+        static let marathon = Labels(title: "Round Pause", resume: "Resume", restart: "Restart Buffet")
     }
 
     let labels: Labels
