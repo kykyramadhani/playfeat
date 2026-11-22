@@ -3,28 +3,29 @@
 //  PlayFeat
 //  Created by Owen Limantoro on 21/11/26.
 //
-//  A planet's landed spaceship on its level board. Tapping it drops the
-//  hatch open on its chains to show the chef inside; tapping again
-//  closes it.
+//  A planet's landed spaceship on its level board. It stays shut until the
+//  planet's first level is cleared, then drops the hatch open on its chains
+//  to show the chef inside.
 //
 
 import SwiftUI
 
 struct LandedShip: View {
     let planet: Planet.ID
-    @Binding var isOpen: Bool
+    let isOpen: Bool
 
+    @Environment(AudioManager.self) private var audio
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The box the closed ship is fitted into on the board, in design points.
     static let size = CGSize(width: 764, height: 674)
 
     var body: some View {
-        ClickButton(action: { isOpen.toggle() }, sound: isOpen ? .uiClick : .openShip) {
-            shipArt
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(isOpen ? Text("Close the spaceship") : Text("Open the spaceship"))
+        shipArt
+            .accessibilityHidden(true)
+            .onChange(of: isOpen) { _, isNowOpen in
+                if isNowOpen { audio.play(.openShip) }
+            }
     }
 
     private var shipArt: some View {
@@ -75,10 +76,9 @@ struct LandedShip: View {
 }
 
 #Preview {
-    @Previewable @State var isOpen = false
     HStack {
-        LandedShip(planet: .kepler186f, isOpen: $isOpen)
-        LandedShip(planet: .k2332b, isOpen: $isOpen)
+        LandedShip(planet: .kepler186f, isOpen: true)
+        LandedShip(planet: .k2332b, isOpen: false)
     }
     .scaleEffect(0.5)
     .environment(AudioManager())

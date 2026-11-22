@@ -5,7 +5,7 @@
 //
 //  Which of a planet's levels the player may open, from their best stars.
 //  A level opens once the one before it earned at least one star, and the
-//  marathon opens once the first level has. Stars fuel the spaceship: it
+//  marathon and the landed ship's hatch open once the first level has. Stars fuel the spaceship: it
 //  flies on with 15 of them and every level played.
 //
 
@@ -17,9 +17,11 @@ nonisolated struct PlanetProgress: Equatable {
         index == 0 || bestStars[index - 1] > 0
     }
 
-    var isMarathonUnlocked: Bool {
+    var hasClearedFirstLevel: Bool {
         bestStars.first.map { $0 > 0 } ?? false
     }
+
+    var isMarathonUnlocked: Bool { hasClearedFirstLevel }
 
     /// Every level has a star. Until then the marathon may spoil what's ahead.
     var isPlanetComplete: Bool {

@@ -31,7 +31,6 @@ struct PlanetSelectView: View {
     @State private var showRecipeBook = false
     @State private var showSpoilerWarning = false
     @State private var showShop = false
-    @State private var isShipOpen = false
     @State private var notice: PlanetNotice?
     /// Built once, when the board opens, from the stars days left for it.
     @State private var starFlights: FuelFlightPlan
@@ -110,9 +109,10 @@ struct PlanetSelectView: View {
 
     // MARK: - Left side
 
-    /// Each planet's landed ship, with its fuel gauge on the side panel.
+    /// Each planet's landed ship, with its fuel gauge on the side panel. It
+    /// follows `fuel`, so a first star opens the hatch as it lands.
     private var spaceship: some View {
-        LandedShip(planet: planet.id, isOpen: $isShipOpen)
+        LandedShip(planet: planet.id, isOpen: fuel.hasClearedFirstLevel)
             .overlay(alignment: .topLeading) {
                 ClickButton(action: { notice = .gas }) {
                     FuelGauge(filledBars: fuel.fuelBars(outOf: FuelGauge.barCount))

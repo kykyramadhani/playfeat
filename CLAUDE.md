@@ -15,7 +15,7 @@ input is needed during play.
 | Platform | Status |
 |---|---|
 | iPadOS | **Published** — the only shipping target right now |
-| iOS (iPhone) | Planned. Layouts already scale, but it isn't released or fully tested |
+| iOS (iPhone) | Planned. Taken out of the app target (`TARGETED_DEVICE_FAMILY = "2,6"`) until it is tested; layouts already scale |
 | macOS | Planned. Some Mac code paths exist (`ProcessInfo.isiOSAppOnMac`), not shipped |
 
 - **Minimum OS: iOS / iPadOS 17.0.** Don't use APIs newer than 17 without an
