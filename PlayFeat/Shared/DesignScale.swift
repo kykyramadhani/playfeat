@@ -2,8 +2,8 @@
 //  DesignScale.swift
 //  GetCooking
 //
-//  Every screen in this app was drawn against one canvas — the same
-//  1366×1024 iPad page `TutorialView` measures its artwork in — and the point
+//  Every screen in this app was drawn against one canvas — a 1366×1024
+//  iPad page — and the point
 //  values scattered through the views (a 52pt coin, 36pt padding, a 44pt
 //  score) are all sized for it. Only a 13" iPad actually *is* that canvas:
 //  an iPad mini (1133×744) is under three quarters of it and a phone roughly
@@ -11,10 +11,10 @@
 //
 //  So rather than re-tune a hundred numbers per device, a screen lays itself
 //  out on the canvas it was designed for and the whole thing is scaled down to
-//  fit. Same layout, same proportions, just smaller — which is also why the
-//  fraction-of-the-screen layouts (GameOpening and friends) come out
-//  bit-identical: a fraction of a canvas that is 1/s the screen, scaled by s,
-//  is the same fraction of the screen it always was.
+//  fit. Same layout, same proportions, just smaller — which is also why
+//  fraction-of-the-screen layouts come out bit-identical: a fraction of a
+//  canvas that is 1/s the screen, scaled by s, is the same fraction of the
+//  screen it always was.
 //
 
 import SwiftUI
@@ -123,7 +123,7 @@ private struct HostedContent<Content: View>: UIViewControllerRepresentable {
 
 enum DesignCanvas {
     /// The page size the art and every hardcoded point value assume.
-    static let size = TutorialView.pageSize
+    static let size = CGSize(width: 1366, height: 1024)
 
     /// The width `available` would have if it were the canvas's shape.
     ///
@@ -219,8 +219,6 @@ struct DesignCanvasDebugBadge: View {
 ///                                 whatever screen it is really on
 ///     -debugRotateAfter 8         swap that size's width and height after
 ///                                 8s, to exercise a mid-game rotation
-///     -debugGameplay YES          skip onboarding, tutorial and seat check
-///                                 and open straight onto the board
 ///     -debugSkipSeatCheck YES     open a planet kitchen without the seat
 ///                                 check (the Simulator has no camera)
 ///     -debugLandscape YES         turn a phone to landscape at launch, for
@@ -240,10 +238,6 @@ enum DebugLaunch {
     static var rotateAfter: TimeInterval? {
         let delay = UserDefaults.standard.double(forKey: "debugRotateAfter")
         return delay > 0 ? delay : nil
-    }
-
-    static var skipToGameplay: Bool {
-        UserDefaults.standard.bool(forKey: "debugGameplay")
     }
 
     static var skipSeatCheck: Bool {

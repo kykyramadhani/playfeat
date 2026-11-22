@@ -146,7 +146,7 @@ final class KitchenBubbleNode: SKNode {
             food.addChild(wholeStationSprite(name, artPointsPerPixel: artPointsPerPixel))
         } else if let texture = TrimmedArt.texture(named: name) {
             let sprite = SKSpriteNode(texture: texture)
-            sprite.size = IngredientNode.aspectFit(texture.size(), into: radius * 2 * Self.foodFill)
+            sprite.size = Self.aspectFit(texture.size(), into: radius * 2 * Self.foodFill)
             if placement != nil, let interior {
                 food.addChild(sittingInside(interior, sprite))
             } else {
@@ -203,6 +203,17 @@ final class KitchenBubbleNode: SKNode {
             height: texture.size().height * artPointsPerPixel * scenePerArtPoint
         )
         return sprite
+    }
+
+    /// Scales `size` so its longest edge is `maxDimension`, preserving the
+    /// aspect ratio. Squashing art into a square would turn the bubble into
+    /// an ellipse.
+    private static func aspectFit(_ size: CGSize, into maxDimension: CGFloat) -> CGSize {
+        guard size.width > 0, size.height > 0 else {
+            return CGSize(width: maxDimension, height: maxDimension)
+        }
+        let scale = maxDimension / max(size.width, size.height)
+        return CGSize(width: size.width * scale, height: size.height * scale)
     }
 
     // MARK: - Warning

@@ -178,7 +178,7 @@ final class HandPoseManager {
     /// A hand's cursor in view space (**origin top-left, y-down**).
     ///
     /// SpriteKit scenes use the opposite (bottom-left, y-up) convention, so
-    /// `GameScene` must run this through `convertPoint(fromView:)` rather
+    /// `KitchenScene` must run this through `convertPoint(fromView:)` rather
     /// than assigning the result to a node position directly.
     func cursor(for hand: HandData, in size: CGSize) -> CGPoint {
         mapping.viewPoint(hand.cursorPosition, in: size)

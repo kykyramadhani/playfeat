@@ -51,7 +51,7 @@ struct LocalizationTests {
     /// The actual switch: after applying Indonesian, a known catalog string
     /// has to come back translated rather than in English.
     @Test func applyingALanguageChangesWhatStringsResolveTo() {
-        let key: String.LocalizationValue = "All set! Delivered lots of dishes and stay active!"
+        let key: String.LocalizationValue = "Skip Story"
         defer { AppLocalization.apply(.english) }
 
         AppLocalization.apply(.indonesia)
@@ -61,26 +61,27 @@ struct LocalizationTests {
         let english = AppLocalization.string(key)
 
         #expect(indonesian != english, "the bundle redirect is not taking effect")
-        #expect(indonesian == "Semuanya siap! Sajikan banyak hidangan dan tetaplah aktif!")
+        #expect(indonesian == "Lewati Cerita")
     }
 
-    /// The tutorial reads its copy outside the view tree, so it has to follow
-    /// the picker too — this is the path that would otherwise stay English.
-    @Test func tutorialCopyFollowsTheChosenLanguage() throws {
+    /// The intro story reads its captions outside the view tree, so they have
+    /// to follow the picker too — this is the path that would otherwise stay
+    /// English.
+    @Test func introStoryCaptionsFollowTheChosenLanguage() throws {
         defer { AppLocalization.apply(.english) }
-        let page = try #require(TutorialPage.all.first { $0.id == "11" })
+        let caption = try #require(IntroStoryPanel.all.first).caption
 
         AppLocalization.apply(.indonesia)
-        let indonesian = try #require(page.localizedMessage)
+        let indonesian = AppLocalization.string(caption)
 
         AppLocalization.apply(.english)
-        let english = try #require(page.localizedMessage)
+        let english = AppLocalization.string(caption)
 
         #expect(indonesian != english)
     }
 
     /// Every screen the player reported as still-English: the settings
-    /// sheet, the seat check, and the post-game paycheck and buttons. Each of
+    /// sheet, the seat check, the planet board and the kitchen. Each of
     /// these keys existed in the catalog (Xcode's extractor found the
     /// literal) but had never actually been given an Indonesian value — the
     /// bundle redirect had nothing to redirect *to*, so it silently fell back
@@ -96,10 +97,7 @@ struct LocalizationTests {
             "Adjust your seat to fit in the frame",
             "Adjust your seat and raise your left hand",
             "Adjust your seat and raise your right hand",
-            // Post-game paycheck and buttons
-            "Speed Bonus", "Dishes Served", "Play Again", "Shop", "Main Menu",
-            // Main menu
-            "Most Dishes Served",
+            "Dishes Served", "Shop",
             // Launch screen and planet board
             "Start", "Marathon Mode", "Energy", "Coins", "Fuel", "Settings", "Help",
             "Recipe Book", "Galaxy Map",

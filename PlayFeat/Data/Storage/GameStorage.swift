@@ -9,8 +9,8 @@ import Foundation
 
 struct GameStorage {
     static let coinKey = "coins"
-    static let scoreKey = "highscore"
-    
+
+
     static var coins: Int {
         get {
             UserDefaults.standard.integer(forKey: self.coinKey)
@@ -20,15 +20,6 @@ struct GameStorage {
         }
     }
     
-    static var highscore: Int {
-        get {
-            UserDefaults.standard.integer(forKey: self.scoreKey)
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: self.scoreKey)
-        }
-    }
-
     nonisolated static func bestStarsKey(forLevel levelID: String) -> String { "bestStars_\(levelID)" }
 
     /// A planet's progress from the best stars saved for its levels.
@@ -126,22 +117,12 @@ struct GameStorage {
         defaults.integer(forKey: marathonBestKey(on: planet))
     }
 
-    /// Buffet records are points per planet; classic records are dishes served.
+    /// Keeps the higher of `score` and the planet's best Buffet points.
+    /// - Returns: whether `score` is a new best.
     @discardableResult
     static func recordMarathon(score: Int, on planet: Planet.ID, in defaults: UserDefaults = .standard) -> Bool {
         guard score > bestMarathonScore(on: planet, in: defaults) else { return false }
         defaults.set(score, forKey: marathonBestKey(on: planet))
         return true
-    }
-
-    /// Banks a finished run: its coins, and its dish count if that beats the
-    /// best so far.
-    static func record(_ result: GameResult) {
-        coins += result.totalCoins
-        // Checked before the write, so it compares against the *previous*
-        // best rather than the value about to be stored.
-        if result.newHighScore {
-            highscore = result.totalDishesServed
-        }
     }
 }

@@ -6,13 +6,13 @@
 //  them from the camera; tests (and later the Simulator) can script them
 //  instead, so gameplay runs without a camera.
 //
-//  Kept to what `GameScene` reads. Camera control (`start`/`stop`), permission
+//  Kept to what `KitchenScene` reads. Camera control (`start`/`stop`), permission
 //  and the body pose stay on `HandPoseManager` for the views that need them.
 //
 
 import CoreGraphics
 
-/// Class-bound so `GameScene` can hold it `weak`, like its other dependencies.
+/// Class-bound so `KitchenScene` can hold it `weak`, like its other dependencies.
 protocol HandInputSource: AnyObject {
     /// Every hand tracked this frame.
     var hands: [HandData] { get }

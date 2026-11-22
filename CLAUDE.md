@@ -4,10 +4,11 @@ A hand-tracking cooking game made with and for the community at PUSPADI
 (Pusat Pemberdayaan Penyandang Disabilitas), Bali — Apple Developer Academy
 Challenge 5 & Final Challenge.
 
-The front camera fills the screen and Vision tracks the player's hands and
-upper body. Players pinch floating ingredient bubbles, drag them onto a plate
-to match the recipe, then carry the finished dish to the bell. No touch input
-is needed during play.
+The front camera and Vision track the player's hands and upper body; the
+hands are drawn as cartoon hands over an illustrated planet kitchen. Players
+pinch floating ingredient bubbles, cook and assemble dishes at the counter,
+and serve them to alien customers before their patience runs out. No touch
+input is needed during play.
 
 ## Platforms
 
@@ -29,13 +30,13 @@ is needed during play.
   torso stay in frame.
 - **Vision** — `VNDetectHumanHandPoseRequest` (hands) and
   `VNDetectHumanBodyPoseRequest` (finds the nearest player, ignores bystanders).
-- **SpriteKit** — the transparent game board drawn over the camera feed.
+- **SpriteKit** — the kitchen board (`KitchenScene`): bubbles, hands, stations.
 - **SwiftUI** — every screen, overlay and HUD element.
-- **Game Center** — sign-in and the "Most Dishes Served" leaderboard
-  (`com.apple.developer.game-center` entitlement). Always optional: the game
-  works fully offline or signed out.
-- **SwiftData + UserDefaults** — inventory (SwiftData); coins, high score and
-  settings (UserDefaults / `@AppStorage`).
+- **Game Center** — sign-in, one Buffet leaderboard per planet and the story
+  achievements (`com.apple.developer.game-center` entitlement). Always
+  optional: the game works fully offline or signed out.
+- **UserDefaults** — coins, stars, energy, upgrades, seen introductions and
+  settings (`GameStorage`, `EnergyStore`, `@AppStorage`).
 - **AVAudio** — music and sound effects.
 - **Accessibility** — Atkinson Hyperlegible font, one-hand mode in Settings.
 
@@ -47,93 +48,76 @@ they can be translated. Ask before adding any other package.
 ### Game flow
 
 ```
-Launch screen → Splash → Onboarding (first launch only) → Game Opening (main menu)
-                                              │ Tap to Play
+Launch screen → LaunchView (loading bar)
+      │ first launch after install only
+      ▼
+Intro story (six Lottie comic panels) ──▶ Galaxy map
+                                              │ a planet
                                               ▼
-                     Tutorial (until finished or skipped)
+                                  Planet level board ──▶ Buffet screen (marathon)
+                                              │ a level         │ PLAY
+                                              ▼                 ▼
+               Kitchen: seat check → 3-2-1 → story day / Buffet run
                                               ▼
-                     Seat calibration (head, shoulders and hands inside the guide box)
-                                              ▼
-                     3-2-1-GO! countdown → Gameplay
-                                              ▼ last life lost
-                     Game Over → Post Game (paycheck: dishes, speed bonus, coins)
-                                              │ Play Again / Home
-                                              ▼
-                     Gameplay again or Game Opening
+                     Report over the frozen kitchen → NEXT / RETRY / board
 ```
 
-- `SceneManager` (App/) holds the current `AppScreen` (`mainMenu`, `shop`,
-  `gameplay`, `postGame(GameResult)`); `ContentView` switches on it. There is
-  no `NavigationStack`: no screen has a back button, and every exit jumps to a
-  known screen. Tutorial, calibration and countdown are *phases inside*
-  `GameplayView`, not separate screens. That keeps the camera mounted across
-  the handover.
-- Each run creates a fresh `GameStateManager`, so Play Again always starts clean.
-- The Shop exists but is "coming soon".
+- `SceneManager` (App/) holds the current `AppScreen` (`introStory`, `galaxy`,
+  `planetSelect`, `marathon`, `kitchen(LevelData)`, `kitchenHandover`);
+  `ContentView` switches on it. There is no `NavigationStack`: every exit
+  jumps to a known screen. The seat check, countdown and report are *phases
+  inside* `KitchenView`, not separate screens.
+- NEXT / RETRY / RESTART go through `kitchenHandover`, so the old kitchen is
+  torn down before a fresh one is built.
+- Starting a story level spends energy (`EnergyStore`).
 
-### One round
+### A story day and a Buffet run
 
-1. A recipe card shows the dish and its ingredients, and the dish clock starts.
-2. The player **pinches** (thumb and index finger) an ingredient bubble, drags
-   it, and opens their fingers to drop it on the plate. Wrong ingredients count
-   as decoys.
-3. Holding a hand over the reset button empties the plate (dwell/hover gesture).
-4. When the plate matches the recipe, the finished dish appears and the
-   **bell rings on the left or right**. The player carries the plate to that side.
-5. A served dish adds to the score and banks leftover clock time as a speed
-   bonus. A dish that runs out of time **costs one life** and deals a new recipe.
-6. Difficulty ramps every 5 served dishes. The run ends when lives reach 0.
-   There is no overall timer; elapsed time counts up.
-
-### Game state (`GameStateManager`, Game/)
-
-```
-idle ──start()──▶ cooking ──plate matches──▶ dishComplete ──bell rings──▶ waitingToServe
-                    ▲                                                        │
-                    └──────────────── plate carried to the bell ─────────────┘
-
-dish clock runs out → lose a life, new recipe (resetToken)
-lives reach 0       → gameOver ──restart()──▶ cooking
-```
-
-`resetToken`, `discardToken` and `runToken` are counters that tell the scene
-and UI about events that don't change `state`. Read the doc comments in
-`GameStateManager` before touching them.
+- **Story day** (`KitchenDay` + `RefillFlow`, Game/Level/): a 90-second day.
+  Alien customers step up to the counter with an order; the player cooks and
+  assembles it from bubbles and serves it over the customer. Patience zones
+  set the tip; a customer who runs out of patience leaves. New customers stop
+  10 s before the end, and whoever is still waiting can be served in overtime.
+  Stars come from the day's points.
+- **Buffet** (`MarathonSession` + `MarathonFlow`, Game/Marathon/): one
+  continuous day of rounds with card breaks between them; three lost
+  customers end it. Each planet's best points go to its Game Center
+  leaderboard.
 
 ## Architecture
 
-Three layers, back to front, assembled in `GameplayView`:
+`KitchenView` assembles a day, back to front:
 
-1. **Camera layer** — `CameraPreviewView` shows the live feed. It reuses the
-   capture session in `HandPoseManager` (only one session per camera).
-2. **Game layer** — `GameScene`, a transparent SpriteKit scene. Owns all
-   physical interaction: bubbles, plate, bell, grab/drag/release, animations.
-3. **HUD layer** — SwiftUI overlays: recipe card, hearts, points, pause,
-   countdown, game over, camera-permission card.
+1. **Kitchen art** — `KitchenBackdrop`, the planet's illustrated kitchen. The
+   camera preview (`CameraPreviewView`) shows only during the seat check; it
+   reuses the capture session in `HandPoseManager`.
+2. **Game layer** — `KitchenScene`, a transparent SpriteKit scene. Owns all
+   physical interaction: bubbles, hands, stations, grab/drag/drop, serving.
+3. **HUD layer** — SwiftUI overlays: orders, patience, points, pause,
+   countdown, reports, Buffet cards.
 
-Data flows one way: **Vision → Game → Scene / UI**. `GameScene` reads hand data
-and game state every frame in `update(_:)` (polling suits a 60 fps loop).
-SwiftUI observes the same objects.
+Data flows one way: **Vision → Game → Scene / UI**. `KitchenScene` reads hand
+data and the day's state every frame in `update(_:)` (polling suits a 60 fps
+loop). SwiftUI observes the same objects.
 
 ## Folder structure
 
 ```
 PlayFeat/
 ├── App/        Entry point, root navigation and screen routing
-├── Game/       Game rules and state: rounds, scoring, lives, clocks, difficulty.
+├── Game/       Game rules and state: story days, Buffet runs, scoring, clocks.
 │               No SwiftUI or SpriteKit here.
 ├── Vision/     Everything built on the Vision framework: hand and body pose
-│   └── Gestures/  Gesture detectors built on pose data (pinch, hover, swipe)
+│   └── Gestures/  Gesture detectors built on pose data (pinch, grip, hover)
 ├── Camera/     Camera permission, device and format selection, preview view
 ├── Audio/      Music and sound effects
 ├── Network/    Online services (Game Center)
 ├── Data/
-│   ├── Models/   Plain data types (recipes, ingredients, shop items, ...)
-│   └── Storage/  Saving and loading (UserDefaults, SwiftData)
+│   ├── Models/   Plain data types (levels, planets, kitchen art, shop, ...)
+│   └── Storage/  Saving and loading (UserDefaults)
 ├── Scenes/     Everything SpriteKit
-│   ├── GameScene/  The game scene, split into extensions by concern
-│   ├── Nodes/      Reusable SKNodes
-│   └── Animation/  Sprite animations
+│   ├── KitchenScene/  The kitchen scene, split into extensions by concern
+│   └── Nodes/         Reusable SKNodes
 ├── UI/         Everything SwiftUI
 │   ├── Screens/     Full-screen views (one per navigation destination)
 │   ├── Overlays/    Views shown over gameplay
@@ -141,7 +125,7 @@ PlayFeat/
 │   └── Styles/      Button and view styles
 ├── Shared/     Small helpers used everywhere: extensions, layout scaling,
 │               localization
-└── Resources/  Assets, fonts, sounds, videos
+└── Resources/  Assets, fonts, sounds, level JSON, Lottie animations
 
 PlayFeatTests/    Unit tests. Same folders as the app, so the tests for
                   Vision/ live in PlayFeatTests/Vision/
@@ -184,8 +168,8 @@ Summary:
 ### Naming and formatting
 
 - **camelCase** for variables, properties, functions and enum cases
-  (`dishTimeFraction`, `case waitingToServe`).
-- **UpperCamelCase** for types and protocols (`GameStateManager`, `HandInputSource`).
+  (`patienceLeft`, `case kitchenHandover`).
+- **UpperCamelCase** for types and protocols (`KitchenDay`, `HandInputSource`).
 - No `snake_case`, no Hungarian notation, no type prefixes.
 - Shared point and number maths (`distance(to:)`, `eased(toward:by:)`,
   `clamped(to:)`) lives in `Shared/Extensions/CGPoint+Distance.swift` and is
@@ -193,7 +177,7 @@ Summary:
   writing another `hypot` or `min(max())`.
 - One main type per file, and the file is named after it. Extensions that split
   a type by concern go in a folder named after the type
-  (`Scenes/GameScene/Input.swift`).
+  (`Scenes/KitchenScene/Hands.swift`).
 - Header for new files:
   ```swift
   //
@@ -227,10 +211,9 @@ Summary:
 - An asset's lookup name is its **imageset folder name**, and lookups are
   **case-sensitive**. `ArtAssetTests` catches mismatches.
 - Two-part start: iOS shows `PlayFeat/Resources/Launch Screen.storyboard` while
-  the app loads, then `SplashScreenView` plays the animated mascot. The launch
-  screen is only the plain `SplashBackground` color — the splash's first frame —
-  so the handover has no visible seam. Don't add the mascot or text to it: the
-  splash fades them in from nothing, and launch screens can't use Atkinson.
+  the app loads, then `LaunchView` shows the logo and loading bar. The launch
+  screen is only the plain `SplashBackground` color. Don't add the logo or text
+  to it: launch screens can't use Atkinson.
 - Because `project.pbxproj` is gitignored, anything only the project file knows
   about never reaches a teammate's clone. So the launch screen is wired through
   tracked files: the storyboard lives inside the synchronized `PlayFeat/` folder
@@ -249,10 +232,10 @@ Summary:
     frames before Vision and stops the camera; `.background` also fades the
     music out. `.active` resumes both (the camera only if a screen still
     wants it).
-  - `GameplayView` (per run): pauses the clock and `SpriteView` at `.inactive`
+  - `KitchenView` (per day): pauses the day and `SpriteView` at `.inactive`
     too, since hand tracking is already off. A brief `.inactive` resumes at
-    once; returning from `.background` plays a 3-2-1 first. A run killed by
-    iOS while in the background is lost (no mid-run save).
+    once; returning from `.background` plays a 3-2-1 first. A day killed by
+    iOS while in the background is lost (no mid-day save).
   - `scenePhase` is forwarded explicitly into `ContentView`, because
     `PhoneSafeSides` hosts the app in its own hosting controller.
 
@@ -263,14 +246,14 @@ Summary:
   times with no changes to the tests.
 - New logic comes with tests in the matching `PlayFeatTests/` folder.
 - Camera and Vision changes also need a manual check on a real iPad: pinch,
-  drag, drop, hover reset, bell serve, rotation, one-hand mode.
+  drag, drop, cooking, serving a customer, rotation, one-hand mode.
 
 ## Git workflow
 
 - **Never commit directly to `main`.** Every new feature or fix gets its own
   branch from an up-to-date `main`:
   - `feature/<short-name>`, e.g. `feature/shop-screen`
-  - `fix/<short-name>`, e.g. `fix/bell-side-swap`
+  - `fix/<short-name>`, e.g. `fix/shorter-closing-window`
   - `refactor/<short-name>`, e.g. `refactor/observable-migration`
 - **Commit messages have no fixed format, but must summarize the changes:**
   what changed and why, in plain words. One logical change per commit.

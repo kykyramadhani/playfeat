@@ -16,12 +16,11 @@ import AVFoundation
 ///
 /// - SwiftUI views read it from the environment:
 ///   `@Environment(AudioManager.self) private var audio`
-/// - `GameStateManager` receives it through `init`.
-/// - `GameScene` receives it through its `audio` property.
+/// - `KitchenScene` receives it through its `audio` property.
 ///
 /// Buttons don't call it directly: `ClickButton` plays the UI click.
 ///
-///     audio.play(.addPoint)          // one-shot
+///     audio.play(.putOrder)          // one-shot
 ///     audio.startClockWarning()      // begin looping tick
 ///     audio.stopClockWarning()       // stop the loop
 
@@ -124,13 +123,13 @@ final class AudioManager: NSObject {
 
     // MARK: - Public API: background music
 
-    /// Starts (or fades in) the looping background-music track. The default is
-    /// the gameplay theme; pass another base file name to play a different one.
+    /// Starts (or fades in) the looping background-music track `name`, a
+    /// base file name from `MusicTrack`.
     ///
     /// Calling this again for the track already playing does nothing, so it is
     /// safe to call on every round start without restarting the loop.
     func startMusic(
-        _ name: String = MusicTrack.classic,
+        _ name: String,
         fadeIn: TimeInterval = 1.5
     ) {
         guard isEnabled else { return }

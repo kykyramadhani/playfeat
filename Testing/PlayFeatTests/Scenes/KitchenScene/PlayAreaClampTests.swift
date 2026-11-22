@@ -20,10 +20,10 @@ struct PlayAreaClampTests {
     /// scene. The bubble must stop at the frame — once it leaves there is no
     /// way to reach it again.
     @Test func aBubbleDraggedPastTheEdgeStopsAtTheFrame() {
-        let offLeft = GameScene.clamped(CGPoint(x: -300, y: 600), radius: radius, in: screen)
-        let offRight = GameScene.clamped(CGPoint(x: 1200, y: 600), radius: radius, in: screen)
-        let offBottom = GameScene.clamped(CGPoint(x: 400, y: -80), radius: radius, in: screen)
-        let offTop = GameScene.clamped(CGPoint(x: 400, y: 2000), radius: radius, in: screen)
+        let offLeft = DragMotion.clamped(CGPoint(x: -300, y: 600), radius: radius, in: screen)
+        let offRight = DragMotion.clamped(CGPoint(x: 1200, y: 600), radius: radius, in: screen)
+        let offBottom = DragMotion.clamped(CGPoint(x: 400, y: -80), radius: radius, in: screen)
+        let offTop = DragMotion.clamped(CGPoint(x: 400, y: 2000), radius: radius, in: screen)
 
         #expect(offLeft.x == radius)
         #expect(offRight.x == screen.width - radius)
@@ -36,7 +36,7 @@ struct PlayAreaClampTests {
     @Test func interiorPointsAreUntouched() {
         let inside = CGPoint(x: 400, y: 600)
 
-        #expect(GameScene.clamped(inside, radius: radius, in: screen) == inside)
+        #expect(DragMotion.clamped(inside, radius: radius, in: screen) == inside)
     }
 
     /// A scene narrower than two radii would build a reversed range, which
@@ -44,7 +44,7 @@ struct PlayAreaClampTests {
     @Test func aSceneSmallerThanTheBubbleDoesNotTrap() {
         let tiny = CGSize(width: 40, height: 40)
 
-        let clamped = GameScene.clamped(CGPoint(x: 500, y: 500), radius: radius, in: tiny)
+        let clamped = DragMotion.clamped(CGPoint(x: 500, y: 500), radius: radius, in: tiny)
 
         #expect(clamped == CGPoint(x: radius, y: radius))
     }

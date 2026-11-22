@@ -22,14 +22,18 @@ Start with the architecture guide, then follow the system you want to change. Ea
 | Feedback | [12. Music and sound](12-music-and-sound.md) | Audio ownership, tracks, effects, event-driven sound, volume and lifecycle |
 | Other gameplay | [13. Marathon mode](13-marathon-mode.md) | Continuous day, rounds, breaks, cards, temporary coins, stages and difficulty |
 | Data | [14. Storage and inventory](14-storage-and-inventory.md) | UserDefaults, SwiftData, saved progress, runtime state and save boundaries |
-| Other gameplay | [15. Classic game mode](15-classic-game-mode.md) | The older recipe/plate/bell engine, clocks, lives, events and paycheck |
 | Presentation | [16. Rendering, assets and layout](16-rendering-assets-and-layout.md) | SwiftUI/SpriteKit layering, design canvas, artwork sizing, coordinates and z-order |
 | Services | [17. Game Center](17-game-center.md) | Authentication, leaderboard loading/submission, offline behavior and current gaps |
 | Maintenance | [18. Testing and debugging](18-testing-and-debugging.md) | Test organization, launch arguments, diagnostics and practical investigation paths |
 
-## Two gameplay engines: do not mix their rules
+## One gameplay engine
 
-The primary route is:
+> **22 November 2026:** the classic v1 game (`GameplayView`, `GameStateManager`,
+> `GameScene`, its recipes, bell, lives, legacy shop and paycheck) was removed
+> with its assets and tests. Guide 15 is gone; other guides written on
+> 18 November may still mention it in passing.
+
+The route is:
 
 ```text
 Launch / START → Galaxy → Planet level board
@@ -39,16 +43,13 @@ Launch / START → Galaxy → Planet level board
 
 The marathon uses the same kitchen and item interactions, with `MarathonSession`, `MarathonFlow`, and `MarathonBubbleSupply` supplying different rules.
 
-The retained classic route is `GameplayView + GameStateManager + GameScene`. It uses different recipes, three lives, a bell, a legacy shop, and a separate `PostGameView`. A missing/invalid story level can still fall back to this route. A feature existing in the classic engine does not mean it is implemented in the planet kitchen.
-
 ## Current implementation boundaries
 
 - Kepler-186f has six bundled story levels. The next planet shows an unlock/congratulations popup, but has no playable board yet.
 - Starting a story level spends its energy cost; energy refills one point every 5 minutes up to 25.
 - Story results stay over the frozen kitchen. Earned stars light up in place. Flying stars and the extra report fuel gauge have been removed.
 - The recipe book has four real entries and six tile positions; remaining tiles are placeholders, not a full recipe-unlock system.
-- Permanent kitchen upgrades, temporary marathon cards, and classic coin multipliers are three different systems.
-- The current marathon report does not bank its score into `GameStorage.highscore` or submit it to Game Center. The classic game does submit its completed-dish count.
+- Permanent kitchen upgrades and temporary marathon cards are two different systems.
 - Existing [multiplayer notes](../multiplayer-plan.md) describe planned work; they do not establish that networking gameplay has been implemented.
 
 ## How to use and maintain these guides

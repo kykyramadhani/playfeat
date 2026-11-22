@@ -78,10 +78,10 @@ extension KitchenScene {
     /// Held food sits in the drawn hand's pinch, not on the palm.
     private func carry(_ hand: KitchenHand, toward pinch: CGPoint, frameDelta: TimeInterval) {
         guard let node = hand.held else { return }
-        let target = GameScene.clamped(pinch, radius: node.radius, in: size)
+        let target = DragMotion.clamped(pinch, radius: node.radius, in: size)
         node.position = node.position.eased(
             toward: target,
-            by: GameScene.easing(base: dragSmoothing, delta: frameDelta)
+            by: DragMotion.easing(base: dragSmoothing, delta: frameDelta)
         )
     }
 
