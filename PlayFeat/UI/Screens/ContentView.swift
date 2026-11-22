@@ -2,27 +2,22 @@
 //  ContentView.swift
 //  PlayFeat
 //
-//  Root view: shows whichever AppScreen SceneManager is on, with onboarding
-//  and the splash layered above it.
+//  Root view: shows whichever AppScreen SceneManager is on, with the
+//  loading screen layered above it at launch.
 //
 //  A plain switch rather than a NavigationStack: every screen is full-screen
-//  with no back button, and each exit jumps to a known screen, so there is no
-//  stack to keep. GameStateManager stays inside GameplayView, so every run
-//  starts fresh.
+//  and each exit jumps to a known screen, so there is no stack to keep.
 //
 
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(InventoryManager.self) private var inventory
     @Environment(HandPoseManager.self) private var handPoseManager
     @Environment(AudioManager.self) private var audio
     
     @State private var sceneManager = SceneManager()
     /// The loading/START title screen, shown once per launch.
     @State private var showLaunchScreen = true
-    @AppStorage(GameStorage.coinKey) private var coin: Int = 0
-    @AppStorage(GameStorage.scoreKey) private var highscore: Int = 0
 
     /// Watched, not just stored: switching language has to redraw everything
     /// that has already been laid out, and views only rebuild for state they
@@ -36,8 +31,8 @@ struct ContentView: View {
         guard !showLaunchScreen else { return nil }
         switch sceneManager.screen {
         case .introStory: return MusicTrack.story
-        case .mainMenu, .galaxy, .planetSelect, .marathon, .shop: return MusicTrack.menu
-        case .gameplay, .kitchen, .kitchenHandover, .postGame: return nil
+        case .galaxy, .planetSelect, .marathon: return MusicTrack.menu
+        case .kitchen, .kitchenHandover: return nil
         }
     }
 
@@ -80,11 +75,6 @@ struct ContentView: View {
 
             #if DEBUG
             DebugLaunch.applyLandscapeIfRequested()
-            if DebugLaunch.skipToGameplay {
-                showLaunchScreen = false
-                sceneManager.finishTutorial()
-                sceneManager.play()
-            }
             openDebugKitchenIfRequested()
             #endif
         }
@@ -104,9 +94,6 @@ struct ContentView: View {
                    value: sceneManager.screen)
     }
 
-    /// The camera preview lives inside GameplayView, as that screen's
-    /// backmost layer. The capture *session* is owned by HandPoseManager, so
-    /// mounting the preview there doesn't rebuild the pipeline.
     @ViewBuilder
     private var currentScreen: some View {
         switch sceneManager.screen {
@@ -120,9 +107,6 @@ struct ContentView: View {
                 IntroStoryView(onFinish: sceneManager.finishIntroStory)
                     .transition(.opacity)
             }
-        case .mainMenu:
-            GameOpening(sceneManager: sceneManager)
-                .transition(.opacity)
         case .galaxy:
             GalaxyMapView(sceneManager: sceneManager)
                 .transition(.opacity)
@@ -132,26 +116,12 @@ struct ContentView: View {
         case .marathon:
             MarathonView(sceneManager: sceneManager)
                 .transition(.opacity)
-        case .shop:
-            ShopView(sceneManager: sceneManager)
-                .transition(.opacity)
-        case .gameplay:
-            GameplayView(
-                sceneManager: sceneManager,
-                handPoseManager: handPoseManager,
-                inventory: inventory,
-                audio: audio
-            )
-            .transition(.opacity)
         case .kitchen(let level):
             KitchenView(sceneManager: sceneManager, level: level)
                 .transition(.opacity)
         case .kitchenHandover:
             Color.black
                 .ignoresSafeArea()
-                .transition(.opacity)
-        case .postGame(let result):
-            PostGameView(result: result, sceneManager: sceneManager)
                 .transition(.opacity)
         }
     }
@@ -178,7 +148,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environment(InventoryManager(inMemory: true))
         .environment(EnergyStore())
         .environment(HandPoseManager())
         .environment(AudioManager())

@@ -8,8 +8,8 @@ import Foundation
 
 /// Fires once the player has held a hand over a target for `dwellDuration`.
 ///
-/// Kept out of `GameScene` so the dwell and re-arm rules can be exercised
-/// without a live SpriteKit view.
+/// Kept out of the views that use it so the dwell and re-arm rules can be
+/// exercised without a camera.
 struct HoverDetector {
     /// How long the hand must stay put before the gesture fires.
     var dwellDuration: TimeInterval = 1.0

@@ -19,13 +19,11 @@ struct HandCursorNodeTests {
 
     @Test(arguments: [VNChirality.left, .right])
     func chiralityControlsTheArtworkOnEitherHalfOfTheScreen(chirality: VNChirality) throws {
-        let scene = GameScene(size: CGSize(width: 1000, height: 700))
-        let hand = HandData(id: 0, cursorPosition: .zero, grabPoint: .zero,
-                            isOpenHand: true, isClosedFist: false, skeleton: [], chirality: chirality)
+        let cursor = HandCursorNode(chirality: chirality, bubbleRadius: 80)
 
         for x: CGFloat in [300, 700] {
-            scene.updateCursorNode(for: hand, at: CGPoint(x: x, y: 350))
-            let cursor = try #require(scene.cursorNodes[hand.id])
+            cursor.position = CGPoint(x: x, y: 350)
+            cursor.setChirality(chirality)
             let art = try #require(cursor.children.first as? SKSpriteNode)
             #expect(art.xScale == (chirality == .left ? -1 : 1))
         }

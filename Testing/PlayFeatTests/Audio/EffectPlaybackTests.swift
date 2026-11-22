@@ -4,7 +4,7 @@ import Testing
 
 @MainActor
 struct EffectPlaybackTests {
-    @Test(arguments: [MusicTrack.story, MusicTrack.buffet, MusicTrack.classic])
+    @Test(arguments: [MusicTrack.story, MusicTrack.buffet])
     func returningToMenuKeepsItsTrackPlaying(gameplayTrack: String) {
         let audio = AudioManager()
         audio.musicVolume = 0

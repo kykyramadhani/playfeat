@@ -3,9 +3,8 @@
 //  PlayFeat
 //  Created by Owen Limantoro on 20/11/26.
 //
-//  The screen's left and right edges blink red when something is lost: a
-//  life in the camera game (LoseHeartOverlay), a customer in a marathon.
-//  Moved out of LoseHeartOverlay so both games flash the same way.
+//  The screen's left and right edges blink red when a customer is lost in a
+//  marathon.
 //
 
 import SwiftUI

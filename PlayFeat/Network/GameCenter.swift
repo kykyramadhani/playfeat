@@ -2,14 +2,13 @@
 //  GameCenter.swift
 //  GetCooking
 //
-//  Game Center: sign in at launch, submit scores when a run ends (classic
-//  dishes served; each planet's Buffet points on its own leaderboard), read
-//  the top scores for the marathon screen, open the dashboard, and report
-//  the story mode's achievements.
+//  Game Center: sign in at launch, submit each planet's Buffet points to its
+//  own leaderboard, read the top scores for the marathon screen, open the
+//  dashboard, and report the story mode's achievements.
 //
 //  Everything here fails quietly on purpose. A player who declined the sign-in
-//  prompt, or has no network, still gets the whole game — GameStorage.highscore
-//  stays the source of truth for what the UI shows, and Game Center is a bonus
+//  prompt, or has no network, still gets the whole game — GameStorage stays
+//  the source of truth for what the UI shows, and Game Center is a bonus
 //  layer on top of it.
 //
 
@@ -19,9 +18,6 @@ import UIKit
 enum GameCenter {
     // Leaderboard IDs must match App Store Connect character for character —
     // a mismatch fails silently, scores just never show up.
-
-    /// The classic game's Most Dishes Served.
-    static let classicLeaderboardID = "com.reability.playfeat.mostdishes"
 
     /// The Buffet (marathon) leaderboard of `planet`, in points. Leaderboard
     /// IDs take no hyphens, so the planet's are swapped for underscores.

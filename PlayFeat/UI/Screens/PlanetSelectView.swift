@@ -253,14 +253,11 @@ struct PlanetSelectView: View {
         }
     }
 
-    /// Opens the level's kitchen. A level without a data file yet falls back
-    /// to the classic run, so every unlocked level stays playable.
+    /// Opens the level's kitchen. Every level ships with a data file
+    /// (`LevelLoaderTests` checks), so a failed load opens nothing.
     private func startLevel(at index: Int) {
-        if let level = try? LevelLoader.load(planet.levelIDs[index]) {
-            sceneManager.goToKitchen(level)
-        } else {
-            sceneManager.play()
-        }
+        guard let level = try? LevelLoader.load(planet.levelIDs[index]) else { return }
+        sceneManager.goToKitchen(level)
     }
 
     private func levelDetail(at index: Int) -> LevelDetailPopup.Level {

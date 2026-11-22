@@ -12,18 +12,13 @@ import Foundation
 /// Every sound in the game. The raw value is the file name (without extension)
 /// exactly as it appears in Resource/Sound.
 enum SoundEffect: String, CaseIterable {
-    case addPoint        = "add_point"          // player earns a point
-    case bell            = "bell_2x"            // dish finished / order up
     case bubbleGrab      = "bubble_grab"        // pick up an ingredient/item
     case bubblePut       = "bubble_put"         // place an ingredient down
     case clockRunningOut = "sfx_time_warning"   // low-time warning (looping)
     case countdown       = "countdown321"       // start of a round
-    case loseHeart       = "lose_heart"         // mistake / dropped order
     case putOrder        = "sfx_serve_ok"        // submit a completed order
-    case reset           = "reset"              // level restart / game reset
     case uiClick         = "sfx_button"         // menu button pressed
     case wrongIngredient = "sfx_wrong_dish"     // a wrong ingredient placed on the plate
-    case scuffleCloud    = "scuffle_cloud"      // the puff of smoke when a dish is finished
 
     case back = "sfx_back"
     case place = "sfx_place"
@@ -94,7 +89,6 @@ enum SoundEffect: String, CaseIterable {
 nonisolated enum MusicTrack {
     static let menu = "bgm_menu"
     static let story = "bgm_story"
-    static let classic = "gameplay_getcooking"
     // Only the retained underscore-named track is bundled. No alternate.
     static let buffet = "music_buffet"
 }

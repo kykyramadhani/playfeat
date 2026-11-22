@@ -12,8 +12,6 @@ import Testing
 @MainActor
 struct SceneManagerTests {
 
-    private let result = GameResult(dishesByType: ["salad": 2], speedBonus: 5)
-
     /// A returning player's manager, with a full energy meter of its own, so
     /// tests don't drain (or depend on) the energy and story saved on the device.
     private func makeManager(energy: EnergyMeter = EnergyMeter()) -> SceneManager {
@@ -86,39 +84,11 @@ struct SceneManagerTests {
         #expect(manager.isShortOfEnergy)
     }
 
-    /// AstroFeast skips the classic main menu: START lands on the galaxy map.
-    @Test func theAppOpensOnTheGalaxyMapWithTheTutorialStillToRead() {
+    /// A returning player lands on the galaxy map after the loading screen.
+    @Test func theAppOpensOnTheGalaxyMap() {
         let manager = makeManager()
 
         #expect(manager.screen == .galaxy)
-        #expect(manager.isInTutorial)
-    }
-
-    @Test func playingOpensTheGameplayScreen() {
-        let manager = makeManager()
-
-        manager.play()
-
-        #expect(manager.screen == .gameplay)
-    }
-
-    /// The results screen carries the finished run's outcome with it.
-    @Test func endingARunShowsItsResults() {
-        let manager = makeManager()
-        manager.play()
-
-        manager.goToPostGame(result)
-
-        #expect(manager.screen == .postGame(result))
-    }
-
-    @Test func playAgainGoesFromTheResultsBackIntoGameplay() {
-        let manager = makeManager()
-        manager.goToPostGame(result)
-
-        manager.replayGame()
-
-        #expect(manager.screen == .gameplay)
     }
 
     /// Tap to Play opens the galaxy; a planet there opens its board.
@@ -153,17 +123,6 @@ struct SceneManagerTests {
 
         #expect(manager.planet == .k2332b)
         #expect(manager.screen == .planetSelect)
-    }
-
-    /// The planet board opens first; a level there starts the run.
-    @Test func thePlanetBoardSitsBetweenTheMenuAndARun() {
-        let manager = makeManager()
-
-        manager.goToPlanetSelect()
-        #expect(manager.screen == .planetSelect)
-
-        manager.play()
-        #expect(manager.screen == .gameplay)
     }
 
     /// The unlocked trophy opens the marathon; STORY MODE goes back to the board.
@@ -387,23 +346,4 @@ struct SceneManagerTests {
         return LevelReport(day: day, previousBestStars: 0)
     }
 
-    @Test func theShopIsReachableAndItsBackButtonReturnsToTheMenu() {
-        let manager = makeManager()
-
-        manager.goToShop()
-        #expect(manager.screen == .shop)
-
-        manager.goToMainMenu()
-        #expect(manager.screen == .mainMenu)
-    }
-
-    /// Read once per launch: a second run goes straight to the seat check.
-    @Test func finishingTheTutorialSkipsItForLaterRuns() {
-        let manager = makeManager()
-
-        manager.finishTutorial()
-        manager.replayGame()
-
-        #expect(!manager.isInTutorial)
-    }
 }

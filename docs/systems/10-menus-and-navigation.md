@@ -91,4 +91,4 @@ Change route ownership in `SceneManager`, screen composition in `ContentView`, a
 - [Story report](../../PlayFeat/UI/Overlays/LevelReportView.swift), [classic report](../../PlayFeat/UI/Screens/PostGameView.swift)
 - [Navigation tests](../../Testing/PlayFeatTests/App/SceneManagerTests.swift), [recipe-book tests](../../Testing/PlayFeatTests/Data/Models/RecipeBookTests.swift)
 
-Related: [architecture](01-architecture-and-app-lifecycle.md), [planets](08-planets-and-progression.md), [classic game](15-classic-game-mode.md). [Back to index](README.md).
+Related: [architecture](01-architecture-and-app-lifecycle.md), [planets](08-planets-and-progression.md). [Back to index](README.md).

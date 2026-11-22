@@ -10,20 +10,6 @@
         },
         "archived" : false,
         "defaultFormatter" : "INTEGER",
-        "referenceName" : "Most Dishes Served",
-        "scoreRangeEnd" : null,
-        "scoreRangeStart" : null,
-        "scoreSortType" : "DESC",
-        "submissionType" : "BEST_SCORE",
-        "vendorIdentifier" : "com.reability.playfeat.mostdishes",
-        "visibility" : "SHOW_FOR_ALL"
-      },
-      {
-        "activityProperties" : {
-
-        },
-        "archived" : false,
-        "defaultFormatter" : "INTEGER",
         "referenceName" : "Buffet Points: Kepler-186f",
         "scoreRangeEnd" : null,
         "scoreRangeStart" : null,

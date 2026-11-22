@@ -3,13 +3,13 @@
 //  PlayFeat
 //
 //  What gameplay needs from audio. `AudioManager` is the real one; tests pass
-//  a recorder, so GameAudio can be checked without speakers. Views that need
+//  a recorder, so the kitchen's sounds can be checked without speakers. Views that need
 //  music or the volumes keep using `AudioManager` from the environment.
 //
 
 import Foundation
 
-/// Class-bound so `GameScene` can hold it `weak`, like its other dependencies.
+/// Class-bound so `KitchenScene` can hold it `weak`, like its other dependencies.
 protocol SoundPlaying: AnyObject {
     func play(_ effect: SoundEffect)
     func startLoop(_ effect: SoundEffect, key: String)

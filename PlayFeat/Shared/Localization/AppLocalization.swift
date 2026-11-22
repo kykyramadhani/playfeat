@@ -52,7 +52,7 @@ enum AppLocalization {
     ///
     /// `Text("…")` goes through the bundle swap above on its own, but
     /// `String(localized:)` is worth routing through here explicitly so a
-    /// caller reading copy *outside* a view — `TutorialPage`, say — cannot
+    /// caller reading copy *outside* a view — `IntroStoryPanel`, say — cannot
     /// end up with the system language by accident.
     static func string(_ value: String.LocalizationValue) -> String {
         String(localized: value, bundle: Bundle.overrideLocalization ?? .main)

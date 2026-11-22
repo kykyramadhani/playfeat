@@ -58,4 +58,4 @@ Check the signed-in player, entitlements, bundle provisioning, exact leaderboard
 
 There is no dedicated live Game Center integration test in the current unit-test inventory. Verify network behavior on an appropriately configured account/device rather than relying on rules tests.
 
-Related: [marathon](13-marathon-mode.md), [classic game](15-classic-game-mode.md), [storage](14-storage-and-inventory.md). [Back to index](README.md).
+Related: [marathon](13-marathon-mode.md), [storage](14-storage-and-inventory.md). [Back to index](README.md).

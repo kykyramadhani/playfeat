@@ -4,13 +4,11 @@
 //
 
 import SwiftUI
-import SwiftData
 import UIKit
 
 @main
 struct PlayFeatApp: App {
     @State private var audio = AudioManager()
-    @State private var inventory = InventoryManager()
     @State private var camera: CameraManager
     @State private var handPoseManager: HandPoseManager
 
@@ -49,13 +47,11 @@ struct PlayFeatApp: App {
         PhoneSafeSides {
             // Inside, not on the scene: PhoneSafeSides hosts the app
             // separately, and environment doesn't reach across. That includes
-            // the scene phase, which GameplayView needs to pause the run.
+            // the scene phase, which KitchenView needs to pause the day.
             ContentView()
                 .environment(audio)
-                .environment(inventory)
                 .environment(handPoseManager)
                 .environment(\.scenePhase, scenePhase)
-                .modelContainer(inventory.container)
         }
     }
 
