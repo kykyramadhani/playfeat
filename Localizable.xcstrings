@@ -406,17 +406,6 @@
         }
       }
     },
-    "Close the spaceship" : {
-      "comment" : "VoiceOver label of the landed spaceship on the level board while its hatch is open.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutup pesawat luar angkasa"
-          }
-        }
-      }
-    },
     "Coins" : {
       "comment" : "VoiceOver label for the coin counter in the planet screen's HUD.",
       "localizations" : {
@@ -1426,17 +1415,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ups, rotinya terlipat di tanganku kayak selimut mungil."
-          }
-        }
-      }
-    },
-    "Open the spaceship" : {
-      "comment" : "VoiceOver label of the landed spaceship on the level board while its hatch is closed.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Buka pesawat luar angkasa"
           }
         }
       }

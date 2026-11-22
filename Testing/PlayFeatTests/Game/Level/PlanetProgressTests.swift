@@ -23,6 +23,11 @@ struct PlanetProgressTests {
         #expect(!progress.isUnlocked(levelAt: 3))
     }
 
+    @Test func theLandedShipOpensOnceTheFirstLevelHasAStar() {
+        #expect(!PlanetProgress(bestStars: [0, 0, 0, 0, 0, 0]).hasClearedFirstLevel)
+        #expect(PlanetProgress(bestStars: [1, 0, 0, 0, 0, 0]).hasClearedFirstLevel)
+    }
+
     @Test func theMarathonOpensOnceTheFirstLevelHasAStar() {
         #expect(!PlanetProgress(bestStars: [0, 0, 0, 0, 0, 0]).isMarathonUnlocked)
         #expect(PlanetProgress(bestStars: [1, 0, 0, 0, 0, 0]).isMarathonUnlocked)
