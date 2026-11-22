@@ -99,7 +99,7 @@ struct LocalizationTests {
             "Adjust your seat and raise your right hand",
             "Dishes Served", "Shop",
             // Launch screen and planet board
-            "Start", "Marathon Mode", "Energy", "Coins", "Fuel", "Settings", "Help",
+            "Start", "Buffet Mode", "Energy", "Coins", "Fuel", "Settings", "Help",
             "Recipe Book", "Galaxy Map",
             // Level popup and marathon screen
             "Play", "Close", "Story Mode", "Highest Score", "Leaderboard",
@@ -152,15 +152,15 @@ struct LocalizationTests {
             "Aww, tiny stars—I’ve spent so long arranging them that I forgot to taste one!",
             // Marathon rounds, pause and report
             "Continue", "Faster Grill I", "Faster Pot", "Boil time 6 s → 4.5 s", "Second Grill Spot", "Cozy Seats", "Golden Flatbread", "Round Pause",
-            "Resume", "Restart Marathon", "Home", "Nothing left to buy. Take a breather.",
-            "Grill holds 2 flatbreads at once", "Both flatbreads +6 points", "Marathon Complete", "Total Marathon Points", "Rounds Played",
+            "Resume", "Restart Buffet", "Home", "Nothing left to buy. Take a breather.",
+            "Grill holds 2 flatbreads at once", "Both flatbreads +6 points", "Buffet Complete", "Total Buffet Points", "Rounds Played",
             "Average Dishes / Round", "Customers Served", "Total Points",
-            "Choose 1 upgrade for the next round, or skip to save your coins.", "Marathon Coins",
+            "Choose 1 upgrade for the next round, or skip to save your coins.", "Buffet Coins",
             "Game Pause", "Resume Level", "Retry Level", "Pause",
             // Marathon HUD
             "Round %lld", "Customers Lost", "%lld of %lld",
             // Notices and the new planet
-            "Complete previous level to unlock this level", "Complete the first level to unlock marathon mode",
+            "Complete previous level to unlock this level", "Complete the first level to unlock Buffet mode",
             "You have to finish all six levels to continue to the next planet",
             "One energy comes back every 5 minutes", "Not enough energy. One comes back every 5 minutes",
             "Congratulations!!", "You’ve unlocked a new planet", "Proceed to Planet",
@@ -168,7 +168,7 @@ struct LocalizationTests {
             "Back to Galaxy", "Ingredients", "Tools", "Open the spaceship", "Close the spaceship",
             // Intro story
             "Skip Story", "Tap anywhere to continue", "Tap anywhere to start",
-            "Marathon is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go.",
+            "Buffet is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go.",
         ]
 
         defer { AppLocalization.apply(.english) }

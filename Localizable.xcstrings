@@ -1,13 +1,13 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%@ marathon coins" : {
-      "comment" : "Marathon: marathon coins the player can still spend; the number is bold.",
+    "%@ Buffet coins" : {
+      "comment" : "Buffet: Buffet coins the player can still spend; the number is bold.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ koin maraton"
+            "value" : "%@ koin Buffet"
           }
         }
       }
@@ -450,13 +450,13 @@
         }
       }
     },
-    "Complete the first level to unlock marathon mode" : {
-      "comment" : "Shown when the locked marathon is tapped.",
+    "Complete the first level to unlock Buffet mode" : {
+      "comment" : "Shown when the locked Buffet is tapped.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Selesaikan level pertama untuk membuka mode maraton"
+            "value" : "Selesaikan level pertama untuk membuka mode Buffet"
           }
         }
       }
@@ -1053,57 +1053,57 @@
         }
       }
     },
-    "Marathon Coins" : {
-      "comment" : "VoiceOver: the marathon coin counter in the kitchen.",
+    "Buffet Coins" : {
+      "comment" : "VoiceOver: the Buffet coin counter in the kitchen.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Koin Maraton"
+            "value" : "Koin Buffet"
           }
         }
       }
     },
-    "Marathon Complete" : {
-      "comment" : "Title of the marathon's end report.",
+    "Buffet Complete" : {
+      "comment" : "Title of the Buffet's end report.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maraton Selesai"
+            "value" : "Buffet Selesai"
           }
         }
       }
     },
-    "Marathon is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go." : {
-      "comment" : "Marathon spoiler warning, shown once before the planet is finished.",
+    "Buffet is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go." : {
+      "comment" : "Buffet spoiler warning, shown once before the planet is finished.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maraton sudah terbuka! Perhatian: maraton menyajikan hidangan dan pelanggan yang belum kamu temui di cerita. Bisa jadi sulit, jadi bersenang-senanglah dan belajar sambil bermain."
+            "value" : "Buffet sudah terbuka! Perhatian: Buffet menyajikan hidangan dan pelanggan yang belum kamu temui di cerita. Bisa jadi sulit, jadi bersenang-senanglah dan belajar sambil bermain."
           }
         }
       }
     },
-    "Marathon Mode" : {
-      "comment" : "Label under the trophy that opens a planet's endless marathon.",
+    "Buffet Mode" : {
+      "comment" : "Label under the trophy that opens a planet's endless Buffet.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mode Maraton"
+            "value" : "Mode Buffet"
           }
         }
       }
     },
-    "Marathon Mode, locked" : {
-      "comment" : "VoiceOver label for the marathon trophy before it unlocks.",
+    "Buffet Mode, locked" : {
+      "comment" : "VoiceOver label for the Buffet trophy before it unlocks.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mode Maraton, terkunci"
+            "value" : "Mode Buffet, terkunci"
           }
         }
       }
@@ -1704,13 +1704,13 @@
         }
       }
     },
-    "Restart Marathon" : {
-      "comment" : "Marathon pause: start the whole run over.",
+    "Restart Buffet" : {
+      "comment" : "Buffet pause: start the whole run over.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ulangi Maraton"
+            "value" : "Ulangi Buffet"
           }
         }
       }
@@ -2115,13 +2115,13 @@
         }
       }
     },
-    "Total Marathon Points" : {
-      "comment" : "Marathon report: the run's points.",
+    "Total Buffet Points" : {
+      "comment" : "Buffet report: the run's points.",
       "localizations" : {
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Total Poin Maraton"
+            "value" : "Total Poin Buffet"
           }
         }
       }

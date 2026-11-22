@@ -26,13 +26,13 @@ enum PlanetNotice: Equatable {
     var message: Text {
         switch self {
         case .lockedLevel: Text("Complete previous level to unlock this level")
-        case .lockedMarathon: Text("Complete the first level to unlock marathon mode")
+        case .lockedMarathon: Text("Complete the first level to unlock Buffet mode")
         case .unplayedLevels: Text("You have to finish all six levels to continue to the next planet")
         case .energy: Text("One energy comes back every 5 minutes")
         case .notEnoughEnergy: Text("Not enough energy. One comes back every 5 minutes")
         case .gas: Text("Collect \(PlanetProgress.starsToLeave) stars to fill the tank for the next planet")
         case .marathonSpoiler:
-            Text("Marathon is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go.")
+            Text("Buffet is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go.")
         }
     }
 

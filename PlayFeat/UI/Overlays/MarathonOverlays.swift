@@ -96,7 +96,7 @@ struct RoundCompleteOverlay: View {
     }
 }
 
-/// "50 marathon coins" on a cream pill, the coin overlapping its left end.
+/// "50 Buffet coins" on a cream pill, the coin overlapping its left end.
 private struct MarathonCoinsPill: View {
     let coins: Int
 
@@ -117,7 +117,7 @@ private struct MarathonCoinsPill: View {
     }
 
     private var label: some View {
-        Text("\(Text(coins, format: .number).font(.atkinson(size: 24, weight: .bold))) marathon coins")
+        Text("\(Text(coins, format: .number).font(.atkinson(size: 24, weight: .bold))) Buffet coins")
             .font(.atkinson(size: 24, weight: .regular))
             .tracking(0.48)
             .foregroundStyle(Color.purple900)
@@ -266,7 +266,7 @@ struct MarathonReportView: View {
 
             card
                 .padding(.top, 56)
-                .overlay(alignment: .top) { TiltedTitleBadge(title: Text("Marathon Complete")).padding(.top, 3) }
+                .overlay(alignment: .top) { TiltedTitleBadge(title: Text("Buffet Complete")).padding(.top, 3) }
                 .overlay(alignment: .bottom) { buttons.offset(y: 59) }
                 .scaleEffect(Self.fitScale)
         }
@@ -296,7 +296,7 @@ struct MarathonReportView: View {
 
     private var totalPoints: some View {
         VStack(spacing: 18) {
-            Text("Total Marathon Points")
+            Text("Total Buffet Points")
                 .font(.atkinson(size: 32, weight: .bold))
                 .textCase(.uppercase)
             Text(session.points, format: .number)
