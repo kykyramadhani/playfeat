@@ -68,6 +68,16 @@ enum SoundEffect: String, CaseIterable {
         }
     }
 
+    /// How many times the sound plays back to back, each at `playbackRate`.
+    /// The sped-up day-end and angry-customer cues are too short heard once.
+    var repeatCount: Int {
+        switch self {
+        case .dayEnd: 5
+        case .angryArrive: 2
+        default: 1
+        }
+    }
+
     var gain: Float {
         switch self {
         case .bakeLoop, .boilingPot: 0.16

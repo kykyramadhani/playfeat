@@ -98,10 +98,10 @@ final class AudioManager: NSObject {
         effects.play(effect)
     }
 
-    /// Fit an effect to a UI animation without changing its randomized pitch.
-    func play(_ effect: SoundEffect, duration: TimeInterval) {
+    /// Fit an effect to a UI animation, at a set pitch instead of a random one.
+    func play(_ effect: SoundEffect, duration: TimeInterval, semitones: Float) {
         guard isEnabled else { return }
-        effects.play(effect, duration: duration)
+        effects.play(effect, duration: duration, semitones: semitones)
     }
 
     func startLoop(_ effect: SoundEffect, key: String) {

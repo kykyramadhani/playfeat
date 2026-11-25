@@ -5,8 +5,9 @@
 //
 //  Plays a `FuelFlightPlan` over the planet board: after a day that earned
 //  stars, each new star flies from its level card into the fuel gauge, one
-//  at a time, and the gauge fills with a chime as each lands. With Reduce
-//  Motion on, the stars don't fly; the gauge just fills, chime by chime.
+//  at a time, and the gauge fills with a chime as each lands. Each chime is
+//  a little higher than the last. With Reduce Motion on, the stars don't
+//  fly; the gauge just fills, chime by chime.
 //
 //  The board marks its cards and gauge with `FuelFlightAnchors`.
 //
@@ -32,6 +33,8 @@ struct FuelStarFlights: ViewModifier {
     private static let pauseAfterLanding: Duration = .seconds(0.3)
     /// Gives a new star one frame at its card before it's sent flying.
     private static let takeOffFrame: Duration = .milliseconds(30)
+    private static let chimeStepSemitones: Float = 0.5
+    private static let highestChimeSemitones: Float = 2.5
 
     func body(content: Content) -> some View {
         content
@@ -53,8 +56,8 @@ struct FuelStarFlights: ViewModifier {
         guard !plan.flights.isEmpty else { return }
         do {
             try await Task.sleep(for: Self.firstTakeOffDelay)
-            for flight in plan.flights {
-                try await fly(flight)
+            for (landing, flight) in plan.flights.enumerated() {
+                try await fly(flight, landing: landing)
             }
         } catch {
             // Leaving the board mid-flight: the saved progress is already
@@ -63,7 +66,7 @@ struct FuelStarFlights: ViewModifier {
         }
     }
 
-    private func fly(_ flight: FuelFlightPlan.Flight) async throws {
+    private func fly(_ flight: FuelFlightPlan.Flight, landing: Int) async throws {
         if !reduceMotion {
             hasLanded = false
             flyingStar = flight
@@ -72,15 +75,21 @@ struct FuelStarFlights: ViewModifier {
             try await Task.sleep(for: .seconds(Self.flightDuration))
             flyingStar = nil
         }
-        land(flight)
+        land(flight, landing: landing)
         try await Task.sleep(for: Self.pauseAfterLanding)
     }
 
-    private func land(_ flight: FuelFlightPlan.Flight) {
-        // Compress the entire fuel gurgle to the gauge-fill animation, with
-        // pitch still randomized independently in -1...+2 semitones.
-        audio.play(.gasCollected, duration: Self.gaugeFillDuration)
+    private func land(_ flight: FuelFlightPlan.Flight, landing: Int) {
+        // The whole fuel gurgle is squeezed into the gauge-fill animation.
+        audio.play(.gasCollected, duration: Self.gaugeFillDuration,
+                   semitones: Self.chimeSemitones(forLanding: landing))
         withAnimation(.easeOut(duration: Self.gaugeFillDuration)) { fuel = flight.progressAfter }
+    }
+
+    /// How far the chime for the `landing`th star (0 is the first) is raised:
+    /// half a semitone per star before it, so a run of stars climbs, up to +2.5.
+    static func chimeSemitones(forLanding landing: Int) -> Float {
+        min(Float(landing) * chimeStepSemitones, highestChimeSemitones)
     }
 
     // MARK: - Geometry
