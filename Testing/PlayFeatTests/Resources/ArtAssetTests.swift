@@ -34,6 +34,14 @@ struct ArtAssetTests {
         #expect(UIColor(named: name) != nil, "missing marathon HUD colour '\(name)'")
     }
 
+    /// The seat check's pose guide is drawn at its Figma size, so a picture
+    /// with another shape would squash it.
+    @Test func theSeatGuideKeepsItsFigmaShape() throws {
+        let guide = try #require(UIImage(named: "CalibrationGuide"))
+        #expect(abs(guide.size.width / guide.size.height - 698.57 / 479) < 0.01)
+        #expect(UIColor(named: "CalibrationFrame") != nil)
+    }
+
     /// The planet kitchen draws every item by name, in a bubble and once put
     /// down, plain and upgraded; a missing picture is an empty bubble, sheet
     /// or station.

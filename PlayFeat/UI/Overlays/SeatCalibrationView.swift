@@ -5,9 +5,11 @@
 //  The screen between the main menu and the game: the player sits back far
 //  enough that their upper body — shoulders down to hips — fits the frame.
 //
-//  The border is the whole feedback loop. Orange while the pose is wrong;
-//  once it is right, a green border draws itself over the orange one, and the
-//  game starts when it closes the loop.
+//  The frame is the whole feedback loop. It shows faintly while the pose is
+//  wrong; once it is right, the bright frame draws itself around the faint
+//  one, and the game starts when it closes the loop.
+//
+//  Layout: Figma "calibration" (1950:936).
 //
 
 import AVFoundation
@@ -43,31 +45,34 @@ struct SeatCalibrationView: View {
 
     // MARK: - Layout
 
-    /// Target box, as a fraction of the screen.
-    private static let frameShare = CGSize(width: 0.54, height: 0.42)
+    /// The box the player fits into, in design points.
+    private static let boxSize = CGSize(width: 1110, height: 565)
+    /// The box sits low, so the camera sees the player from the waist up.
+    private static let boxBottomMargin: CGFloat = 65
+    private static let instructionTop: CGFloat = 187
 
     /// Smallest share of the box's width the player's shoulders may span.
     /// This is the "don't sit right at the back of the room" check.
-    private static let minimumShoulderShare: CGFloat = 0.25
+    private static let minimumShoulderShare: CGFloat = 0.2
 
-    /// Guide silhouette width, as a share of the box.
-    private static let guideShare: CGFloat = 0.53
+    private static let guideSize = CGSize(width: 698.57, height: 479)
+    /// Gap between the guide's waist and the box's bottom edge.
+    private static let guideBottomInset: CGFloat = 13
 
-    private static let cornerRadius: CGFloat = 40
-    private static let borderWidth: CGFloat = 12
+    private static let cornerRadius: CGFloat = 30.15
+    /// Drawn inside the box's edge, so the box keeps its Figma outer size.
+    private static let borderWidth: CGFloat = 15.07
+    /// How strongly the frame shows before the player holds the pose.
+    private static let waitingBorderOpacity = 0.35
 
     /// Where the player has to put themselves. Also handed to the pose
     /// pipeline: until calibration passes, nobody outside it is the player.
     static func targetFrame(in size: CGSize) -> CGRect {
-        let box = CGSize(
-            width: size.width * frameShare.width,
-            height: size.height * frameShare.height
-        )
-        return CGRect(
-            x: (size.width - box.width) / 2,
-            y: (size.height - box.height) / 2,
-            width: box.width,
-            height: box.height
+        CGRect(
+            x: (size.width - boxSize.width) / 2,
+            y: size.height - boxSize.height - boxBottomMargin,
+            width: boxSize.width,
+            height: boxSize.height
         )
     }
 
@@ -78,20 +83,16 @@ struct SeatCalibrationView: View {
             GeometryReader { proxy in
                 let frame = Self.targetFrame(in: proxy.size)
 
-                VStack(spacing: 0) {
-                    Text(instructionText)
-                        .font(.atkinson(size: 44, weight: .black))
-                        .foregroundStyle(.white)
-                        .outlined(width: 4)
-                        .frame(maxHeight: .infinity, alignment: .center)
+                ZStack(alignment: .topLeading) {
+                    instruction
+                        .frame(width: proxy.size.width)
+                        .offset(y: Self.instructionTop)
 
                     border
                         .frame(width: frame.width, height: frame.height)
-
-                    Spacer(minLength: 0)
-                        .frame(maxHeight: .infinity)
+                        .offset(x: frame.minX, y: frame.minY)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .onChange(of: proxy.size, initial: true) { _, size in
                     handPoseManager.setPlayerZone(Self.targetFrame(in: size), in: size)
                 }
@@ -117,48 +118,40 @@ struct SeatCalibrationView: View {
         .onAppear { handPoseManager.start() }
     }
 
-    /// Orange underneath, green drawn over the top of it as the dwell fills —
-    /// so the progress reads as the frame turning good, rather than as a
-    /// separate gauge the player has to interpret.
+    private var instruction: some View {
+        Text(instructionText)
+            .font(.atkinson(size: 48, weight: .bold))
+            .foregroundStyle(.neutralElevated)
+            .outlined(.labelTab, width: 2)
+            .multilineTextAlignment(.center)
+    }
+
+    /// The faint frame underneath, the bright one drawn over it as the dwell
+    /// fills — so the progress reads as the frame lighting up, rather than as
+    /// a separate gauge the player has to interpret.
     private var border: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: Self.cornerRadius)
-                .fill(.white.opacity(0.15))
-                .overlay(alignment: .bottom) { guide }
-                .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
+        let frameShape = RoundedRectangle(cornerRadius: Self.cornerRadius)
+            .inset(by: Self.borderWidth / 2)
+        return ZStack {
+            guide
 
-            RoundedRectangle(cornerRadius: Self.cornerRadius)
-                .stroke(Color.accentColor, lineWidth: Self.borderWidth)
+            frameShape
+                .stroke(.calibrationFrame.opacity(Self.waitingBorderOpacity), lineWidth: Self.borderWidth)
 
-            RoundedRectangle(cornerRadius: Self.cornerRadius)
+            frameShape
                 .trim(from: 0, to: progress)
-                .stroke(
-                    .appPrimary,
-                    style: StrokeStyle(lineWidth: Self.borderWidth, lineCap: .round)
-                )
+                .stroke(.calibrationFrame, style: StrokeStyle(lineWidth: Self.borderWidth, lineCap: .round))
         }
     }
 
     /// The pose to copy: head and shoulders in the frame with both hands up.
-    ///
-    /// Drawn as a white silhouette rather than the artwork's own grey, which
-    /// disappears against dark clothing on a live camera. Bottom-anchored and
-    /// clipped, so it reads as the player's own body filling the frame.
     private var guide: some View {
-        GeometryReader { box in
-            Image("CalibrationGuide")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: box.size.width * Self.guideShare)
-                .foregroundStyle(.white.opacity(0.45))
-                .shadow(color: .black.opacity(0.35), radius: 8)
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity,
-                    alignment: .bottom
-                )
-        }
+        Image("CalibrationGuide")
+            .resizable()
+            .frame(width: Self.guideSize.width, height: Self.guideSize.height)
+            .padding(.bottom, Self.guideBottomInset)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            .accessibilityHidden(true)
     }
 
     /// Routed through `AppLocalization` rather than `Text` with a plain
