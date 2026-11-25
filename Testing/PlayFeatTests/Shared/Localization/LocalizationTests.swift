@@ -64,6 +64,21 @@ struct LocalizationTests {
         #expect(indonesian == "Lewati Cerita")
     }
 
+    /// The badge over a customer ordering a dish the player hasn't served yet
+    /// is a SpriteKit label, so it is looked up by hand rather than by `Text`.
+    @Test func theNewDishBadgeReadsNewOrBaru() {
+        defer { AppLocalization.apply(.english) }
+
+        AppLocalization.apply(.indonesia)
+        let indonesian = AppLocalization.string("New")
+
+        AppLocalization.apply(.english)
+        let english = AppLocalization.string("New")
+
+        #expect(indonesian == "Baru")
+        #expect(english == "New")
+    }
+
     /// The intro story reads its captions outside the view tree, so they have
     /// to follow the picker too — this is the path that would otherwise stay
     /// English.
@@ -94,7 +109,7 @@ struct LocalizationTests {
             "Music", "Sound Effects", "Language", "One-hand Mode", "OFF", "ON",
             "Left Hand", "Right Hand", "Pickup Gesture", "Pinch", "F Pinch",
             // Seat check
-            "Adjust your seat to fit in the frame",
+            "Adjust yourself to fit in the frame",
             "Adjust your seat and raise your left hand",
             "Adjust your seat and raise your right hand",
             "Dishes Served", "Shop",

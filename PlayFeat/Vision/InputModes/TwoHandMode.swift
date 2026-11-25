@@ -16,6 +16,6 @@ nonisolated struct TwoHandMode: HandInputMode {
     }
 
     var calibrationInstruction: String.LocalizationValue {
-        "Adjust your seat to fit in the frame"
+        "Adjust yourself to fit in the frame"
     }
 }
