@@ -352,6 +352,61 @@
         }
       }
     },
+    "Buffet Coins" : {
+      "comment" : "VoiceOver: the Buffet coin counter in the kitchen.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koin Buffet"
+          }
+        }
+      }
+    },
+    "Buffet Complete" : {
+      "comment" : "Title of the Buffet's end report.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buffet Selesai"
+          }
+        }
+      }
+    },
+    "Buffet is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go." : {
+      "comment" : "Buffet spoiler warning, shown once before the planet is finished.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buffet sudah terbuka! Perhatian: Buffet menyajikan hidangan dan pelanggan yang belum kamu temui di cerita. Bisa jadi sulit, jadi bersenang-senanglah dan belajar sambil bermain."
+          }
+        }
+      }
+    },
+    "Buffet Mode" : {
+      "comment" : "Label under the trophy that opens a planet's endless Buffet.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode Buffet"
+          }
+        }
+      }
+    },
+    "Buffet Mode, locked" : {
+      "comment" : "VoiceOver label for the Buffet trophy before it unlocks.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode Buffet, terkunci"
+          }
+        }
+      }
+    },
     "Buffet Run Duration" : {
       "comment" : "Marathon report: how long the run lasted.",
       "localizations" : {
@@ -670,6 +725,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iyuh, bunyinya ‘blorp’—kira-kira bakal bunyi lagi nggak, ya?"
+          }
+        }
+      }
+    },
+    "Ever since then, the astronaut had to sell food for aliens in order to get back home." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sejak saat itu, sang astronaut berjualan makanan untuk para alien agar bisa pulang ke rumah."
           }
         }
       }
@@ -1042,61 +1108,6 @@
         }
       }
     },
-    "Buffet Coins" : {
-      "comment" : "VoiceOver: the Buffet coin counter in the kitchen.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Koin Buffet"
-          }
-        }
-      }
-    },
-    "Buffet Complete" : {
-      "comment" : "Title of the Buffet's end report.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Buffet Selesai"
-          }
-        }
-      }
-    },
-    "Buffet is open! Heads up: it serves dishes and customers you haven't met yet in the story. It can be hard, so have fun and learn as you go." : {
-      "comment" : "Buffet spoiler warning, shown once before the planet is finished.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Buffet sudah terbuka! Perhatian: Buffet menyajikan hidangan dan pelanggan yang belum kamu temui di cerita. Bisa jadi sulit, jadi bersenang-senanglah dan belajar sambil bermain."
-          }
-        }
-      }
-    },
-    "Buffet Mode" : {
-      "comment" : "Label under the trophy that opens a planet's endless Buffet.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mode Buffet"
-          }
-        }
-      }
-    },
-    "Buffet Mode, locked" : {
-      "comment" : "VoiceOver label for the Buffet trophy before it unlocks.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mode Buffet, terkunci"
-          }
-        }
-      }
-    },
     "Max" : {
       "comment" : "Shop button on an upgrade that can't go higher.",
       "localizations" : {
@@ -1198,6 +1209,7 @@
     },
     "New Menu" : {
       "comment" : "Title of the popup introducing a new dish.",
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -1209,6 +1221,7 @@
     },
     "New Tools" : {
       "comment" : "Title of the popup introducing a new kitchen tool.",
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -1314,6 +1327,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AKTIF"
+          }
+        }
+      }
+    },
+    "Once upon a time, there was an astronaut who had just finished his research at a foreign planet and he wanted to go back home." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dahulu kala, ada seorang astronaut yang baru saja menyelesaikan penelitiannya di sebuah planet asing, dan ia ingin pulang ke rumah."
           }
         }
       }
@@ -1443,6 +1467,7 @@
     },
     "Owned: %lld" : {
       "comment" : "A badge that shows the user how many coin multipliers they have purchased.",
+      "extractionState" : "stale",
       "isCommentAutoGenerated" : true,
       "localizations" : {
         "id" : {
@@ -1531,6 +1556,7 @@
       }
     },
     "Pinch to grab!\nThen drag the ingredient to the plate." : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -1814,6 +1840,17 @@
         }
       }
     },
+    "Sadly, the spaceship became damaged and ran out of fuel. The astronaut had no idea how to get back." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sayangnya, pesawatnya rusak dan kehabisan bahan bakar. Sang astronaut tidak tahu bagaimana cara pulang."
+          }
+        }
+      }
+    },
     "Sea Cookie" : {
       "comment" : "Planet 2 ingredient: the plain cookie the dessert starts from.",
       "localizations" : {
@@ -1878,6 +1915,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lewati"
+          }
+        }
+      }
+    },
+    "Skip Story" : {
+      "comment" : "Intro story: button that ends the story at once.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lewati Cerita"
           }
         }
       }
@@ -2005,6 +2053,17 @@
         }
       }
     },
+    "Suddenly, his spaceship crashed midway on his journey back home due to an asteroid collision." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiba-tiba, pesawat luar angkasanya menabrak asteroid di tengah perjalanan pulang."
+          }
+        }
+      }
+    },
     "Sun Grill" : {
       "comment" : "Name of the kitchen grill.",
       "localizations" : {
@@ -2012,6 +2071,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panggangan Matahari"
+          }
+        }
+      }
+    },
+    "Tap anywhere to continue" : {
+      "comment" : "Intro story: hint under the caption to turn the page.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ketuk di mana saja untuk lanjut"
+          }
+        }
+      }
+    },
+    "Tap anywhere to start" : {
+      "comment" : "Intro story: hint under the last caption, which ends the story.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ketuk di mana saja untuk mulai"
           }
         }
       }
@@ -2027,6 +2108,17 @@
         }
       }
     },
+    "The crash made the spaceship plunge down and fell upon another planet." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabrakan itu membuat pesawatnya meluncur jatuh ke sebuah planet lain."
+          }
+        }
+      }
+    },
     "The Star Cookie is put together on the cookie plate." : {
       "comment" : "New Tools popup: what the cookie plate is for.",
       "localizations" : {
@@ -2034,6 +2126,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kue Bintang disusun di atas piring kue."
+          }
+        }
+      }
+    },
+    "Then he met a local alien of the planet. The alien said he needed to get stars for the fuel by selling food for the aliens." : {
+      "comment" : "Intro story: caption of one comic panel.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lalu ia bertemu alien penduduk planet itu. Kata si alien, ia harus mengumpulkan bintang untuk bahan bakar dengan berjualan makanan untuk para alien."
           }
         }
       }
@@ -2082,17 +2185,6 @@
         }
       }
     },
-    "Total Income" : {
-      "comment" : "Level report: the day's coins plus tips.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Total Pendapatan"
-          }
-        }
-      }
-    },
     "Total Buffet Points" : {
       "comment" : "Buffet report: the run's points.",
       "localizations" : {
@@ -2100,6 +2192,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Total Poin Buffet"
+          }
+        }
+      }
+    },
+    "Total Income" : {
+      "comment" : "Level report: the day's coins plus tips.",
+      "localizations" : {
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total Pendapatan"
           }
         }
       }
@@ -2194,6 +2297,7 @@
     },
     "x%lld" : {
       "comment" : "A label that shows the number of a dish that was just served.",
+      "extractionState" : "stale",
       "isCommentAutoGenerated" : true,
       "localizations" : {
         "id" : {
@@ -2216,6 +2320,7 @@
       }
     },
     "You have 3 hearts!\nRun out of time? You'll lose a heart!" : {
+      "extractionState" : "stale",
       "localizations" : {
         "id" : {
           "stringUnit" : {
@@ -2243,105 +2348,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kamu telah membuka planet baru"
-          }
-        }
-      }
-    },
-    "Once upon a time, there was an astronaut who had just finished his research at a foreign planet and he wanted to go back home." : {
-      "comment" : "Intro story: caption of one comic panel.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dahulu kala, ada seorang astronaut yang baru saja menyelesaikan penelitiannya di sebuah planet asing, dan ia ingin pulang ke rumah."
-          }
-        }
-      }
-    },
-    "Suddenly, his spaceship crashed midway on his journey back home due to an asteroid collision." : {
-      "comment" : "Intro story: caption of one comic panel.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tiba-tiba, pesawat luar angkasanya menabrak asteroid di tengah perjalanan pulang."
-          }
-        }
-      }
-    },
-    "The crash made the spaceship plunge down and fell upon another planet." : {
-      "comment" : "Intro story: caption of one comic panel.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tabrakan itu membuat pesawatnya meluncur jatuh ke sebuah planet lain."
-          }
-        }
-      }
-    },
-    "Sadly, the spaceship became damaged and ran out of fuel. The astronaut had no idea how to get back." : {
-      "comment" : "Intro story: caption of one comic panel.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sayangnya, pesawatnya rusak dan kehabisan bahan bakar. Sang astronaut tidak tahu bagaimana cara pulang."
-          }
-        }
-      }
-    },
-    "Then he met a local alien of the planet. The alien said he needed to get stars for the fuel by selling food for the aliens." : {
-      "comment" : "Intro story: caption of one comic panel.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lalu ia bertemu alien penduduk planet itu. Kata si alien, ia harus mengumpulkan bintang untuk bahan bakar dengan berjualan makanan untuk para alien."
-          }
-        }
-      }
-    },
-    "Ever since then, the astronaut had to sell food for aliens in order to get back home." : {
-      "comment" : "Intro story: caption of one comic panel.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sejak saat itu, sang astronaut berjualan makanan untuk para alien agar bisa pulang ke rumah."
-          }
-        }
-      }
-    },
-    "Tap anywhere to continue" : {
-      "comment" : "Intro story: hint under the caption to turn the page.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ketuk di mana saja untuk lanjut"
-          }
-        }
-      }
-    },
-    "Tap anywhere to start" : {
-      "comment" : "Intro story: hint under the last caption, which ends the story.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ketuk di mana saja untuk mulai"
-          }
-        }
-      }
-    },
-    "Skip Story" : {
-      "comment" : "Intro story: button that ends the story at once.",
-      "localizations" : {
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lewati Cerita"
           }
         }
       }
