@@ -4,9 +4,11 @@ import AVFoundation
 /// Pitch varies per playback, independently of its speed or target duration.
 nonisolated enum EffectPlayback {
     static let semitoneRange: ClosedRange<Float> = -1...2
+    static let centsPerSemitone: Float = 100
 
+    /// A random pitch, kept inside `semitoneRange`.
     static func pitchCents(semitones: Float) -> Float {
-        min(max(semitones, semitoneRange.lowerBound), semitoneRange.upperBound) * 100
+        min(max(semitones, semitoneRange.lowerBound), semitoneRange.upperBound) * centsPerSemitone
     }
 
     static func rate(sourceDuration: TimeInterval, targetDuration: TimeInterval?, defaultRate: Float) -> Float {
@@ -58,12 +60,17 @@ final class EffectPlayer {
         }
     }
 
-    func play(_ effect: SoundEffect, duration: TimeInterval? = nil) {
+    /// `semitones` sets the pitch; without it the pitch is random.
+    func play(_ effect: SoundEffect, duration: TimeInterval? = nil, semitones: Float? = nil) {
         // Bound CPU and memory when a control is tapped repeatedly.
         if oneShots.count >= 16, let oldest = oneShots.first { stop(oldest) }
-        guard let id = makeVoice(effect, duration: duration) else { return }
+        guard let id = makeVoice(effect, duration: duration, semitones: semitones) else { return }
         oneShots.append(id)
         guard let buffer = buffers[effect], let voice = voices[id] else { return }
+        // Queued on one voice, so the repeats run back to back at one pitch.
+        for _ in 1..<effect.repeatCount {
+            voice.player.scheduleBuffer(buffer)
+        }
         voice.player.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { [weak self] _ in
             // Graph mutations must happen off the audio render thread.
             DispatchQueue.main.async { self?.stop(id) }
@@ -101,11 +108,12 @@ final class EffectPlayer {
 
     func resume() { isSuspended = false }
 
-    private func makeVoice(_ effect: SoundEffect, duration: TimeInterval? = nil) -> UUID? {
+    private func makeVoice(_ effect: SoundEffect, duration: TimeInterval? = nil, semitones: Float? = nil) -> UUID? {
         guard !isSuspended, let buffer = buffers[effect] else { return nil }
         let player = AVAudioPlayerNode()
         let pitch = AVAudioUnitTimePitch()
-        pitch.pitch = EffectPlayback.pitchCents(semitones: Float.random(in: EffectPlayback.semitoneRange))
+        pitch.pitch = semitones.map { $0 * EffectPlayback.centsPerSemitone }
+            ?? EffectPlayback.pitchCents(semitones: Float.random(in: EffectPlayback.semitoneRange))
         pitch.rate = EffectPlayback.rate(
             sourceDuration: Double(buffer.frameLength) / buffer.format.sampleRate,
             targetDuration: duration, defaultRate: effect.playbackRate
