@@ -48,6 +48,22 @@ struct EffectPlaybackTests {
         #expect(EffectPlayback.pitchCents(semitones: 5) == 200)
     }
 
+    @Test func aSetPitchIsPlayedAsGivenEvenAboveTheRandomRange() {
+        let player = EffectPlayer()
+        player.volume = 0
+        player.preload()
+        defer { player.stopAll() }
+        player.play(.gasCollected, duration: 0.25, semitones: 2.5)
+        #expect(player.activePitchCents == [250])
+    }
+
+    @Test func dayEndAndAngryArrivalRepeatAtTheirSpeedUp() {
+        #expect(SoundEffect.dayEnd.repeatCount == 5)
+        #expect(SoundEffect.angryArrive.repeatCount == 2)
+        #expect(SoundEffect.gasCollected.repeatCount == 1)
+        #expect(SoundEffect.allCases.allSatisfy { $0.repeatCount >= 1 })
+    }
+
     @Test func reportModesAndRetainedMusicStayDistinct() throws {
         #expect(SoundEffect.storyReport.rawValue == "sfx_round_over")
         #expect(SoundEffect.runOver.rawValue == "sfx_run_over")
